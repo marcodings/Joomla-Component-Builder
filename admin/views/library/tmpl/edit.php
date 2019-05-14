@@ -1,27 +1,13 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		edit.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
@@ -31,7 +17,7 @@ JHtml::_('behavior.tooltip');
 JHtml::_('behavior.formvalidation');
 JHtml::_('formbehavior.chosen', 'select');
 JHtml::_('behavior.keepalive');
-$componentParams = JComponentHelper::getParams('com_componentbuilder');
+$componentParams = $this->params; // will be removed just use $this->params instead
 ?>
 <script type="text/javascript">
 	// waiting spinner
@@ -56,7 +42,7 @@ $componentParams = JComponentHelper::getParams('com_componentbuilder');
 	});
 </script>
 <div id="componentbuilder_loader" style="display: none;">
-<form action="<?php echo JRoute::_('index.php?option=com_componentbuilder&layout=edit&id='.(int) $this->item->id.$this->referral); ?>" method="post" name="adminForm" id="adminForm" class="form-validate" enctype="multipart/form-data">
+<form action="<?php echo JRoute::_('index.php?option=com_componentbuilder&layout=edit&id='. (int) $this->item->id . $this->referral); ?>" method="post" name="adminForm" id="adminForm" class="form-validate" enctype="multipart/form-data">
 
 	<?php echo JLayoutHelper::render('library.behaviour_above', $this); ?>
 <div class="form-horizontal">
@@ -109,6 +95,10 @@ $componentParams = JComponentHelper::getParams('com_componentbuilder');
 		</div>
 	<?php echo JHtml::_('bootstrap.endTab'); ?>
 
+	<?php $this->ignore_fieldsets = array('details','metadata','vdmmetadata','accesscontrol'); ?>
+	<?php $this->tab_name = 'libraryTab'; ?>
+	<?php echo JLayoutHelper::render('joomla.edit.params', $this); ?>
+
 	<?php if ($this->canDo->get('library.delete') || $this->canDo->get('core.edit.created_by') || $this->canDo->get('library.edit.state') || $this->canDo->get('core.edit.created')) : ?>
 	<?php echo JHtml::_('bootstrap.addTab', 'libraryTab', 'publishing', JText::_('COM_COMPONENTBUILDER_LIBRARY_PUBLISHING', true)); ?>
 		<div class="row-fluid form-horizontal-desktop">
@@ -157,81 +147,6 @@ $componentParams = JComponentHelper::getParams('com_componentbuilder');
 
 <script type="text/javascript">
 
-// #jform_how listeners for how_vvvvwad function
-jQuery('#jform_how').on('keyup',function()
-{
-	var how_vvvvwad = jQuery("#jform_how").val();
-	vvvvwad(how_vvvvwad);
-
-});
-jQuery('#adminForm').on('change', '#jform_how',function (e)
-{
-	e.preventDefault();
-	var how_vvvvwad = jQuery("#jform_how").val();
-	vvvvwad(how_vvvvwad);
-
-});
-
-// #jform_how listeners for how_vvvvwae function
-jQuery('#jform_how').on('keyup',function()
-{
-	var how_vvvvwae = jQuery("#jform_how").val();
-	vvvvwae(how_vvvvwae);
-
-});
-jQuery('#adminForm').on('change', '#jform_how',function (e)
-{
-	e.preventDefault();
-	var how_vvvvwae = jQuery("#jform_how").val();
-	vvvvwae(how_vvvvwae);
-
-});
-
-// #jform_how listeners for how_vvvvwaf function
-jQuery('#jform_how').on('keyup',function()
-{
-	var how_vvvvwaf = jQuery("#jform_how").val();
-	vvvvwaf(how_vvvvwaf);
-
-});
-jQuery('#adminForm').on('change', '#jform_how',function (e)
-{
-	e.preventDefault();
-	var how_vvvvwaf = jQuery("#jform_how").val();
-	vvvvwaf(how_vvvvwaf);
-
-});
-
-// #jform_how listeners for how_vvvvwag function
-jQuery('#jform_how').on('keyup',function()
-{
-	var how_vvvvwag = jQuery("#jform_how").val();
-	vvvvwag(how_vvvvwag);
-
-});
-jQuery('#adminForm').on('change', '#jform_how',function (e)
-{
-	e.preventDefault();
-	var how_vvvvwag = jQuery("#jform_how").val();
-	vvvvwag(how_vvvvwag);
-
-});
-
-// #jform_how listeners for how_vvvvwah function
-jQuery('#jform_how').on('keyup',function()
-{
-	var how_vvvvwah = jQuery("#jform_how").val();
-	vvvvwah(how_vvvvwah);
-
-});
-jQuery('#adminForm').on('change', '#jform_how',function (e)
-{
-	e.preventDefault();
-	var how_vvvvwah = jQuery("#jform_how").val();
-	vvvvwah(how_vvvvwah);
-
-});
-
 // #jform_how listeners for how_vvvvwai function
 jQuery('#jform_how').on('keyup',function()
 {
@@ -262,18 +177,93 @@ jQuery('#adminForm').on('change', '#jform_how',function (e)
 
 });
 
-// #jform_type listeners for type_vvvvwak function
+// #jform_how listeners for how_vvvvwak function
+jQuery('#jform_how').on('keyup',function()
+{
+	var how_vvvvwak = jQuery("#jform_how").val();
+	vvvvwak(how_vvvvwak);
+
+});
+jQuery('#adminForm').on('change', '#jform_how',function (e)
+{
+	e.preventDefault();
+	var how_vvvvwak = jQuery("#jform_how").val();
+	vvvvwak(how_vvvvwak);
+
+});
+
+// #jform_how listeners for how_vvvvwal function
+jQuery('#jform_how').on('keyup',function()
+{
+	var how_vvvvwal = jQuery("#jform_how").val();
+	vvvvwal(how_vvvvwal);
+
+});
+jQuery('#adminForm').on('change', '#jform_how',function (e)
+{
+	e.preventDefault();
+	var how_vvvvwal = jQuery("#jform_how").val();
+	vvvvwal(how_vvvvwal);
+
+});
+
+// #jform_how listeners for how_vvvvwam function
+jQuery('#jform_how').on('keyup',function()
+{
+	var how_vvvvwam = jQuery("#jform_how").val();
+	vvvvwam(how_vvvvwam);
+
+});
+jQuery('#adminForm').on('change', '#jform_how',function (e)
+{
+	e.preventDefault();
+	var how_vvvvwam = jQuery("#jform_how").val();
+	vvvvwam(how_vvvvwam);
+
+});
+
+// #jform_how listeners for how_vvvvwan function
+jQuery('#jform_how').on('keyup',function()
+{
+	var how_vvvvwan = jQuery("#jform_how").val();
+	vvvvwan(how_vvvvwan);
+
+});
+jQuery('#adminForm').on('change', '#jform_how',function (e)
+{
+	e.preventDefault();
+	var how_vvvvwan = jQuery("#jform_how").val();
+	vvvvwan(how_vvvvwan);
+
+});
+
+// #jform_how listeners for how_vvvvwao function
+jQuery('#jform_how').on('keyup',function()
+{
+	var how_vvvvwao = jQuery("#jform_how").val();
+	vvvvwao(how_vvvvwao);
+
+});
+jQuery('#adminForm').on('change', '#jform_how',function (e)
+{
+	e.preventDefault();
+	var how_vvvvwao = jQuery("#jform_how").val();
+	vvvvwao(how_vvvvwao);
+
+});
+
+// #jform_type listeners for type_vvvvwap function
 jQuery('#jform_type').on('keyup',function()
 {
-	var type_vvvvwak = jQuery("#jform_type input[type='radio']:checked").val();
-	vvvvwak(type_vvvvwak);
+	var type_vvvvwap = jQuery("#jform_type input[type='radio']:checked").val();
+	vvvvwap(type_vvvvwap);
 
 });
 jQuery('#adminForm').on('change', '#jform_type',function (e)
 {
 	e.preventDefault();
-	var type_vvvvwak = jQuery("#jform_type input[type='radio']:checked").val();
-	vvvvwak(type_vvvvwak);
+	var type_vvvvwap = jQuery("#jform_type input[type='radio']:checked").val();
+	vvvvwap(type_vvvvwap);
 
 });
 

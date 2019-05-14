@@ -1,27 +1,13 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		componentbuilder.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
@@ -39,127 +25,53 @@ abstract class ComponentbuilderHelper
 	{
 		// the Session keeps track of all data related to the current session of this user
 		self::loadSession();
-	}  
+	}
 
 	/**
-	* 	Locked Libraries (we can not have these change)
+	* Locked Libraries (we can not have these change)
 	**/
 	public static $libraryNames = array(1 => 'No Library', 2 => 'Bootstrap v4', 3 => 'Uikit v3', 4 => 'Uikit v2', 5 => 'FooTable v2', 6 => 'FooTable v3');
 
 	/**
-	* 	The global params
+	* Array of php fields Allowed (16)
+	**/
+	public static $phpFieldArray = array('', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'x');
+
+	/**
+	* The global params
 	**/
 	protected static $params = false;
 
 	/**
-	* 	The global updater
+	* The global updater
 	**/
 	protected static $globalUpdater = array();
 
 	/**
-	* 	The local company details
+	* The local company details
 	**/
 	protected static $localCompany = array();
 
 	/**
-	* 	The snippet paths
+	* The snippet paths
 	**/
 	public static $snippetPath = 'https://raw.githubusercontent.com/vdm-io/Joomla-Component-Builder-Snippets/master/';
 	public static $snippetsPath = 'https://api.github.com/repos/vdm-io/Joomla-Component-Builder-Snippets/git/trees/master';
 
 	/**
-	*	The packages paths
+	* The VDM packages paths
 	**/
-	public static $jcbGithubPackagesUrl = "https://api.github.com/repos/vdm-io/JCB-Packages/git/trees/master";
-	public static $jcbGithubPackageUrl = "https://github.com/vdm-io/JCB-Packages/raw/master/";
+	public static $vdmGithubPackagesUrl = "https://api.github.com/repos/vdm-io/JCB-Packages/git/trees/master";
+	public static $vdmGithubPackageUrl = "https://github.com/vdm-io/JCB-Packages/raw/master/";
+
+	/**
+	* The JCB packages paths
+	**/
+	public static $jcbGithubPackagesUrl = "https://api.github.com/repos/vdm-io/JCB-Community-Packages/git/trees/master";
+	public static $jcbGithubPackageUrl = "https://github.com/vdm-io/JCB-Community-Packages/raw/master/";
 
 	// not needed at this time (maybe latter)
 	public static $accessToken = "";
-
-	/**
-	*	get the github repo file list
-	*
-	*	@return  array on success
-	* 
-	*/
-	public static function getGithubRepoFileList($type, $target)
-	{
-		// get the current Packages (public)
-		if (!$repoData = self::get($type))
-		{
-			if (self::urlExists($target))
-			{
-				$repoData = self::getFileContents($target);
-				if (self::checkJson($repoData))
-				{
-					$test = json_decode($repoData);
-					if (self::checkObject($test) && isset($test->tree) && self::checkArray($test->tree) )
-					{
-						// remember to set it
-						self::set($type, $repoData);
-					}
-					// check if we have error message from github
-					elseif ($errorMessage = self::githubErrorHandeler(array('error' => null), $test))
-					{
-						if (self::checkString($errorMessage['error']))
-						{
-							JFactory::getApplication()->enqueueMessage($errorMessage['error'], 'Error');
-						}
-						$repoData = false;
-					}
-				}
-				else
-				{
-					$repoData = false;
-				}
-			}
-			else
-			{
-				JFactory::getApplication()->enqueueMessage(JText::sprintf('COM_COMPONENTBUILDER_THE_URL_S_SET_TO_RETRIEVE_THE_PACKAGES_DOES_NOT_EXIST', $target), 'Error');
-			}
-		}
-		// check if we could find packages
-		if (isset($repoData) && self::checkJson($repoData))
-		{
-			$repoData = json_decode($repoData);
-			if (self::checkObject($repoData) && isset($repoData->tree) && self::checkArray($repoData->tree) )
-			{
-				return $repoData->tree;
-			}
-		}
-		return false;
-	}
-
-	/**
-	*	get the github error messages
-	*
-	*	@return  array of errors on success
-	* 
-	*/
-	protected static function githubErrorHandeler($message, &$github)
-	{
-		if (self::checkObject($github) && isset($github->message) && self::checkString($github->message))
-		{
-			// set the message
-			$errorMessage = $github->message;
-			// add the documentation URL
-			if (isset($github->documentation_url) && self::checkString($github->documentation_url))
-			{
-				$errorMessage = $errorMessage.'<br />'.$github->documentation_url;
-			}
-			// check the message
-			if (strpos($errorMessage, 'Authenticated') !== false)
-			{
-				// add little more help if it is an access token issue
-				$errorMessage = JText::sprintf('COM_COMPONENTBUILDER_SBR_YOU_CAN_ADD_AN_BACCESS_TOKENB_TO_GETBIBLE_GLOBAL_OPTIONS_TO_MAKE_AUTHENTICATED_REQUESTS_AN_ACCESS_TOKEN_WITH_ONLY_PUBLIC_ACCESS_WILL_DO', $errorMessage);
-			}
-			// set error notice
-			$message['error'] = $errorMessage;
-			// we have error message
-			return $message;
-		}
-		return false;
-	}
 
 	/**
 	 * The array of constant paths
@@ -495,7 +407,41 @@ abstract class ComponentbuilderHelper
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Fix the path to work in the JCB script <-- (main issue here)
+	 *	Since we need / slash in all paths, for the JCB script even if it is Windows
+	 *	and since MS works with both forward and back slashes
+	 *	we just convert all slashes to forward slashes
+	 * 
+	 * THIS is just my hack (fix) if you know a better way! speak-up!
+	 * 
+	 * @param   mix    $values   the array of paths or the path as a string
+	 * @param   array  $targets  paths to target
+	 *
+	 * @return  string
+	 * 
+	 */
+	public static function fixPath(&$values, $targets = array())
+	{
+		// if multiple to gets searched and fixed
+		if (self::checkArray($values) && self::checkArray($targets))
+		{
+			foreach ($targets as $target)
+			{
+				if (isset($values[$target]) && strpos($values[$target], '\\') !== false)
+				{
+					$values[$target] = str_replace('\\', '/', $values[$target]);
+				}
+			}
+		}
+		// if just a string
+		elseif (self::checkString($values) && strpos($values, '\\') !== false)
+		{
+			$values = str_replace('\\', '/', $values);
+		}
+	}
+
 	/**
 	 * get all the file paths in folder and sub folders
 	 * 
@@ -586,72 +532,6 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	 * Remove folders with files
-	 * 
-	 * @param   string   $dir     The path to folder to remove
-	 * @param   boolean  $ignore  The folders and files to ignore and not remove
-	 *
-	 * @return  boolean   True in all is removed
-	 * 
-	 */
-	public static function removeFolder($dir, $ignore = false)
-	{
-		if (JFolder::exists($dir))
-		{
-			$it = new RecursiveDirectoryIterator($dir);
-			$it = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
-			foreach ($it as $file)
-			{
-				if ('.' === $file->getBasename() || '..' ===  $file->getBasename()) continue;
-				if ($file->isDir())
-				{
-					$keeper = false;
-					if (self::checkArray($ignore))
-					{
-						foreach ($ignore as $keep)
-						{
-							if (strpos($file->getPathname(), $dir.'/'.$keep) !== false)
-							{
-								$keeper = true;
-							}
-						}
-					}
-					if ($keeper)
-					{
-						continue;
-					}
-					JFolder::delete($file->getPathname());
-				}
-				else
-				{
-					$keeper = false;
-					if (self::checkArray($ignore))
-					{
-						foreach ($ignore as $keep)
-						{
-							if (strpos($file->getPathname(), $dir.'/'.$keep) !== false)
-							{
-								$keeper = true;
-							}
-						}
-					}
-					if ($keeper)
-					{
-						continue;
-					}
-					JFile::delete($file->getPathname());
-				}
-			}
-			if (!self::checkArray($ignore))
-			{
-				return JFolder::delete($dir);
-			}
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	* 	The dynamic builder of views, tables and fields
 	**/
 	public static function dynamicBuilder(&$data, $type)
@@ -659,198 +539,6 @@ abstract class ComponentbuilderHelper
 		self::autoLoader('extrusion');
 		$extruder = new Extrusion($data);
 	}
-
-	public static function getFieldOptions($value, $type, $settings = array(), $xml = null)
-	{
-		// Get a db connection.
-		$db = JFactory::getDbo();
-
-		// Create a new query object.
-		$query = $db->getQuery(true);
-		$query->select($db->quoteName(array('properties', 'short_description', 'description')));
-		$query->from($db->quoteName('#__componentbuilder_fieldtype'));
-		$query->where($db->quoteName('published') . ' = 1');
-		$query->where($db->quoteName($type) . ' = '. $value);
-
-		// Reset the query using our newly populated query object.
-		$db->setQuery($query);
-		$db->execute();
-		if ($db->getNumRows())
-		{
-			$result = $db->loadObject();
-			$properties = json_decode($result->properties,true);
-			$field = array(
-				'subform' => array(),
-				'nameListOptions' => array(),
-				'php' => array(),
-				'values' => "<field ", 
-				'values_description' => '<table class="uk-table uk-table-hover uk-table-striped uk-table-condensed">', 
-				'short_description' => $result->short_description, 
-				'description' => $result->description);
-			// number pointer
-			$nr = 0;
-			// value to check since there are false and null values even 0 in the values returned
-			$confirmation = '8qvZHoyuFYQqpj0YQbc6F3o5DhBlmS-_-a8pmCZfOVSfANjkmV5LG8pCdAY2JNYu6cB';
-			// set the headers
-			$field['values_description'] .= '<thead><tr><th class="uk-text-right">'.JText::_('COM_COMPONENTBUILDER_PROPERTY').'</th><th>'.JText::_('COM_COMPONENTBUILDER_EXAMPLE').'</th><th>'.JText::_('COM_COMPONENTBUILDER_DESCRIPTION').'</th></thead><tbody>';
-			foreach ($properties as $property)
-			{
-				$example = (isset($property['example']) && self::checkString($property['example'])) ? $property['example'] : '';
-				$field['values_description'] .= '<tr><td class="uk-text-right"><code>'.$property['name'].'</code></td><td>'.$example.'</td><td>'.$property['description'].'</td></tr>';
-				// check if we should load the value
-				$value = self::getValueFromXMLstring($xml, $property['name'], $confirmation);
-				// check if this is a php field
-				$addPHP = false;
-				if (strpos($property['name'], 'type_php') !== false)
-				{
-					$addPHP = true;
-					$phpKey = trim(preg_replace('/[0-9]+/', '', $property['name']), '_');
-					// start array if not already set
-					if (!isset($field['php'][$phpKey]))
-					{
-						$field['php'][$phpKey] = array();
-						$field['php'][$phpKey]['value'] = array();
-						$field['php'][$phpKey]['desc'] = $property['description'];
-					}
-				}
-				// was the settings for the property passed
-				if(self::checkArray($settings) && isset($settings[$property['name']]))
-				{
-					// add the xml values
-					$field['values'] .= PHP_EOL."\t".$property['name'].'="'.$settings[$property['name']].'" ';
-					// add the json values
-					if ($addPHP)
-					{
-						$field['php'][$phpKey]['value'][] = $settings[$property['name']];
-					}
-					else
-					{
-						$field['subform']['properties'.$nr] = array('name' => $property['name'], 'value' => $settings[$property['name']], 'desc' => $property['description']);
-					}
-				}
-				elseif (!$xml || $confirmation !== $value)
-				{
-					// add the xml values
-					$field['values'] .= PHP_EOL."\t" . $property['name'] . '="'. ($confirmation !== $value) ? $value : $example .'" ';
-					// add the json values
-					if ($addPHP)
-					{
-						$field['php'][$phpKey]['value'][] = ($confirmation !== $value) ? $value : $example;
-					}
-					else
-					{
-						$field['subform']['properties' . $nr] = array('name' => $property['name'], 'value' => ($confirmation !== $value) ? $value : $example, 'desc' => $property['description']);
-					}
-				}
-				// add the name List Options
-				if (!$addPHP)
-				{
-					$field['nameListOptions'][$property['name']] = $property['name'];
-				}
-				// increment the number
-				$nr++;
-			}
-			$field['values'] .= PHP_EOL."/>";
-			$field['values_description'] .= '</tbody></table>';
-			// return found field options
-			return $field;
-		}
-		return false;
-	}
-
-	public static function getValueFromXMLstring($xml, $get, $confirmation)
-	{
-		if (self::checkString($xml))
-		{
-			return self::getBetween($xml, $get.'="', '"', $confirmation);
-		}
-		return $confirmation;
-	}
-
-
-	/**
-	* The zipper method
-	* 
-	* @param  string   $workingDIR    The directory where the items must be zipped
-	* @param  string   $filepath          The path to where the zip file must be placed
-	*
-	* @return  bool true   On success
-	* 
-	*/
-	public static function zip($workingDIR, &$filepath)
-	{
-		// store the current joomla working directory
-		$joomla = getcwd();
-
-		// we are changing the working directory to the component temp folder
-		chdir($workingDIR);
-
-		// the full file path of the zip file
-		$filepath = JPath::clean($filepath);
-
-		// delete an existing zip file (or use an exclusion parameter in JFolder::files()
-		JFile::delete($filepath);
-
-		// get a list of files in the current directory tree
-		$files = JFolder::files('.', '', true, true);
-		$zipArray = array();
-		// setup the zip array
-		foreach ($files as $file)
-		{
-		   $tmp = array();
-		   $tmp['name'] = str_replace('./', '', $file);
-		   $tmp['data'] = JFile::read($file);
-		   $tmp['time'] = filemtime($file);
-		   $zipArray[] = $tmp;
-		}
-
-		// change back to joomla working directory
-		chdir($joomla);
-
-		// get the zip adapter
-		$zip = JArchive::getAdapter('zip');
-
-		//create the zip file
-		if ($zip->create($filepath, $zipArray))
-		{
-			return true;
-		}
-		return false;
-	}
-
-
-	/**
-	* Write a file to the server
-	*
-	* @param  string   $path    The path and file name where to safe the data
-	* @param  string   $data    The data to safe
-	*
-	* @return  bool true   On success
-	*
-	*/
-	public static function writeFile($path, $data)
-	{
-		$klaar = false;
-		if (self::checkString($data))
-		{
-			// open the file
-			$fh = fopen($path, "w");
-			if (!is_resource($fh))
-			{
-				return $klaar;
-			}
-			// write to the file
-			if (fwrite($fh, $data))
-			{
-				// has been done
-				$klaar = true;
-			}
-			// close file.
-			fclose($fh);
-		}
-		return $klaar;
-	}
-
 
 	/*
 	 * Convert repeatable field to subform
@@ -963,6 +651,1169 @@ abstract class ComponentbuilderHelper
 		}
 		return $object;
 	}
+
+	/**
+	 * Run Global Updater if any are set
+	 * 
+	 * @return  void
+	 * 
+	 */
+	public static function runGlobalUpdater()
+	{
+		// check if any updates are set to run
+		if (self::checkArray(self::$globalUpdater))
+		{
+			// get the database object
+			$db = JFactory::getDbo();
+			foreach (self::$globalUpdater as $tableKeyID => $object)
+			{
+				// get the table
+				$table = explode('.', $tableKeyID);
+				// update the item
+				$db->updateObject('#__componentbuilder_' . (string) $table[0] , $object, (string) $table[1]);
+			}
+			// rest updater
+			self::$globalUpdater = array();
+		}
+	}
+
+	/**
+	 * Copy Any Item (only use for direct database copying)
+	 * 
+	 * @param   int        $id         The item to copy
+	 * @param   string   $table     The table and model to copy from and with
+	 * @param   array    $config   The values that should change
+	 *
+	 * @return  boolean   True if success
+	 * 
+	 */
+	public static function copyItem($id, $type, $config = array())
+	{
+		// only continue if we have an id
+		if ((int) $id > 0)
+		{
+			// get the model
+			$model = self::getModel($type);
+			$app   = \JFactory::getApplication();
+			// get item
+			if ($item = $model->getItem($id))
+			{
+				// update values that should change
+				if (self::checkArray($config))
+				{
+					foreach($config as $key => $value)
+					{
+						if (isset($item->{$key}))
+						{
+							$item->{$key} = $value;
+						}
+					}
+				}
+				// clone the object
+				$data = array();
+				foreach ($item as $key => $value)
+				{
+					$data[$key] = $value;
+				}			
+				// reset some values
+				$data['id'] = 0;
+				$data['version'] = 1;
+				if (isset($data['tags']))
+				{
+					$data['tags'] = null;
+				}
+				if (isset($data['associations']))
+				{
+					$data['associations'] = array();
+				}
+				// remove some unneeded values
+				unset($data['params']);
+				unset($data['asset_id']);
+				unset($data['checked_out']);
+				unset($data['checked_out_time']);
+				// Attempt to save the data.
+				if ($model->save($data))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	* the basic localkey
+	**/
+	protected static $localkey = false;
+
+	/**
+	* get the localkey
+	**/	
+	public static function getLocalKey()
+	{
+		if (!self::$localkey)
+		{
+			// get the basic key
+			self::$localkey = md5(self::getCryptKey('basic', 'localKey34fdWEkl'));
+		}
+		return self::$localkey;
+	}
+
+	/**
+	 * indent HTML
+	 */
+	public static function indent($html)
+	{
+		// load the class
+		require_once JPATH_ADMINISTRATOR.'/components/com_componentbuilder/helpers/indenter.php';
+		// set new indenter
+		$indenter = new Indenter();
+		// return indented html
+		return $indenter->indent($html);
+	}
+
+	public static function checkFileType($file, $sufix)
+	{
+		// now check if the file ends with the sufix
+		return $sufix === "" || ($sufix == substr(strrchr($file, "."), -strlen($sufix)));
+	}
+
+	public static function imageInfo($path, $request = 'type')
+	{
+		// set image
+		$image = JPATH_SITE.'/'.$path;
+		// check if exists
+		if (file_exists($image) && $result = @getimagesize($image))
+		{
+			// return type request
+			switch ($request)
+			{
+				case 'width':
+					return $result[0];
+					break;
+				case 'height':
+					return $result[1];
+					break;
+				case 'type':
+					$extensions = array(
+						IMAGETYPE_GIF => "gif",
+						IMAGETYPE_JPEG => "jpg",
+						IMAGETYPE_PNG => "png",
+						IMAGETYPE_SWF => "swf",
+						IMAGETYPE_PSD => "psd",
+						IMAGETYPE_BMP => "bmp",
+						IMAGETYPE_TIFF_II => "tiff",
+						IMAGETYPE_TIFF_MM => "tiff",
+						IMAGETYPE_JPC => "jpc",
+						IMAGETYPE_JP2 => "jp2",
+						IMAGETYPE_JPX => "jpx",
+						IMAGETYPE_JB2 => "jb2",
+						IMAGETYPE_SWC => "swc",
+						IMAGETYPE_IFF => "iff",
+						IMAGETYPE_WBMP => "wbmp",
+						IMAGETYPE_XBM => "xbm",
+						IMAGETYPE_ICO => "ico"
+					);
+					return $extensions[$result[2]];
+					break;
+				case 'attr':
+					return $result[3];
+					break;
+				case 'all':
+				default:
+					return $result;
+					break;
+			}
+		}
+		return false;
+	}
+
+	/**
+	*  set the session defaults if not set
+	**/
+	protected static function setSessionDefaults()
+	{
+		// noting for now
+		return true;
+	}
+
+	/**
+	* check if it is a new hash
+	**/
+	public static function newHash($hash, $name = 'backup', $type = 'hash', $key = '',  $fileType = 'txt')
+	{
+		// make sure we have a hash
+		if (self::checkString($hash))
+		{
+			// first get the file path
+			$path_filename = self::getFilePath('path', $name.$type, $fileType, $key, JPATH_COMPONENT_ADMINISTRATOR);
+			// set as read if not already set
+			if ($content = self::getFileContents($path_filename, false))
+			{
+				if ($hash == $content)
+				{
+					return false;
+				}
+			}
+			// set the hash
+			return self::writeFile($path_filename, $hash);
+		}
+		return false;
+	}
+
+	protected static $pkOwnerSearch = array(
+		'company' => 'COM_COMPONENTBUILDER_DTCOMPANYDTDDSDD',
+		'owner' => 'COM_COMPONENTBUILDER_DTOWNERDTDDSDD',
+		'email' => 'COM_COMPONENTBUILDER_DTEMAILDTDDSDD',
+		'website' => 'COM_COMPONENTBUILDER_DTWEBSITEDTDDSDD',
+		'license' => 'COM_COMPONENTBUILDER_DTLICENSEDTDDSDD',
+		'copyright' => 'COM_COMPONENTBUILDER_DTCOPYRIGHTDTDDSDD'
+		);
+
+	/**
+	* get the JCB package owner details display
+	**/
+	public static function getPackageOwnerDetailsDisplay(&$info, $trust = false)
+	{
+		$hasOwner = false;
+		$ownerDetails = '<h2 class="module-title nav-header">' . JText::_('COM_COMPONENTBUILDER_PACKAGE_OWNER_DETAILS') . '</h2>';
+		$ownerDetails .= '<dl class="uk-description-list-horizontal">';
+		// load the list items
+		foreach (self::$pkOwnerSearch as $key => $dd)
+		{
+			if ($value = self::getPackageOwnerValue($key, $info))
+			{
+				$ownerDetails .= JText::sprintf($dd, $value);
+				// check if we have a owner/source name
+				if (('owner' === $key || 'company' === $key) && !$hasOwner)
+				{
+					$hasOwner = true;
+					$owner = $value;
+				}
+			}
+		}
+		$ownerDetails .= '</dl>';
+
+		// provide some details to how the user can get a key
+		if ($hasOwner && isset($info['getKeyFrom']['buy_link']) && self::checkString($info['getKeyFrom']['buy_link']))
+		{
+			$ownerDetails .= '<hr />';
+			$ownerDetails .= JText::sprintf('COM_COMPONENTBUILDER_BGET_THE_KEY_FROMB_A_SSA', 'class="btn btn-primary" href="'.$info['getKeyFrom']['buy_link'].'" target="_blank" title="get a key from '.$owner.'"', $owner);
+		}
+		// add more custom links
+		elseif ($hasOwner && isset($info['getKeyFrom']['buy_links']) && self::checkArray($info['getKeyFrom']['buy_links']))
+		{
+			$buttons = array();
+			foreach ($info['getKeyFrom']['buy_links'] as $keyName => $link)
+			{
+				$buttons[] = JText::sprintf('COM_COMPONENTBUILDER_BGET_THE_KEY_FROM_SB_FOR_A_SSA', $owner, 'class="btn btn-primary" href="'.$link.'" target="_blank" title="get a key from '.$owner.'"', $keyName);
+			}
+			$ownerDetails .= '<hr />';
+			$ownerDetails .= implode('<br />', $buttons);
+		}
+		// return the owner details
+		if (!$hasOwner)
+		{
+			$ownerDetails = '<h2>' . JText::_('COM_COMPONENTBUILDER_PACKAGE_OWNER_DETAILS_NOT_FOUND') . '</h2>';
+			if (!$trust)
+			{
+				$ownerDetails .= '<p style="color: #922924;">' . JText::_('COM_COMPONENTBUILDER_BE_CAUTIOUS_DO_NOT_CONTINUE_UNLESS_YOU_TRUST_THE_ORIGIN_OF_THIS_PACKAGE') . '</p>';
+			}
+		}
+		return '<div>'.$ownerDetails.'</div>';
+	}
+
+	public static function getPackageOwnerValue($key, &$info)
+	{
+		$source = (isset($info['source']) && isset($info['source'][$key])) ? 'source' : ((isset($info['getKeyFrom']) && isset($info['getKeyFrom'][$key])) ? 'getKeyFrom' : false);
+		if ($source && self::checkString($info[$source][$key]))
+		{
+			return $info[$source][$key];
+		}
+		return false;
+	}
+
+	/**
+	*  get the JCB package component key status
+	**/
+	public static function getPackageComponentsKeyStatus(&$info)
+	{
+		// check the package key status
+		if (!isset($info['key']))
+		{
+			if (isset($info['getKeyFrom']) && isset($info['getKeyFrom']['owner']))
+			{
+				// this just confirms it for older packages
+				$info['key'] = true;
+			}
+			else
+			{
+				// this just confirms it for older packages
+				$info['key'] = false;
+			}
+		}
+		return $info['key'];
+	}
+
+	protected static $compOwnerSearch = array(
+		'ul' => array (
+			'companyname' => 'COM_COMPONENTBUILDER_ICOMPANYI_BSB',
+			'author' => 'COM_COMPONENTBUILDER_IAUTHORI_BSB',
+			'email' => 'COM_COMPONENTBUILDER_IEMAILI_BSB',
+			'website' => 'COM_COMPONENTBUILDER_IWEBSITEI_BSB',
+			),
+		'other' => array(
+			'license' => 'COM_COMPONENTBUILDER_HFOUR_CLASSNAVHEADERLICENSEHFOURPSP',
+			'copyright' => 'COM_COMPONENTBUILDER_HFOUR_CLASSNAVHEADERCOPYRIGHTHFOURPSP'
+			)
+		);
+
+	/**
+	* get the JCB package component details display
+	**/
+	public static function getPackageComponentsDetailsDisplay(&$info)
+	{
+		// check if these components need a key
+		$needKey = self::getPackageComponentsKeyStatus($info);
+		if (isset($info['name']) && self::checkArray($info['name'])) 
+		{
+			$cAmount = count((array) $info['name']);
+			$class2 = ($cAmount == 1) ? 'span12' : 'span6';
+			$counter = 1;
+			$display = array();
+			foreach ($info['name'] as $key => $value)
+			{
+				// set the name
+				$name= $value . ' v' . $info['component_version'][$key];
+				if ($cAmount > 1 && $counter == 3)
+				{
+					$display[] = '</div>';
+					$counter = 1;
+				}
+				if ($cAmount > 1 && $counter == 1)
+				{
+					$display[] = '<div>';
+				}
+				$display[] = '<div class="well well-small ' . $class2 . '">';
+				$display[] = '<h3>';
+				$display[] = $name;
+				if ($needKey)
+				{
+					$display[] = ' - <em>' . JText::sprintf('COM_COMPONENTBUILDER_PAIDLOCKED') . '</em>';
+				}
+				else
+				{
+					$display[] = ' - <em>' . JText::sprintf('COM_COMPONENTBUILDER_FREEOPEN') . '</em>';
+				}
+				$display[] = '</h3><h4>';
+				$display[] = $info['short_description'][$key];
+				$display[] = '</h4>';
+				$display[] = '<ul class="uk-list uk-list-striped">';
+				// load the list items
+				foreach (self::$compOwnerSearch['ul'] as $li => $value)
+				{
+					if (isset($info[$li]) && isset($info[$li][$key]))
+					{
+						$display[] = '<li>'.JText::sprintf($value, $info[$li][$key]).'</li>';
+					}
+				}
+				$display[] = '</ul>';
+				// if we have a source link we add it
+				if (isset($info['joomla_source_link']) && self::checkArray($info['joomla_source_link']) && isset($info['joomla_source_link'][$key]) && self::checkString($info['joomla_source_link'][$key]))
+				{
+					$display[] = '<a class="uk-button uk-button-mini uk-width-1-1 uk-margin-small-bottom " href="'.$info['joomla_source_link'][$key].'" target="_blank" title="Source Code for Joomla Component ('.$name.')">source code</a>';
+				}
+				// load other
+				foreach (self::$compOwnerSearch['other'] as $other => $value)
+				{
+					if (isset($info[$other]) && isset($info[$other][$key]))
+					{
+						$display[] = JText::sprintf($value, $info[$other][$key]);
+					}
+				}
+				$display[] = '</div>';
+
+				$counter++;
+			}
+			// close the div if needed
+			if ($cAmount > 1)
+			{
+				$display[] = '</div>';
+			}
+			return implode("\n",$display);
+		}
+		return '<div>'.JText::_('COM_COMPONENTBUILDER_NO_COMPONENT_DETAILS_FOUND_SO_IT_IS_NOT_SAFE_TO_CONTINUE').'</div>';
+	}
+
+	/**
+	* get the database table columns
+	**/
+	public static function getDbTableColumns($tableName, $as, $type)
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+        	// get the columns
+		$columns = $db->getTableColumns("#__" . $tableName);
+		// set the type (multi or single)
+		$unique = '';
+		if (1 == $type)
+		{
+			$unique = self::safeString($tableName) . '_';
+		}
+		if (self::checkArray($columns))
+		{
+        		// build the return string
+			$tableColumns = array();
+			foreach ($columns as $column => $typeCast)
+			{
+				$tableColumns[] =  $as . "." . $column . ' AS ' . $unique . $column;
+			}
+			return implode("\n", $tableColumns);
+		}
+		return false;
+	}
+
+	/**
+	* get the view table columns
+	**/
+	public static function getViewTableColumns($admin_view, $as, $type)
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+		$query->select($db->quoteName(array('a.addfields', 'b.name_single')));
+		$query->from($db->quoteName('#__componentbuilder_admin_fields', 'a'));
+		$query->join('LEFT', $db->quoteName('#__componentbuilder_admin_view', 'b') . ' ON (' . $db->quoteName('a.admin_view') . ' = ' . $db->quoteName('b.id') . ')');
+		$query->where($db->quoteName('b.published') . ' = 1');
+		$query->where($db->quoteName('a.admin_view') . ' = ' . (int) $admin_view);
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+		$db->execute();
+		if ($db->getNumRows())
+		{
+			$result = $db->loadObject();
+			$tableName = '';
+			if (1 == $type)
+			{
+				$tableName = self::safeString($result->name_single) . '_';
+			}
+			$addfields = json_decode($result->addfields, true);
+			if (self::checkArray($addfields))
+			{
+				// reset all buckets
+				$field = array();
+				$fields = array();
+				// get data
+				foreach ($addfields as $nr => $value)
+				{
+					$tmp = self::getFieldNameAndType((int) $value['field']);
+					if (self::checkArray($tmp))
+					{
+						$field[$nr] = $tmp;
+					}
+					// insure it is set to alias if needed
+					if (isset($value['alias']) && $value['alias'] == 1)
+					{
+						$field[$nr]['name'] = 'alias';
+					}
+					// remove a field that is not being stored in the database
+					if (!isset($value['list']) || $value['list'] == 2)
+					{
+						unset($field[$nr]);
+					}
+				}
+				// add the basic defaults
+				$fields[] = $as . ".id AS " . $tableName . "id";
+				$fields[] = $as . ".asset_id AS " . $tableName . "asset_id";
+				// load data
+				foreach ($field as $n => $f)
+				{
+					if (self::checkArray($f))
+					{
+						$fields[] = $as . "." . $f['name'] . " AS " . $tableName . $f['name'];
+					}
+				}
+				// add the basic defaults
+				$fields[] = $as . ".published AS " . $tableName . "published";
+				$fields[] = $as . ".created_by AS " . $tableName . "created_by";
+				$fields[] = $as . ".modified_by AS " . $tableName . "modified_by";
+				$fields[] = $as . ".created AS " . $tableName . "created";
+				$fields[] = $as . ".modified AS " . $tableName . "modified";
+				$fields[] = $as . ".version AS " . $tableName . "version";
+				$fields[] = $as . ".hits AS " . $tableName . "hits";
+				if (0) // TODO access is not set here but per/view in the form linking this admin view to which these field belong to the components (boooo I know but that is the case and so we can't ever really know at this point if this view has access set)
+				{
+					$fields[] = $as . ".access AS " . $tableName . "access";
+				}
+				$fields[] = $as . ".ordering AS " . $tableName . "ordering";
+				// return the field of this view
+				return implode("\n", $fields);
+			}
+		}
+		return false;
+	}
+
+	protected static function getFieldNameAndType($id)
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+
+		// Order it by the ordering field.
+		$query->select($db->quoteName(array('a.name', 'a.xml')));
+		$query->select($db->quoteName(array('c.name'), array('type_name')));
+		$query->from('#__componentbuilder_field AS a');
+		$query->join('LEFT', $db->quoteName('#__componentbuilder_fieldtype', 'c') . ' ON (' . $db->quoteName('a.fieldtype') . ' = ' . $db->quoteName('c.id') . ')');
+		$query->where($db->quoteName('a.id') . ' = '. $db->quote($id));
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+		$db->execute();
+		if ($db->getNumRows())
+		{
+			// Load the results as a list of stdClass objects (see later for more options on retrieving data).
+			$field = $db->loadObject();
+			// load the values form params
+			$field->xml = json_decode($field->xml);
+			$field->type_name = self::safeString($field->type_name);
+			$load = true;
+			// if category then name must be catid (only one per view)
+			if ($field->type_name == 'category')
+			{
+				$name = 'catid';
+			}
+			// if tag is set then enable all tag options for this view (only one per view)
+			elseif ($field->type_name == 'tag')
+			{
+				$name = 'tags';
+			}
+			// don't add spacers or notes
+			elseif ($field->type_name == 'spacer' || $field->type_name == 'note')
+			{
+				// make sure the name is unique
+				return false;
+			}
+			else
+			{
+				$name = self::safeString(self::getBetween($field->xml,'name="','"'));
+			}
+
+			// use field core name only if not found in xml
+			if (!self::checkString($name))
+			{
+				$name = self::safeString($field->name);;
+			}
+			return array('name' => $name, 'type' => $field->type_name);
+		}
+		return false;
+	}
+
+	/**
+	* validate that a placeholder is unique
+	**/
+	public static function validateUniquePlaceholder($id, $name, $bool = false)
+	{
+		// make sure no padding is set
+		$name = preg_replace("/[^A-Za-z0-9_]/", '', $name);
+		// this list may grow as we find more cases that break the compiler (just open an issue on github)
+		if (in_array($name, array('component', 'view', 'views')))
+		{
+			// check if we must return boolean
+			if (!$bool)
+			{
+				return array (
+					'message' => JText::_('COM_COMPONENTBUILDER_SORRY_THIS_PLACEHOLDER_IS_ALREADY_IN_USE_IN_THE_COMPILER'),
+					'status' => 'danger');
+			}
+			return false;
+		}
+		// add the padding (needed)
+		$name = '[[[' . trim($name) . ']]]';
+		if (self::placeholderIsSet($id, $name))
+		{
+			// check if we must return boolean
+			if (!$bool)
+			{
+				return array (
+					'message' => JText::_('COM_COMPONENTBUILDER_SORRY_THIS_PLACEHOLDER_IS_ALREADY_IN_USE'),
+					'status' => 'danger');
+			}
+			return false;
+		}
+		// check if we must return boolean
+		if (!$bool)
+		{
+			return array (
+				'name' => $name,
+				'message' => JText::_('COM_COMPONENTBUILDER_GREAT_THIS_PLACEHOLDER_WILL_WORK'),
+				'status' => 'success');
+		}
+		return true;
+	}
+
+	/**
+	* search for placeholder in table
+	**/
+	protected static function placeholderIsSet($id, $name)
+	{
+		// query the table for result array
+		if (($results = self::getPlaceholderTarget($id, $name)) !== false)
+		{
+			// check if we must continue the search
+			foreach ($results as $_id => $target)
+			{
+				if ($name === $target)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	* get placeholder target
+	**/
+	protected static function getPlaceholderTarget($id, $name)
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+		// Create a new query object.
+		$query = $db->getQuery(true);
+		$query->select($db->quoteName(array('id', 'target')));
+		$query->from($db->quoteName('#__componentbuilder_placeholder'));
+		$query->where($db->quoteName('target') . ' = '. $db->quote($name));
+		// check if we have id
+		if (is_numeric($id))
+		{
+			$query->where($db->quoteName('id') . ' <> ' . (int) $id);
+		}
+		$db->setQuery($query);
+		$db->execute();
+		if ($db->getNumRows())
+		{
+			return $db->loadAssocList('id', 'target');
+		}
+		return false;
+	}
+
+	/**
+	 * The array of dynamic content
+	 * 
+	 * @var     array
+	 */
+	protected static $dynamicContent = array(
+		// The banners by size
+		'banner' => array(
+			'728-90' => array(
+				'<a href="https://volunteers.joomla.org/" target="_blank" title="Joomla! Volunteers Portal"><img src="https://cdn.joomla.org/volunteers/joomla-heart-wide.gif" alt="Joomla! Volunteers Portal" width="728" height="90" border="0"></a>',
+				'<a href="https://magazine.joomla.org" target="_blank" title="Joomla! Community Magazine | Because community matters..."><img alt="Joomla! Community Magazine | Because community matters..." src="https://magazine.joomla.org/images/banners/JCM_2010_728x90.png" width="728" height="90" border="0" /></a>'
+			),
+			'160-600' => array(
+				'<a href="https://volunteers.joomla.org/" target="_blank" title="Joomla! Volunteers Portal"><img src="https://cdn.joomla.org/volunteers/joomla-heart-tall.gif" alt="Joomla! Volunteers Portal" width="160" height="600" border="0"></a>',
+				'<a href="https://magazine.joomla.org" target="_blank" title="Joomla! Community Magazine | Because community matters..."><img src="https://magazine.joomla.org/images/banners/JCM_2010_120x600.png" alt="Joomla! Community Magazine | Because community matters..." width="120" height="600" border="0"/></a>'
+			)
+		),
+		// The build-gif by size
+		'builder-gif' => array(
+			'707-400' => array(
+				'<img src="components/com_componentbuilder/assets/images/ajax-loader.gif" />'
+			)
+		)
+	);
+
+	/**
+	 * get the dynamic content
+	 * 
+	 * @param   string   $type     The type of content
+	 * @param   string    $size   The size of the content
+	 *
+	 * @return  string   on success
+	 * 
+	 */
+	public static function getDynamicContent($type, $size, $default = '')
+	{
+		if (isset(self::$dynamicContent[$type]) && isset(self::$dynamicContent[$type][$size]) && ($nr = self::checkArray(self::$dynamicContent[$type][$size])))
+		{
+			// get the random item number
+			$get = (int) rand(0, --$nr);
+			// return found content
+			return self::$dynamicContent[$type][$size][$get];
+		}
+		return $default;
+	}
+
+	/**
+	* 	the Butler
+	**/
+	public static $session = array();
+
+	/**
+	* 	the Butler Assistant 
+	**/
+	protected static $localSession = array();
+
+	/**
+	* 	start a session if not already set, and load with data
+	**/
+	public static function loadSession()
+	{
+		if (!isset(self::$session) || !self::checkObject(self::$session))
+		{
+			self::$session = JFactory::getSession();
+		}
+		// set the defaults
+		self::setSessionDefaults();
+	}
+
+	/**
+	* 	give Session more to keep
+	**/
+	public static function set($key, $value)
+	{
+		if (!isset(self::$session) || !self::checkObject(self::$session))
+		{
+			self::$session = JFactory::getSession();
+		}
+		// set to local memory to speed up program
+		self::$localSession[$key] = $value;
+		// load to session for later use
+		return self::$session->set($key, self::$localSession[$key]);
+	}
+
+	/**
+	* 	get info from Session
+	**/
+	public static function get($key, $default = null)
+	{
+		if (!isset(self::$session) || !self::checkObject(self::$session))
+		{
+			self::$session = JFactory::getSession();
+		}
+		// check if in local memory
+		if (!isset(self::$localSession[$key]))
+		{
+			// set to local memory to speed up program
+			self::$localSession[$key] = self::$session->get($key, $default);
+		}
+		return self::$localSession[$key];
+	}
+
+
+	/**
+	 * get field options
+	 *
+	 * @return  array   on success
+	 * 
+	 */
+	public static function getFieldOptions($value, $type, $settings = array(), $xml = null, $db_defaults = false)
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+		$query->select($db->quoteName(array('properties', 'short_description', 'description')));
+		// load database default values
+		if ($db_defaults)
+		{
+			$query->select($db->quoteName(array('datadefault', 'datadefault_other', 'datalenght', 'datalenght_other', 'datatype', 'has_defaults', 'indexes', 'null_switch', 'store')));
+		}
+		$query->from($db->quoteName('#__componentbuilder_fieldtype'));
+		$query->where($db->quoteName('published') . ' = 1');
+		$query->where($db->quoteName($type) . ' = '. $value);
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+		$db->execute();
+		if ($db->getNumRows())
+		{
+			$result = $db->loadObject();
+			$properties = json_decode($result->properties, true);
+			$field = array(
+				'subform' => array(),
+				'nameListOptions' => array(),
+				'php' => array(),
+				'values' => "<field ", 
+				'values_description' => '<table class="uk-table uk-table-hover uk-table-striped uk-table-condensed">', 
+				'short_description' => $result->short_description, 
+				'description' => $result->description);
+			// number pointer
+			$nr = 0;
+			// php tracker (we must try to load alteast 17 rows
+			$phpTracker = array();
+			// value to check since there are false and null values even 0 in the values returned
+			$confirmation = '8qvZHoyuFYQqpj0YQbc6F3o5DhBlmS-_-a8pmCZfOVSfANjkmV5LG8pCdAY2JNYu6cB';
+			// set the headers
+			$field['values_description'] .= '<thead><tr><th class="uk-text-right">' . JText::_('COM_COMPONENTBUILDER_PROPERTY') . '</th><th>' . JText::_('COM_COMPONENTBUILDER_EXAMPLE') . '</th><th>' . JText::_('COM_COMPONENTBUILDER_DESCRIPTION') . '</th></thead><tbody>';
+			foreach ($properties as $property)
+			{
+				$example = (isset($property['example']) && self::checkString($property['example'])) ? $property['example'] : '';
+				$field['values_description'] .= '<tr><td class="uk-text-right"><code>' . $property['name'] . '</code></td><td>' . $example . '</td><td>' . $property['description'] . '</td></tr>';
+				// check if we should load the value
+				$value = self::getValueFromXMLstring($xml, $property['name'], $confirmation);
+				// check if this is a php field
+				$addPHP = false;
+				if (strpos($property['name'], 'type_php') !== false)
+				{
+					$addPHP = true;
+					// set the line number
+					$phpLine = (int) preg_replace('/[^0-9]/', '', $property['name']);
+					// set the key
+					$phpKey = trim(preg_replace('/[0-9]+/', '', $property['name']), '_');
+					// start array if not already set
+					if (!isset($field['php'][$phpKey]))
+					{
+						$field['php'][$phpKey] = array();
+						$field['php'][$phpKey]['value'] = array();
+						$field['php'][$phpKey]['desc'] = $property['description'];
+						// start tracker
+						$phpTracker[$phpKey] = 1;
+					}
+				}
+				// was the settings for the property passed
+				if(self::checkArray($settings) && isset($settings[$property['name']]))
+				{
+					// add the xml values
+					$field['values'] .= PHP_EOL . "\t" . $property['name'] . '="'. $settings[$property['name']] . '" ';
+					// add the json values
+					if ($addPHP)
+					{
+						$field['php'][$phpKey]['value'][$phpLine] = $settings[$property['name']];
+						$phpTracker[$phpKey]++;
+					}
+					else
+					{
+						$field['subform']['properties'.$nr] = array('name' => $property['name'], 'value' => $settings[$property['name']], 'desc' => $property['description']);
+					}
+				}
+				elseif (!$xml || $confirmation !== $value)
+				{
+					// add the xml values
+					$field['values'] .= PHP_EOL."\t" . $property['name'] . '="' . ($confirmation !== $value) ? $value : $example .'" ';
+					// add the json values
+					if ($addPHP)
+					{
+						$field['php'][$phpKey]['value'][$phpLine] = ($confirmation !== $value) ? $value : $example;
+						$phpTracker[$phpKey]++;
+					}
+					else
+					{
+						$field['subform']['properties' . $nr] = array('name' => $property['name'], 'value' => ($confirmation !== $value) ? $value : $example, 'desc' => $property['description']);
+					}
+				}
+				// add the name List Options
+				if (!$addPHP)
+				{
+					$field['nameListOptions'][$property['name']] = $property['name'];
+				}
+				// increment the number
+				$nr++;
+			}
+			// check if all php is loaded using the tracker
+			if (self::checkString($xml) && isset($phpTracker) && self::checkArray($phpTracker))
+			{
+				foreach ($phpTracker as $phpKey => $start)
+				{
+					if ($start < 30)
+					{
+						// we must search for more code in the xml just incase
+						foreach(range(2, 30) as $t_nr)
+						{
+							$get_ = $phpKey . '_' . $t_nr;
+							if (!isset($field['php'][$phpKey]['value'][$t_nr]) && ($value = self::getValueFromXMLstring($xml, $get_, $confirmation)) !== $confirmation)
+							{
+								$field['php'][$phpKey]['value'][$t_nr] = $value;
+							}
+						}
+					}
+				}
+			}
+			$field['values'] .= PHP_EOL . "/>";
+			$field['values_description'] .= '</tbody></table>';
+			// load the database defaults if set and wanted
+			if ($db_defaults && isset($result->has_defaults) && $result->has_defaults == 1)
+			{
+				$field['database'] = array(
+					'datatype' => $result->datatype,
+					'datadefault' => $result->datadefault,
+					'datadefault_other' => $result->datadefault_other,
+					'datalenght' => $result->datalenght,
+					'datalenght_other' => $result->datalenght_other,
+					'indexes' => $result->indexes,
+					'null_switch' => $result->null_switch,
+					'store' => $result->store
+				);
+			}
+			// return found field options
+			return $field;
+		}
+		return false;
+	}
+
+	public static function getValueFromXMLstring(&$xml, &$get, $confirmation = '')
+	{
+		if (self::checkString($xml))
+		{
+			// if we have a PHP value, we must base64 decode it
+			if (strpos($get, 'type_php') !== false)
+			{
+				return self::openValidBase64(self::getBetween($xml, $get.'="', '"', $confirmation));
+			}
+			return self::getBetween($xml, $get . '="', '"', $confirmation);
+		}
+		return $confirmation;
+	}
+
+
+	/**
+	* The zipper method
+	* 
+	* @param  string   $workingDIR    The directory where the items must be zipped
+	* @param  string   $filepath          The path to where the zip file must be placed
+	*
+	* @return  bool true   On success
+	* 
+	*/
+	public static function zip($workingDIR, &$filepath)
+	{
+		// store the current joomla working directory
+		$joomla = getcwd();
+
+		// we are changing the working directory to the component temp folder
+		chdir($workingDIR);
+
+		// the full file path of the zip file
+		$filepath = JPath::clean($filepath);
+
+		// delete an existing zip file (or use an exclusion parameter in JFolder::files()
+		JFile::delete($filepath);
+
+		// get a list of files in the current directory tree
+		$files = JFolder::files('.', '', true, true);
+		$zipArray = array();
+		// setup the zip array
+		foreach ($files as $file)
+		{
+		   $tmp = array();
+		   $tmp['name'] = str_replace('./', '', $file);
+		   $tmp['data'] = JFile::read($file);
+		   $tmp['time'] = filemtime($file);
+		   $zipArray[] = $tmp;
+		}
+
+		// change back to joomla working directory
+		chdir($joomla);
+
+		// get the zip adapter
+		$zip = JArchive::getAdapter('zip');
+
+		//create the zip file
+		if ($zip->create($filepath, $zipArray))
+		{
+			return true;
+		}
+		return false;
+	}
+
+
+	/**
+	* Write a file to the server
+	*
+	* @param  string   $path    The path and file name where to safe the data
+	* @param  string   $data    The data to safe
+	*
+	* @return  bool true   On success
+	*
+	*/
+	public static function writeFile($path, $data)
+	{
+		$klaar = false;
+		if (self::checkString($data))
+		{
+			// open the file
+			$fh = fopen($path, "w");
+			if (!is_resource($fh))
+			{
+				return $klaar;
+			}
+			// write to the file
+			if (fwrite($fh, $data))
+			{
+				// has been done
+				$klaar = true;
+			}
+			// close file.
+			fclose($fh);
+		}
+		return $klaar;
+	}
+
+
+	/**
+	 * Remove folders with files
+	 * 
+	 * @param   string   $dir     The path to folder to remove
+	 * @param   boolean  $ignore  The folders and files to ignore and not remove
+	 *
+	 * @return  boolean   True in all is removed
+	 * 
+	 */
+	public static function removeFolder($dir, $ignore = false)
+	{
+		if (JFolder::exists($dir))
+		{
+			$it = new RecursiveDirectoryIterator($dir);
+			$it = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+			// remove ending /
+			$dir = rtrim($dir, '/');
+			// now loop the files & folders
+			foreach ($it as $file)
+			{
+				if ('.' === $file->getBasename() || '..' ===  $file->getBasename()) continue;
+				// set file dir
+				$file_dir = $file->getPathname();
+				// check if this is a dir or a file
+				if ($file->isDir())
+				{
+					$keeper = false;
+					if (self::checkArray($ignore))
+					{
+						foreach ($ignore as $keep)
+						{
+							if (strpos($file_dir, $dir.'/'.$keep) !== false)
+							{
+								$keeper = true;
+							}
+						}
+					}
+					if ($keeper)
+					{
+						continue;
+					}
+					JFolder::delete($file_dir);
+				}
+				else
+				{
+					$keeper = false;
+					if (self::checkArray($ignore))
+					{
+						foreach ($ignore as $keep)
+						{
+							if (strpos($file_dir, $dir.'/'.$keep) !== false)
+							{
+								$keeper = true;
+							}
+						}
+					}
+					if ($keeper)
+					{
+						continue;
+					}
+					JFile::delete($file_dir);
+				}
+			}
+			// delete the root folder if not ignore found
+			if (!self::checkArray($ignore))
+			{
+				return JFolder::delete($dir);
+			}
+			return true;
+		}
+		return false;
+	}
+
+
+	/**
+	*	get the github repo file list
+	*
+	*	@return  array on success
+	* 
+	*/
+	public static function getGithubRepoFileList($type, $target)
+	{
+		// get the current Packages (public)
+		if (!$repoData = self::get($type))
+		{
+			if (self::urlExists($target))
+			{
+				$repoData = self::getFileContents($target);
+				if (self::checkJson($repoData))
+				{
+					$test = json_decode($repoData);
+					if (self::checkObject($test) && isset($test->tree) && self::checkArray($test->tree) )
+					{
+						// remember to set it
+						self::set($type, $repoData);
+					}
+					// check if we have error message from github
+					elseif ($errorMessage = self::githubErrorHandeler(array('error' => null), $test))
+					{
+						if (self::checkString($errorMessage['error']))
+						{
+							JFactory::getApplication()->enqueueMessage($errorMessage['error'], 'Error');
+						}
+						$repoData = false;
+					}
+				}
+				else
+				{
+					$repoData = false;
+				}
+			}
+			else
+			{
+				JFactory::getApplication()->enqueueMessage(JText::sprintf('COM_COMPONENTBUILDER_THE_URL_S_SET_TO_RETRIEVE_THE_PACKAGES_DOES_NOT_EXIST', $target), 'Error');
+			}
+		}
+		// check if we could find packages
+		if (isset($repoData) && self::checkJson($repoData))
+		{
+			$repoData = json_decode($repoData);
+			if (self::checkObject($repoData) && isset($repoData->tree) && self::checkArray($repoData->tree) )
+			{
+				return $repoData->tree;
+			}
+		}
+		return false;
+	}
+
+	/**
+	*	get the github error messages
+	*
+	*	@return  array of errors on success
+	* 
+	*/
+	protected static function githubErrorHandeler($message, &$github)
+	{
+		if (self::checkObject($github) && isset($github->message) && self::checkString($github->message))
+		{
+			// set the message
+			$errorMessage = $github->message;
+			// add the documentation URL
+			if (isset($github->documentation_url) && self::checkString($github->documentation_url))
+			{
+				$errorMessage = $errorMessage.'<br />'.$github->documentation_url;
+			}
+			// check the message
+			if (strpos($errorMessage, 'Authenticated') !== false)
+			{
+				// add little more help if it is an access token issue
+				$errorMessage = JText::sprintf('COM_COMPONENTBUILDER_SBR_YOU_CAN_ADD_AN_BACCESS_TOKENB_TO_GETBIBLE_GLOBAL_OPTIONS_TO_MAKE_AUTHENTICATED_REQUESTS_AN_ACCESS_TOKEN_WITH_ONLY_PUBLIC_ACCESS_WILL_DO', $errorMessage);
+			}
+			// set error notice
+			$message['error'] = $errorMessage;
+			// we have error message
+			return $message;
+		}
+		return false;
+	}
+
 
 	public static function getDynamicScripts($type, $fieldName = false)
 	{
@@ -1683,181 +2534,6 @@ abstract class ComponentbuilderHelper
 		return false;
 	}
 
-	/**
-	 * Run Global Updater if any are set
-	 * 
-	 * @return  void
-	 * 
-	 */
-	public static function runGlobalUpdater()
-	{
-		// check if any updates are set to run
-		if (self::checkArray(self::$globalUpdater))
-		{
-			// get the database object
-			$db = JFactory::getDbo();
-			foreach (self::$globalUpdater as $tableKeyID => $object)
-			{
-				// get the table
-				$table = explode('.', $tableKeyID);
-				// update the item
-				$db->updateObject('#__componentbuilder_' . (string) $table[0] , $object, (string) $table[1]);
-			}
-			// rest updater
-			self::$globalUpdater = array();
-		}
-	}
-
-	/**
-	 * Copy Any Item (only use for direct database copying)
-	 * 
-	 * @param   int        $id         The item to copy
-	 * @param   string   $table     The table and model to copy from and with
-	 * @param   array    $config   The values that should change
-	 *
-	 * @return  boolean   True if success
-	 * 
-	 */
-	public static function copyItem($id, $type, $config = array())
-	{
-		// only continue if we have an id
-		if ((int) $id > 0)
-		{
-			// get the model
-			$model = self::getModel($type);
-			$app   = \JFactory::getApplication();
-			// get item
-			if ($item = $model->getItem($id))
-			{
-				// update values that should change
-				if (self::checkArray($config))
-				{
-					foreach($config as $key => $value)
-					{
-						if (isset($item->{$key}))
-						{
-							$item->{$key} = $value;
-						}
-					}
-				}
-				// clone the object
-				$data = array();
-				foreach ($item as $key => $value)
-				{
-					$data[$key] = $value;
-				}			
-				// reset some values
-				$data['id'] = 0;
-				$data['version'] = 1;
-				if (isset($data['tags']))
-				{
-					$data['tags'] = null;
-				}
-				if (isset($data['associations']))
-				{
-					$data['associations'] = array();
-				}
-				// remove some unneeded values
-				unset($data['params']);
-				unset($data['asset_id']);
-				unset($data['checked_out']);
-				unset($data['checked_out_time']);
-				// Attempt to save the data.
-				if ($model->save($data))
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	/**
-	* 	the basic localkey
-	**/
-	protected static $localkey = false;
-
-	/**
-	* 	get the localkey
-	**/	
-	public static function getLocalKey()
-	{
-		if (!self::$localkey)
-		{
-			// get the basic key
-			self::$localkey = md5(self::getCryptKey('basic', 'localKey34fdWEkl'));
-		}
-		return self::$localkey;
-	}
-
-	/**
-	 *	indent HTML
-	 */
-	public static function indent($html)
-	{
-		// load the class
-		require_once JPATH_ADMINISTRATOR.'/components/com_componentbuilder/helpers/indenter.php';
-		// set new indenter
-		$indenter = new Indenter();
-		// return indented html
-		return $indenter->indent($html);
-	}
-
-	public static function checkFileType($file, $sufix)
-	{
-		// now check if the file ends with the sufix
-		return $sufix === "" || ($sufix == substr(strrchr($file, "."), -strlen($sufix)));
-	}
-
-	public static function imageInfo($path,$request = 'type')
-	{
-		// set image
-		$image = JPATH_SITE.'/'.$path;
-		// check if exists
-		if (file_exists($image) && $result = @getimagesize($image))
-		{
-			// return type request
-			switch ($request)
-			{
-				case 'width':
-					return $result[0];
-					break;
-				case 'height':
-					return $result[1];
-					break;
-				case 'type':
-					$extensions = array(
-						IMAGETYPE_GIF => "gif",
-						IMAGETYPE_JPEG => "jpg",
-						IMAGETYPE_PNG => "png",
-						IMAGETYPE_SWF => "swf",
-						IMAGETYPE_PSD => "psd",
-						IMAGETYPE_BMP => "bmp",
-						IMAGETYPE_TIFF_II => "tiff",
-						IMAGETYPE_TIFF_MM => "tiff",
-						IMAGETYPE_JPC => "jpc",
-						IMAGETYPE_JP2 => "jp2",
-						IMAGETYPE_JPX => "jpx",
-						IMAGETYPE_JB2 => "jb2",
-						IMAGETYPE_SWC => "swc",
-						IMAGETYPE_IFF => "iff",
-						IMAGETYPE_WBMP => "wbmp",
-						IMAGETYPE_XBM => "xbm",
-						IMAGETYPE_ICO => "ico"
-					);
-					return $extensions[$result[2]];
-					break;
-				case 'attr':
-					return $result[3];
-					break;
-				case 'all':
-				default:
-					return $result;
-					break;
-			}
-		}
-		return false;
-	}
 
 	/**
 	* get between
@@ -1922,119 +2598,113 @@ abstract class ComponentbuilderHelper
 		return  array_unique($bucket);
 	}
 
-	public static function typeField($type,$option = 'default')
+
+	/**
+	 * Field Grouping https://docs.joomla.org/Form_field
+	 **/
+	protected static $fieldGroups = array(
+		'default' => array(
+			'accesslevel', 'cachehandler', 'calendar', 'captcha', 'category', 'checkbox', 'checkboxes', 'chromestyle',
+			'color', 'combo', 'componentlayout', 'contentlanguage', 'contenttype', 'databaseconnection', //  'components', (TODO) must be added but still in use as a custom field in JCB
+			'editor', 'editors', 'email', 'file', 'file', 'filelist', 'folderlist', 'groupedlist', 'headertag', 'helpsite', 'hidden', 'imagelist',
+			'integer', 'language', 'list', 'media', 'menu', 'menuitem', 'meter', 'modulelayout', 'moduleorder', 'moduleposition',
+			'moduletag', 'note', 'number', 'password', 'plugins', 'predefinedlist', 'radio', 'range', 'repeatable', 'rules',
+			'sessionhandler', 'spacer', 'sql', 'subform', 'tag', 'tel', 'templatestyle', 'text', 'textarea', 'timezone', 'url', 'user', 'usergroup'
+		),
+		'plain' => array(
+			'cachehandler', 'calendar', 'checkbox', 'chromestyle', 'color', 'componentlayout', 'contenttype', 'editor', 'editors',
+			'email', 'file', 'headertag', 'helpsite', 'hidden', 'integer', 'language', 'media', 'menu', 'menuitem', 'meter', 'modulelayout',
+			'moduleorder', 'moduletag', 'number', 'password', 'range', 'rules', 'tag', 'tel', 'text', 'textarea', 'timezone', 'url', 'user', 'usergroup'
+		),
+		'option' => array(
+			'accesslevel', 'category', 'checkboxes', 'combo', 'contentlanguage', 'databaseconnection', // 'components',  (TODO) must be added but still in use as a custom field in JCB
+			'filelist', 'folderlist', 'imagelist', 'list', 'plugins', 'predefinedlist', 'radio', 'sessionhandler', 'sql'
+		),
+		'text' => array(
+			'calendar', 'color', 'editor', 'email', 'number', 'password', 'range', 'tel', 'text', 'textarea', 'url'
+		),
+		'list' => array(
+			'checkbox', 'checkboxes', 'list', 'radio'
+		),
+		'dynamic' => array(
+			'category', 'file', 'filelist', 'folderlist', 'headertag', 'imagelist', 'integer', 'media', 'meter', 'rules', 'tag', 'timezone', 'user'
+		),
+		'spacer' => array(
+			'note', 'spacer'
+		),
+		'special' => array(
+			'contentlanguage', 'groupedlist', 'moduleposition', 'plugin', 'repeatable', 'subform', 'templatestyle'
+		)
+	);
+
+	/**
+	 * Field Checker
+	 *
+	 * @param   string   $type The field type
+	 * @param   boolean  $option The field grouping
+	 *
+	 * @return  boolean if the field was found
+	 */
+	public static function fieldCheck($type, $option = 'default')
 	{
-		// list of default fields
-		// https://docs.joomla.org/Form_field
-		$fields = array(
-			'default' => array(
-				'accesslevel','cachehandler','calendar','captcha','category','checkbox',
-				'checkboxes','color','combo','componentlayout','contentlanguage','editor',
-				'chromestyle','contenttype','databaseconnection','editors','email','file',
-				'filelist','folderlist','groupedlist','hidden','file','headertag','helpsite',
-				'imagelist','integer','language','list','media','menu','note','password',
-				'plugins','range','radio','repeatable','rules','subform','sessionhandler','spacer','sql','tag',
-				'tel','menuitem','modulelayout','meter','moduleorder','moduleposition','moduletag',
-				'templatestyle','text','textarea','timezone','url','user','usergroup'
-			), 
-			'text' => array(
-				'calendar','color','editor','email','password','tel','text','textarea','url','number','range'
-			), 
-			'list' => array(
-				'checkboxes','checkbox','list','radio'
-			), 
-			'dynamic' => array(
-				'category','headertag','tag','rules','user','file','filelist','folderlist','imagelist','integer','timezone','media','meter'
-			)
-		);
-		
-		if (in_array($type,$fields[$option]))
+		// now check
+		if (isset(self::$fieldGroups[$option]) && in_array($type, self::$fieldGroups[$option]))
 		{
 			return true;
 		}
-		return false;		
-	}
-
-	/**
-	* 	set the session defaults if not set
-	**/
-	protected static function setSessionDefaults()
-	{
-		// noting for now
-		return true;
-	}
-
-	/**
-	* 	the Butler
-	**/
-	public static $session = array();
-
-	/**
-	* 	the Butler Assistant 
-	**/
-	protected static $localSession = array();
-
-	/**
-	* 	start a session if not already set, and load with data
-	**/
-	public static function loadSession()
-	{
-		if (!isset(self::$session) || !self::checkObject(self::$session))
-		{
-			self::$session = JFactory::getSession();
-		}
-		// set the defaults
-		self::setSessionDefaults();
-	}
-
-	/**
-	* 	give Session more to keep
-	**/
-	public static function set($key, $value)
-	{
-		// set to local memory to speed up program
-		self::$localSession[$key] = $value;
-		// load to session for later use
-		return self::$session->set($key, self::$localSession[$key]);
-	}
-
-	/**
-	* 	get info from Session
-	**/
-	public static function get($key, $default = null)
-	{
-		// check if in local memory
-		if (!isset(self::$localSession[$key]))
-		{
-			// set to local memory to speed up program
-			self::$localSession[$key] = self::$session->get($key, $default);
-		}
-		return self::$localSession[$key];
-	}
-
-	/**
-	* 	check if it is a new hash
-	**/
-	public static function newHash($hash, $name = 'backup', $type = 'hash', $key = '',  $fileType = 'txt')
-	{
-		// make sure we have a hash
-		if (self::checkString($hash))
-		{
-			// first get the file path
-			$path_filename = self::getFilePath('path', $name.$type, $fileType, $key, JPATH_COMPONENT_ADMINISTRATOR);
-			// set as read if not already set
-			if ($content = self::getFileContents($path_filename, false))
-			{
-				if ($hash == $content)
-				{
-					return false;
-				}
-			}
-			// set the hash
-			return self::writeFile($path_filename, $hash);
-		}
 		return false;
 	}
+
+	/**
+	 * get the spacer IDs
+	 *
+	 * @return  array  ids of the spacer field types
+	 */
+	public static function getSpacerIds()
+	{
+		// get the database object to use quote
+		$db = JFactory::getDbo();
+		return self::getVars('fieldtype', (array) array_map(function($name) use($db) { return $db->quote(ucfirst($name)); }, self::$fieldGroups['spacer']), 'name', 'id');
+	}
+
+
+	/**
+	 * open base64 string if stored as base64
+	 *
+	 * @param   string   $data   The base64 string
+	 * @param   string   $key    We store the string with that suffix :)
+	 * @param   string   $default    The default switch
+	 *
+	 * @return  string   The opened string
+	 *
+	 */
+	public static function openValidBase64($data, $key = '__.o0=base64=Oo.__', $default = 'string')
+	{
+		// check that we have a string
+		if (self::checkString($data))
+		{
+			// check if we have a key
+			if (self::checkString($key))
+			{
+				if (strpos($data, $key) !== false)
+				{
+					return base64_decode(str_replace($key, '', $data));
+				}
+			}
+			// fallback to this, not perfect method
+			if (base64_encode(base64_decode($data, true)) === $data)
+			{
+				return base64_decode($data);
+			}
+		}
+		// check if we should just return the string
+		if ('string' === $default)
+		{
+			return $data;
+		}
+		return $default;
+	}
+
 
 	/**
 	* 	prepare base64 string for url
@@ -2118,8 +2788,13 @@ abstract class ComponentbuilderHelper
 	* @return  string    On success the path or url is returned based on the type requested
 	*
 	*/
-	public static function getFilePath($type = 'path', $target = 'filepath', $fileType = null, $key = '', $default = JPATH_SITE . '/images/', $createIfNotSet = true)
+	public static function getFilePath($type = 'path', $target = 'filepath', $fileType = null, $key = '', $default = '', $createIfNotSet = true)
 	{
+		// make sure to always have a string/path
+		if(!self::checkString($default))
+		{
+			$default = JPATH_SITE . '/images/';
+		}
 		// get the global settings
 		if (!self::checkObject(self::$params))
 		{
@@ -2177,18 +2852,23 @@ abstract class ComponentbuilderHelper
 
 
 	/**
-	*	Get the file path or url
+	* Get the file path or url
 	* 
-	*	@param  string   $type              The (url/path) type to return
-	*	@param  string   $target            The Params Target name (if set)
-	*	@param  string   $default           The default path if not set in Params (fallback path)
-	*	@param  bool     $createIfNotSet    The switch to create the folder if not found
+	* @param  string   $type              The (url/path) type to return
+	* @param  string   $target            The Params Target name (if set)
+	* @param  string   $default           The default path if not set in Params (fallback path)
+	* @param  bool     $createIfNotSet    The switch to create the folder if not found
 	*
-	*	@return  string    On success the path or url is returned based on the type requested
+	* @return  string    On success the path or url is returned based on the type requested
 	* 
 	*/
-	public static function getFolderPath($type = 'path', $target = 'folderpath', $default = JPATH_SITE . '/images/', $createIfNotSet = true)
+	public static function getFolderPath($type = 'path', $target = 'folderpath', $default = '', $createIfNotSet = true)
 	{
+		// make sure to always have a string/path
+		if(!self::checkString($default))
+		{
+			$default = JPATH_SITE . '/images/';
+		}
 		// get the global settings
 		if (!self::checkObject(self::$params))
 		{
@@ -2220,7 +2900,7 @@ abstract class ComponentbuilderHelper
 	/**
 	* get the content of a file
 	*
-	* @param  string          $path    The path to the file
+	* @param  string        $path   The path to the file
 	* @param  string/bool   $none   The return value if no content was found
 	*
 	* @return  string   On success
@@ -2291,34 +2971,115 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	* 	the locker
+	 * bc math wrapper (very basic not for accounting)
+	 *
+	 * @param   string   $type    The type bc math
+	 * @param   int      $val1    The first value
+	 * @param   int      $val2    The second value
+	 * @param   int      $scale   The scale value
+	 *
+	 * @return int
+	 *
+	 */
+	public static function bcmath($type, $val1, $val2, $scale = 0)
+	{
+		// build function name
+		$function = 'bc' . $type;
+		// use the bcmath function if available
+		if (function_exists($function))
+		{
+			return $function($val1, $val2, $scale);
+		}
+		// if function does not exist we use +-*/ operators (fallback - not ideal)
+		switch ($type)
+		{
+			// Multiply two numbers
+			case 'mul':
+				return (string) round($val1 * $val2, $scale);
+				break;
+			// Divide of two numbers
+			case 'div':
+				return (string) round($val1 / $val2, $scale);
+				break;
+			// Adding two numbers
+			case 'add':
+				return (string) round($val1 + $val2, $scale);
+				break;
+			// Subtract one number from the other
+			case 'sub':
+				return (string) round($val1 - $val2, $scale);
+				break;
+			// Raise an arbitrary precision number to another
+			case 'pow':
+				return (string) round(pow($val1, $val2), $scale);
+				break;
+			// Compare two arbitrary precision numbers
+			case 'comp':
+				return (round($val1,2) == round($val2,2));
+				break;
+		}
+		return false;
+	}
+
+	/**
+	 * Basic sum of an array with more precision
+	 *
+	 * @param   array   $array    The values to sum
+	 * @param   int      $scale   The scale value
+	 *
+	 * @return float
+	 *
+	 */
+	public static function bcsum($array, $scale = 4)
+	{
+		// use the bcadd function if available
+		if (function_exists('bcadd'))
+		{
+			// set the start value
+			$value = 0.0;
+			// loop the values and run bcadd
+			foreach($array as $val)
+			{
+				$value = bcadd($value, $val, $scale);
+			}
+			return $value;
+		}
+		// fall back on array sum
+		return array_sum($array);
+	}
+
+	/**
+	* the locker
 	*
-	*  	@var array 
+	* @var array 
 	**/
 	protected static $locker = array();
 
 	/**
-	* 	the dynamic replacement salt
+	* the dynamic replacement salt
 	*
-	*  	@var array 
+	* @var array 
 	**/
 	protected static $globalSalt = array();
 
 	/**
-	* 	the timer
+	* the timer
 	*
-	*  	@var object
+	* @var object
 	**/
 	protected static $keytimer;
 
 	/**
-	*	To Lock string
+	* To Lock string
 	*
-	*	@param string  $string       The string/array to lock
-	*	@param string  $key          The custom key to use
-	*	@param int      $salt           The switch to add salt and type of salt
-	*	@param int      $dynamic    The dynamic replacement array of salt build string
-	*	@param int      $urlencode  The switch to control url encoding
+	* @param string   $string     The string/array to lock
+	* @param string   $key        The custom key to use
+	* @param int      $salt       The switch to add salt and type of salt
+	* @param int      $dynamic    The dynamic replacement array of salt build string
+	* @param int      $urlencode  The switch to control url encoding
+	*
+	* @return string    Encrypted String
+	*
 	**/
 	public static function lock($string, $key = null, $salt = 2, $dynamic = null, $urlencode = true)
 	{
@@ -2332,13 +3093,13 @@ abstract class ComponentbuilderHelper
 			{
 				$timer = $salt;
 			}
+			// set the default key
+			$key = self::salt($timer, $dynamic);
+			// try getting the system key
 			if (method_exists(get_called_class(), "getCryptKey")) 
 			{
-				$key = self::getCryptKey('basic', self::salt($timer, $dynamic));
-			}
-			else
-			{
-				$key = self::salt($timer, $dynamic);
+				// try getting the medium key first the fall back to basic, and then default
+				$key = self::getCryptKey('medium', self::getCryptKey('basic', $key));
 			}
 		}
 		// check if we have a salt timer
@@ -2357,7 +3118,7 @@ abstract class ComponentbuilderHelper
 			$string = serialize($string);
 		}
 		// prep for url
-		if ($urlencode)
+		if ($urlencode && method_exists(get_called_class(), "base64_urlencode"))
 		{
 			return self::base64_urlencode(self::$locker[$key]->encryptString($string));
 		}
@@ -2365,13 +3126,16 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	* 	To un-Lock string
+	* To un-Lock string
 	*
-	*	@param string  $string       The string to unlock
-	*	@param string  $key          The custom key to use
-	*	@param int      $salt           The switch to add salt and type of salt
-	*	@param int      $dynamic    The dynamic replacement array of salt build string
-	*	@param int      $urlencode  The switch to control url decoding
+	* @param string  $string       The string to unlock
+	* @param string  $key          The custom key to use
+	* @param int      $salt           The switch to add salt and type of salt
+	* @param int      $dynamic    The dynamic replacement array of salt build string
+	* @param int      $urlencode  The switch to control url decoding
+	*
+	* @return string    Decrypted String
+	*
 	**/
 	public static function unlock($string, $key = null, $salt = 2, $dynamic = null, $urlencode = true)
 	{
@@ -2385,14 +3149,13 @@ abstract class ComponentbuilderHelper
 			{
 				$timer = $salt;
 			}
-			// get secure key
+			// set the default key
+			$key = self::salt($timer, $dynamic);
+			// try getting the system key
 			if (method_exists(get_called_class(), "getCryptKey")) 
 			{
-				$key = self::getCryptKey('basic', self::salt($timer, $dynamic));
-			}
-			else
-			{
-				$key = self::salt($timer, $dynamic);
+				// try getting the medium key first the fall back to basic, and then default
+				$key = self::getCryptKey('medium', self::getCryptKey('basic', $key));
 			}
 		}
 		// check if we have a salt timer
@@ -2406,7 +3169,7 @@ abstract class ComponentbuilderHelper
 			self::$locker[$key] = new FOFEncryptAes($key, 128);
 		}
 		// make sure we have real base64
-		if ($urlencode)
+		if ($urlencode && method_exists(get_called_class(), "base64_urldecode"))
 		{
 			$string = self::base64_urldecode($string);
 		}
@@ -2424,10 +3187,13 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	* 	The Salt
+	* The Salt
 	*
-	*	@param int      $type          The type of length the salt should be valid
-	*	@param int      $dynamic    The dynamic replacement array of salt build string
+	* @param int   $type      The type of length the salt should be valid
+	* @param int   $dynamic   The dynamic replacement array of salt build string
+	*
+	* @return string
+	*
 	**/
 	public static function salt($type = 1, $dynamic = null)
 	{
@@ -2472,9 +3238,9 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	The function to insure the salt is valid within the given period (third try)
+	* The function to insure the salt is valid within the given period (third try)
 	*
-	*	@param int $main    The main number
+	* @param int $main    The main number
 	*/
 	protected static function periodFix($main)
 	{
@@ -2482,8 +3248,12 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Check if a string is serialized
-	*	@param string $string
+	* Check if a string is serialized
+	*
+	* @param  string   $string
+	*
+	* @return Boolean
+	*
 	*/
 	public static function is_serial($string)
 	{
@@ -2491,7 +3261,7 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Get dynamic replacement salt
+	* Get dynamic replacement salt
 	*/
 	public static function getDynamicSalt($dynamic = null)
 	{
@@ -2508,7 +3278,7 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	The random or dynamic secret salt
+	* The random or dynamic secret salt
 	*/
 	public static function getSecretSalt($string = null, $size = 9)
 	{
@@ -2531,7 +3301,7 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Get global replacement salt
+	* Get global replacement salt
 	*/
 	public static function getGlobalSalt()
 	{
@@ -2571,7 +3341,7 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Close public protocol
+	* Close public protocol
 	*/
 	public static function closePublicProtocol($id, $public)
 	{
@@ -2598,7 +3368,7 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Open public protocol
+	* Open public protocol
 	*/
 	public static function openPublicProtocol($SECRET, $ID, $PUBLIC)
 	{
@@ -2909,15 +3679,15 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	* 	Move File to Server
-	* 	
-	* 	@param   string    $localPath    The local path to the file
-	* 	@param   string    $fileName     The the actual file name
-	* 	@param   int       $serverID     The server local id to use
-	* 	@param   int       $protocol      The server protocol to use
-	* 	@param   string    $permission    The permission validation area
-	* 	
-	* 	@return  bool      true on success
+	* Move File to Server
+	*
+	* @param   string    $localPath     The local path to the file
+	* @param   string    $fileName      The the actual file name
+	* @param   int         $serverID       The server local id to use
+	* @param   int         $protocol        The server protocol to use
+	* @param   string    $permission    The permission validation area
+	*
+	* @return  bool      true on success
 	**/
 	public static function moveToServer($localPath, $fileName, $serverID, $protocol = null, $permission = 'core.export')
 	{
@@ -2952,23 +3722,23 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	* 	the SFTP objects
+	* the SFTP objects
 	**/
 	protected static $sftp = array();
 
 	/**
-	* 	the FTP objects
+	* the FTP objects
 	**/
 	protected static $ftp = array();
 
 	/**
-	* 	get the server object
-	* 	
-	* 	@param   int         $serverID       The server local id to use
-	* 	@param   int         $protocol        The server protocol to use
-	* 	@param   string    $permission    The permission validation area
-	* 	
-	* 	@return  object     on success server object
+	* get the server object
+	*
+	* @param   int         $serverID       The server local id to use
+	* @param   int         $protocol        The server protocol to use
+	* @param   string    $permission    The permission validation area
+	*
+	* @return  object     on success server object
 	**/
 	public static function getServer($serverID, $protocol = null, $permission = 'core.export')
 	{
@@ -2991,12 +3761,12 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	* 	get the sftp object
-	* 	
-	* 	@param   int         $serverID       The server local id to use
-	* 	@param   string    $permission    The permission validation area
-	* 	
-	* 	@return  object on success with sftp power
+	* get the sftp object
+	*
+	* @param   int         $serverID       The server local id to use
+	* @param   string    $permission    The permission validation area
+	*
+	* @return  object on success with sftp power
 	**/
 	public static function getSftp($serverID, $permission = 'core.export')
 	{
@@ -3150,12 +3920,12 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	* 	get the JClientFtp object
-	* 	
-	* 	@param   int        $serverID       The server local id to use
-	* 	@param   string    $permission    The permission validation area
-	* 	
-	* 	@return  object on success with ftp power
+	* get the JClientFtp object
+	*
+	* @param   int        $serverID         The server local id to use
+	* @param   string    $permission    The permission validation area
+	*
+	* @return  object on success with ftp power
 	**/
 	public static function getFtp($serverID, $permission)
 	{
@@ -3241,13 +4011,13 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	* 	get the server details
-	* 	
-	* 	@param   int         $serverID       The server local id to use
-	* 	@param   int         $protocol        The server protocol to use
-	* 	@param   string    $permission    The permission validation area
-	* 	
-	* 	@return  object    on success with server details
+	* get the server details
+	*
+	* @param   int         $serverID       The server local id to use
+	* @param   int         $protocol        The server protocol to use
+	* @param   string    $permission    The permission validation area
+	*
+	* @return  object    on success with server details
 	**/
 	public static function getServerDetails($serverID, $protocol = 2, $permission = 'core.export')
 	{
@@ -3329,6 +4099,295 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
+	* Get an edit button
+	* 
+	* @param  int      $item       The item to edit
+	* @param  string   $view       The type of item to edit
+	* @param  string   $views      The list view controller name
+	* @param  string   $ref        The return path
+	* @param  string   $component  The component these views belong to
+	* @param  string   $headsup    The message to show on click of button
+	*
+	* @return  string    On success the full html link
+	* 
+	*/
+	public static function getEditButton(&$item, $view, $views, $ref = '', $component = 'com_componentbuilder', $headsup = 'COM_COMPONENTBUILDER_ALL_UNSAVED_WORK_ON_THIS_PAGE_WILL_BE_LOST_ARE_YOU_SURE_YOU_WANT_TO_CONTINUE')
+	{
+		// get URL
+		$url = self::getEditURL($item, $view, $views, $ref, $component);
+		// check if we found any
+		if (self::checkString($url))
+		{
+			// get the global settings
+			if (!self::checkObject(self::$params))
+			{
+				self::$params = JComponentHelper::getParams('com_componentbuilder');
+			}
+			// get UIKIT version
+			$uikit = self::$params->get('uikit_version', 2);
+			// check that we have the ID
+			if (self::checkObject($item) && isset($item->id))
+			{
+				// check if the checked_out is available
+				if (isset($item->checked_out))
+				{
+					$checked_out = (int) $item->checked_out;
+				}
+				else
+				{
+					$checked_out = self::getVar($view, $item->id, 'id', 'checked_out', '=', str_replace('com_', '', $component));
+				}
+			}
+			elseif (self::checkArray($item) && isset($item['id']))
+			{
+				// check if the checked_out is available
+				if (isset($item['checked_out']))
+				{
+					$checked_out = (int) $item['checked_out'];
+				}
+				else
+				{
+					$checked_out = self::getVar($view, $item['id'], 'id', 'checked_out', '=', str_replace('com_', '', $component));
+				}
+			}
+			elseif (is_numeric($item) && $item > 0)
+			{
+				$checked_out = self::getVar($view, $item, 'id', 'checked_out', '=', str_replace('com_', '', $component));
+			}
+			// set the link title
+			$title = self::safeString(JText::_('COM_COMPONENTBUILDER_EDIT') . ' ' . $view, 'W');
+			// check that there is a check message
+			if (self::checkString($headsup))
+			{
+				if (3 == $uikit)
+				{
+					$href = 'onclick="UIkit.modal.confirm(\''.JText::_($headsup).'\').then( function(){ window.location.href = \'' . $url . '\' } )"  href="javascript:void(0)"';
+				}
+				else
+				{
+					$href = 'onclick="UIkit2.modal.confirm(\''.JText::_($headsup).'\', function(){ window.location.href = \'' . $url . '\' })"  href="javascript:void(0)"';
+				}
+			}
+			else
+			{
+				$href = 'href="' . $url . '"';
+			}
+			// return UIKIT version 3
+			if (3 == $uikit)
+			{
+				// check if it is checked out
+				if (isset($checked_out) && $checked_out > 0)
+				{
+					// is this user the one who checked it out
+					if ($checked_out == JFactory::getUser()->id)
+					{
+						return ' <a ' . $href . ' uk-icon="icon: lock" title="' . $title . '"></a>';
+					}
+					return ' <a href="#" disabled uk-icon="icon: lock" title="' . JText::sprintf('COM_COMPONENTBUILDER__HAS_BEEN_CHECKED_OUT_BY_S', self::safeString($view, 'W'), JFactory::getUser($checked_out)->name) . '"></a>'; 
+				}
+				// return normal edit link
+				return ' <a ' . $href . ' uk-icon="icon: pencil" title="' . $title . '"></a>';
+			}
+			// check if it is checked out (return UIKIT version 2)
+			if (isset($checked_out) && $checked_out > 0)
+			{
+				// is this user the one who checked it out
+				if ($checked_out == JFactory::getUser()->id)
+				{
+					return ' <a ' . $href . ' class="uk-icon-lock" title="' . $title . '"></a>';
+				}
+				return ' <a href="#" disabled class="uk-icon-lock" title="' . JText::sprintf('COM_COMPONENTBUILDER__HAS_BEEN_CHECKED_OUT_BY_S', self::safeString($view, 'W'), JFactory::getUser($checked_out)->name) . '"></a>'; 
+			}
+			// return normal edit link
+			return ' <a ' . $href . ' class="uk-icon-pencil" title="' . $title . '"></a>';
+		}
+		return '';
+	}
+
+	/**
+	* Get an edit text button
+	* 
+	* @param  string   $text       The button text
+	* @param  int      $item       The item to edit
+	* @param  string   $view       The type of item to edit
+	* @param  string   $views      The list view controller name
+	* @param  string   $ref        The return path
+	* @param  string   $component  The component these views belong to
+	* @param  string   $headsup    The message to show on click of button
+	*
+	* @return  string    On success the full html link
+	* 
+	*/
+	public static function getEditTextButton($text, &$item, $view, $views, $ref = '', $component = 'com_componentbuilder', $jRoute = true, $class = 'uk-button', $headsup = 'COM_COMPONENTBUILDER_ALL_UNSAVED_WORK_ON_THIS_PAGE_WILL_BE_LOST_ARE_YOU_SURE_YOU_WANT_TO_CONTINUE')
+	{
+		// make sure we have text
+		if (!self::checkString($text))
+		{
+			return self::getEditButton($item, $view, $views, $ref, $component, $headsup);
+		}
+		// get URL
+		$url = self::getEditURL($item, $view, $views, $ref, $component, $jRoute);
+		// check if we found any
+		if (self::checkString($url))
+		{
+			// get the global settings
+			if (!self::checkObject(self::$params))
+			{
+				self::$params = JComponentHelper::getParams('com_componentbuilder');
+			}
+			// get UIKIT version
+			$uikit = self::$params->get('uikit_version', 2);
+			// check that we have the ID
+			if (self::checkObject($item) && isset($item->id))
+			{
+				// check if the checked_out is available
+				if (isset($item->checked_out))
+				{
+					$checked_out = (int) $item->checked_out;
+				}
+				else
+				{
+					$checked_out = self::getVar($view, $item->id, 'id', 'checked_out', '=', str_replace('com_', '', $component));
+				}
+			}
+			elseif (self::checkArray($item) && isset($item['id']))
+			{
+				// check if the checked_out is available
+				if (isset($item['checked_out']))
+				{
+					$checked_out = (int) $item['checked_out'];
+				}
+				else
+				{
+					$checked_out = self::getVar($view, $item['id'], 'id', 'checked_out', '=', str_replace('com_', '', $component));
+				}
+			}
+			elseif (is_numeric($item) && $item > 0)
+			{
+				$checked_out = self::getVar($view, $item, 'id', 'checked_out', '=', str_replace('com_', '', $component));
+			}
+			// set the link title
+			$title = self::safeString(JText::_('COM_COMPONENTBUILDER_EDIT') . ' ' . $view, 'W');
+			// check that there is a check message
+			if (self::checkString($headsup))
+			{
+				if (3 == $uikit)
+				{
+					$href = 'onclick="UIkit.modal.confirm(\''.JText::_($headsup).'\').then( function(){ window.location.href = \'' . $url . '\' } )"  href="javascript:void(0)"';
+				}
+				else
+				{
+					$href = 'onclick="UIkit2.modal.confirm(\''.JText::_($headsup).'\', function(){ window.location.href = \'' . $url . '\' })"  href="javascript:void(0)"';
+				}
+			}
+			else
+			{
+				$href = 'href="' . $url . '"';
+			}
+			// return UIKIT version 3
+			if (3 == $uikit)
+			{
+				// check if it is checked out
+				if (isset($checked_out) && $checked_out > 0)
+				{
+					// is this user the one who checked it out
+					if ($checked_out == JFactory::getUser()->id)
+					{
+						return ' <a class="' . $class . '" ' . $href . ' title="' . $title . '">' . $text . '</a>';
+					}
+					return ' <a class="' . $class . '" href="#" disabled title="' . JText::sprintf('COM_COMPONENTBUILDER__HAS_BEEN_CHECKED_OUT_BY_S', self::safeString($view, 'W'), JFactory::getUser($checked_out)->name) . '">' . $text . '</a>'; 
+				}
+				// return normal edit link
+				return ' <a class="' . $class . '" ' . $href . ' title="' . $title . '">' . $text . '</a>';
+			}
+			// check if it is checked out (return UIKIT version 2)
+			if (isset($checked_out) && $checked_out > 0)
+			{
+				// is this user the one who checked it out
+				if ($checked_out == JFactory::getUser()->id)
+				{
+					return ' <a class="' . $class . '" ' . $href . ' title="' . $title . '">' . $text . '</a>';
+				}
+				return ' <a class="' . $class . '" href="#" disabled title="' . JText::sprintf('COM_COMPONENTBUILDER__HAS_BEEN_CHECKED_OUT_BY_S', self::safeString($view, 'W'), JFactory::getUser($checked_out)->name) . '">' . $text . '</a>'; 
+			}
+			// return normal edit link
+			return ' <a class="' . $class . '" ' . $href . ' title="' . $title . '">' . $text . '</a>';
+		}
+		return '';
+	}
+
+	/**
+	* Get the edit URL
+	* 
+	* @param  int      $item        The item to edit
+	* @param  string   $view        The type of item to edit
+	* @param  string   $views       The list view controller name
+	* @param  string   $ref         The return path
+	* @param  string   $component   The component these views belong to
+	* @param  bool     $jRoute      The switch to add use JRoute or not
+	*
+	* @return  string    On success the edit url
+	* 
+	*/
+	public static function getEditURL(&$item, $view, $views, $ref = '', $component = 'com_componentbuilder', $jRoute = true)
+	{
+		// make sure the user has access to view
+		if (!JFactory::getUser()->authorise($view. '.access', $component))
+		{
+			return false;
+		}
+		// build record
+		$record = new stdClass();
+		// check that we have the ID
+		if (self::checkObject($item) && isset($item->id))
+		{
+			$record->id = (int) $item->id;
+			// check if created_by is available
+			if (isset($item->created_by) && $item->created_by > 0)
+			{
+				$record->created_by = (int) $item->created_by;
+			}
+		}
+		elseif (self::checkArray($item) && isset($item['id']))
+		{
+			$record->id = (int) $item['id'];
+			// check if created_by is available
+			if (isset($item['created_by']) && $item['created_by'] > 0)
+			{
+				$record->created_by = (int) $item['created_by'];
+			}
+		}
+		elseif (is_numeric($item))
+		{
+			$record->id = (int) $item;
+		}
+		// check ID
+		if (isset($record->id) && $record->id > 0)
+		{
+			// get user action permission to edit
+			$action = self::getActions($view, $record, $views, 'edit', str_replace('com_', '', $component));
+			// check if the view permission is set
+			if (($edit = $action->get($view . '.edit', 'none-set')) === 'none-set')
+			{
+				// fall back on the core permission then
+				$edit = $action->get('core.edit', 'none-set');
+			}
+			// can edit
+			if ($edit)
+			{
+				// set the edit link
+				if ($jRoute)
+				{
+					return JRoute::_("index.php?option=" . $component . "&view=" . $views . "&task=" . $view . ".edit&id=" . $record->id . $ref);
+				}
+				return "index.php?option=" . $component . "&view=" . $views . "&task=" . $view . ".edit&id=" . $record->id . $ref;
+			}
+		}
+		return false;
+	}
+
+
+	/**
 	* 	the Crypt objects
 	**/
 	protected static $CRYPT = array();
@@ -3362,9 +4421,54 @@ abstract class ComponentbuilderHelper
 		return self::$CRYPT[$TYPE];
 	}
 
-	
-	public static function jsonToString($value, $sperator = ", ", $table = null)
+
+	/**
+	 * set subform type table
+	 *
+	 * @param   array   $head    The header names
+	 * @param   array   $rows    The row values
+	 * @param   string  $idName  The prefix to the table id
+	 *
+	 * @return string
+	 *
+	 */
+	public static function setSubformTable($head, $rows, $idName)
 	{
+		$table[] = "<div class=\"row-fluid\" id=\"vdm_table_display_".$idName."\">";
+		$table[] = "\t<div class=\"subform-repeatable-wrapper subform-table-layout subform-table-sublayout-section-byfieldsets\">";
+		$table[] = "\t\t<div class=\"subform-repeatable\">";
+		$table[] = "\t\t\t<table class=\"adminlist table table-striped table-bordered\">";
+		$table[] = "\t\t\t\t<thead>";
+		$table[] = "\t\t\t\t\t<tr>";
+		$table[] = "\t\t\t\t\t\t<th>" .  implode("</th><th>", $head) . "</th>";
+		$table[] = "\t\t\t\t\t</tr>";
+		$table[] = "\t\t\t\t</thead>";
+		$table[] = "\t\t\t\t<tbody>";
+		foreach ($rows as $row)
+		{
+			$table[] = "\t\t\t\t\t<tr class=\"subform-repeatable-group\">";
+			$table[] = "\t\t\t\t\t\t" . $row;
+			$table[] = "\t\t\t\t\t</tr>";
+		}
+		$table[] = "\t\t\t\t</tbody>";
+		$table[] = "\t\t\t</table>";
+		$table[] = "\t\t</div>";
+		$table[] = "\t</div>";
+		$table[] = "</div>";
+		// return the table
+		return implode("\n", $table);
+	}
+
+	
+	public static function jsonToString($value, $sperator = ", ", $table = null, $id = 'id', $name = 'name')
+	{
+		// do some table foot work
+		$external = false;
+		if (strpos($table, '#__') !== false)
+		{
+			$external = true;
+			$table = str_replace('#__', '', $table);
+		}
 		// check if string is JSON
 		$result = json_decode($value, true);
 		if (json_last_error() === JSON_ERROR_NONE)
@@ -3377,9 +4481,19 @@ abstract class ComponentbuilderHelper
 					$names = array();
 					foreach ($result as $val)
 					{
-						if ($name = self::getVar($table, $val, 'id', 'name'))
+						if ($external)
 						{
-							$names[] = $name;
+							if ($_name = self::getVar(null, $val, $id, $name, '=', $table))
+							{
+								$names[] = $_name;
+							}
+						}
+						else
+						{
+							if ($_name = self::getVar($table, $val, $id, $name))
+							{
+								$names[] = $_name;
+							}
 						}
 					}
 					if (self::checkArray($names))
@@ -3395,7 +4509,7 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Load the Component xml manifest.
+	* Load the Component xml manifest.
 	**/
 	public static function manifest()
 	{
@@ -3404,12 +4518,12 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Joomla version object
+	* Joomla version object
 	**/	
 	protected static $JVersion;
 
 	/**
-	*	set/get Joomla version
+	* set/get Joomla version
 	**/
 	public static function jVersion()
 	{
@@ -3422,7 +4536,7 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Load the Contributors details.
+	* Load the Contributors details.
 	**/
 	public static function getContributors()
 	{
@@ -3460,8 +4574,8 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Load the Component Help URLs.
-	**/
+	 *	Load the Component Help URLs.
+	 **/
 	public static function getHelpUrl($view)
 	{
 		$user	= JFactory::getUser();
@@ -3498,15 +4612,15 @@ abstract class ComponentbuilderHelper
 						// set joomla article
 						case 1:
 							return self::loadArticleLink($help->article);
-						break;
+							break;
 						// set help text
 						case 2:
 							return self::loadHelpTextLink($help->id);
-						break;
+							break;
 						// set Link
 						case 3:
 							return $help->url;
-						break;
+							break;
 					}
 				}
 			}
@@ -3515,16 +4629,16 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Get the Article Link.
-	**/
+	 *	Get the Article Link.
+	 **/
 	protected static function loadArticleLink($id)
 	{
 		return JURI::root().'index.php?option=com_content&view=article&id='.$id.'&tmpl=component&layout=modal';
 	}
 
 	/**
-	*	Get the Help Text Link.
-	**/
+	 *	Get the Help Text Link.
+	 **/
 	protected static function loadHelpTextLink($id)
 	{
 		$token = JSession::getFormToken();
@@ -3532,7 +4646,7 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Get any component's model
+	* Get any component's model
 	**/
 	public static function getModel($name, $path = JPATH_COMPONENT_SITE, $component = 'Componentbuilder', $config = array())
 	{
@@ -3576,9 +4690,9 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Add to asset Table
+	* Add to asset Table
 	*/
-	public static function setAsset($id,$table)
+	public static function setAsset($id, $table, $inherit = true)
 	{
 		$parent = JTable::getInstance('Asset');
 		$parent->loadByName('com_componentbuilder');
@@ -3595,8 +4709,6 @@ abstract class ComponentbuilderHelper
 
 		if ($error)
 		{
-			$this->setError($error);
-
 			return false;
 		}
 		else
@@ -3612,7 +4724,7 @@ abstract class ComponentbuilderHelper
 			$asset->name      = $name;
 			$asset->title     = $title;
 			// get the default asset rules
-			$rules = self::getDefaultAssetRules('com_componentbuilder',$table);
+			$rules = self::getDefaultAssetRules('com_componentbuilder', $table, $inherit);
 			if ($rules instanceof JAccessRules)
 			{
 				$asset->rules = (string) $rules;
@@ -3640,55 +4752,62 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	 *	Gets the default asset Rules for a component/view.
+	 * Gets the default asset Rules for a component/view.
 	 */
-	protected static function getDefaultAssetRules($component,$view)
+	protected static function getDefaultAssetRules($component, $view, $inherit = true)
 	{
-		// Need to find the asset id by the name of the component.
-		$db = JFactory::getDbo();
-		$query = $db->getQuery(true)
-			->select($db->quoteName('id'))
-			->from($db->quoteName('#__assets'))
-			->where($db->quoteName('name') . ' = ' . $db->quote($component));
-		$db->setQuery($query);
-		$db->execute();
-		if ($db->loadRowList())
+		// if new or inherited
+		$assetId = 0;
+		// Only get the actual item rules if not inheriting
+		if (!$inherit)
 		{
-			// asset alread set so use saved rules
-			$assetId = (int) $db->loadResult();
-			$result =  JAccess::getAssetRules($assetId);
-			if ($result instanceof JAccessRules)
+			// Need to find the asset id by the name of the component.
+			$db = JFactory::getDbo();
+			$query = $db->getQuery(true)
+				->select($db->quoteName('id'))
+				->from($db->quoteName('#__assets'))
+				->where($db->quoteName('name') . ' = ' . $db->quote($component));
+			$db->setQuery($query);
+			$db->execute();
+			// check that there is a value
+			if ($db->getNumRows())
 			{
-				$_result = (string) $result;
-				$_result = json_decode($_result);
-				foreach ($_result as $name => &$rule)
-				{
-					$v = explode('.', $name);
-					if ($view !== $v[0])
-					{
-						// remove since it is not part of this view
-						unset($_result->$name);
-					}
-					else
-					{
-						// clear the value since we inherit
-						$rule = array();
-					}
-				}
-				// check if there are any view values remaining
-				if (count($_result))
-				{
-					$_result = json_encode($_result);
-					$_result = array($_result);
-					// Instantiate and return the JAccessRules object for the asset rules.
-					$rules = new JAccessRules($_result);
-
-					return $rules;
-				}
-				return $result;
+				// asset already set so use saved rules
+				$assetId = (int) $db->loadResult();
 			}
 		}
-		return JAccess::getAssetRules(0);
+		// get asset rules
+		$result =  JAccess::getAssetRules($assetId);
+		if ($result instanceof JAccessRules)
+		{
+			$_result = (string) $result;
+			$_result = json_decode($_result);
+			foreach ($_result as $name => &$rule)
+			{
+				$v = explode('.', $name);
+				if ($view !== $v[0])
+				{
+					// remove since it is not part of this view
+					unset($_result->$name);
+				}
+				elseif ($inherit)
+				{
+					// clear the value since we inherit
+					$rule = array();
+				}
+			}
+			// check if there are any view values remaining
+			if (count($_result))
+			{
+				$_result = json_encode($_result);
+				$_result = array($_result);
+				// Instantiate and return the JAccessRules object for the asset rules.
+				$rules = new JAccessRules($_result);
+				// return filtered rules
+				return $rules;
+			}
+		}
+		return $result;
 	}
 
 	/**
@@ -3783,9 +4902,49 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
+	 * get the field object
+	 *
+	 * @param   array      $attributes   The array of attributes
+	 * @param   string     $default      The default of the field
+	 * @param   array      $options      The options to apply to the XML element
+	 *
+	 * @return  object
+	 *
+	 */
+	public static function getFieldObject($attributes, $default = '', $options = null)
+	{
+		// make sure we have attributes and a type value
+		if (self::checkArray($attributes) && isset($attributes['type']))
+		{
+			// make sure the form helper class is loaded
+			if (!method_exists('JFormHelper', 'loadFieldType'))
+			{
+				jimport('joomla.form.form');
+			}
+			// get field type
+			$field = JFormHelper::loadFieldType($attributes['type'],true);
+			// start field xml
+			$XML = new SimpleXMLElement('<field/>');
+			// load the attributes
+			self::xmlAddAttributes($XML, $attributes);
+			// check if we have options
+			if (self::checkArray($options))
+			{
+				// load the options
+				self::xmlAddOptions($XML, $options);
+			}
+			// setup the field
+			$field->setup($XML, $default);
+			// return the field object
+			return $field;
+		}
+		return false;
+	}
+
+	/**
 	 * Render Bool Button
 	 *
-	 * @param   array    $args   All the args for the button
+	 * @param   array   $args   All the args for the button
 	 *                             0) name
 	 *                             1) additional (options class) // not used at this time
 	 *                             2) default
@@ -3800,8 +4959,6 @@ abstract class ComponentbuilderHelper
 		$args = func_get_args();
 		// check if there is additional button class
 		$additional = isset($args[1]) ? (string) $args[1] : ''; // not used at this time
-		// start the xml
-		$buttonXML = new SimpleXMLElement('<field/>');
 		// button attributes
 		$buttonAttributes = array(
 			'type' => 'radio',
@@ -3810,27 +4967,17 @@ abstract class ComponentbuilderHelper
 			'class' => 'btn-group',
 			'filter' => 'INT',
 			'default' => isset($args[2]) ? (int) $args[2] : 0);
-		// load the haskey attributes
-		self::xmlAddAttributes($buttonXML, $buttonAttributes);
 		// set the button options
 		$buttonOptions = array(
 			'1' => isset($args[3]) ? self::htmlEscape($args[3]) : 'JYES',
 			'0' => isset($args[4]) ? self::htmlEscape($args[4]) : 'JNO');
-		// load the button options
-		self::xmlAddOptions($buttonXML, $buttonOptions);
-
-		// get the radio element
-		$button = JFormHelper::loadFieldType('radio');
-
-		// run
-		$button->setup($buttonXML, $buttonAttributes['default']);
-
-		return $button->input;
+		// return the input
+		return self::getFieldObject($buttonAttributes, $buttonAttributes['default'], $buttonOptions)->input;
 	}
 
 	/**
-	* 	UIKIT Component Classes
-	**/
+	 *  UIKIT Component Classes
+	 **/
 	public static $uk_components = array(
 			'data-uk-grid' => array(
 				'grid' ),
@@ -3884,15 +5031,15 @@ abstract class ComponentbuilderHelper
 			'upload-drop' => array(
 				'upload', 'form-file' )
 			);
-	
+
 	/**
-	* 	Add UIKIT Components
-	**/
+	 *  Add UIKIT Components
+	 **/
 	public static $uikit = false;
 
 	/**
-	* 	Get UIKIT Components
-	**/
+	 *  Get UIKIT Components
+	 **/
 	public static function getUikitComp($content,$classes = array())
 	{
 		if (strpos($content,'class="uk-') !== false)
@@ -3922,13 +5069,13 @@ abstract class ComponentbuilderHelper
 				}
 				return $temp;
 			}
-		}	
+		}
 		if (self::checkArray($classes))
 		{
 			return $classes;
 		}
 		return false;
-	} 
+	}
 
 	/**
 	 * Get a variable 
@@ -4085,183 +5232,149 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Get the actions permissions
+	* Get the action permissions
+	*
+	* @param  string   $view        The related view name
+	* @param  int      $record      The item to act upon
+	* @param  string   $views       The related list view name
+	* @param  mixed    $target      Only get this permission (like edit, create, delete)
+	* @param  string   $component   The target component
+	*
+	* @return  object   The JObject of permission/authorised actions
+	* 
 	**/
-	public static function getActions($view,&$record = null,$views = null)
+	public static function getActions($view, &$record = null, $views = null, $target = null, $component = 'componentbuilder')
 	{
-		jimport('joomla.access.access');
-
-		$user	= JFactory::getUser();
-		$result	= new JObject;
-		$view	= self::safeString($view);
+		// get the user object
+		$user = JFactory::getUser();
+		// load the JObject
+		$result = new JObject;
+		// make view name safe (just incase)
+		$view = self::safeString($view);
 		if (self::checkString($views))
 		{
 			$views = self::safeString($views);
-		}
+ 		}
 		// get all actions from component
-		$actions = JAccess::getActions('com_componentbuilder', 'component');
-		// set acctions only set in component settiongs
-		$componentActions = array('core.admin','core.manage','core.options','core.export');
+		$actions = JAccess::getActionsFromFile(
+			JPATH_ADMINISTRATOR . '/components/com_' . $component . '/access.xml',
+			"/access/section[@name='component']/"
+		);
+		// if non found then return empty JObject
+		if (empty($actions))
+		{
+			return $result;
+		}
+		// get created by if not found
+		if (self::checkObject($record) && !isset($record->created_by) && isset($record->id))
+		{
+			$record->created_by = self::getVar($view, $record->id, 'id', 'created_by', '=', $component);
+		}
+		// set actions only set in component settings
+		$componentActions = array('core.admin', 'core.manage', 'core.options', 'core.export');
+		// check if we have a target
+		$checkTarget = false;
+		if ($target)
+		{
+			// convert to an array
+			if (self::checkString($target))
+			{
+				$target = array($target);
+			}
+			// check if we are good to go
+			if (self::checkArray($target))
+			{
+				$checkTarget = true;
+			}
+		}
 		// loop the actions and set the permissions
 		foreach ($actions as $action)
 		{
+			// check target action filter
+			if ($checkTarget && self::filterActions($view, $action->name, $target))
+			{
+				continue;
+			}
 			// set to use component default
 			$fallback = true;
-			if (self::checkObject($record) && isset($record->id) && $record->id > 0 && !in_array($action->name,$componentActions))
+			// reset permission per/action
+			$permission = false;
+			$catpermission = false;
+			// set area
+			$area = 'comp';
+			// check if the record has an ID and the action is item related (not a component action)
+			if (self::checkObject($record) && isset($record->id) && $record->id > 0 && !in_array($action->name, $componentActions) &&
+				(strpos($action->name, 'core.') !== false || strpos($action->name, $view . '.') !== false))
 			{
+				// we are in item
+				$area = 'item';
 				// The record has been set. Check the record permissions.
-				$permission = $user->authorise($action->name, 'com_componentbuilder.'.$view.'.' . (int) $record->id);
-				if (!$permission) // TODO removed && !is_null($permission)
+				$permission = $user->authorise($action->name, 'com_' . $component . '.' . $view . '.' . (int) $record->id);
+				// if no permission found, check edit own
+				if (!$permission)
 				{
-					if ($action->name == 'core.edit' || $action->name == $view.'.edit')
+					// With edit, if the created_by matches current user then dig deeper.
+					if (($action->name === 'core.edit' || $action->name === $view . '.edit') && $record->created_by > 0 && ($record->created_by == $user->id))
 					{
-						if ($user->authorise('core.edit.own', 'com_componentbuilder.'.$view.'.' . (int) $record->id))
+						// the correct target
+						$coreCheck = (array) explode('.', $action->name);
+						// check that we have both local and global access
+						if ($user->authorise($coreCheck[0] . '.edit.own', 'com_' . $component . '.' . $view . '.' . (int) $record->id) &&
+							$user->authorise($coreCheck[0]  . '.edit.own', 'com_' . $component))
 						{
-							// If the owner matches 'me' then allow.
-							if (isset($record->created_by) && $record->created_by > 0 && ($record->created_by == $user->id))
-							{
-								$result->set($action->name, true);
-								// set not to use component default
-								$fallback = false;
-							}
-							else
-							{
-								$result->set($action->name, false);
-								// set not to use component default
-								$fallback = false;
-							}
+							// allow edit
+							$result->set($action->name, true);
+							// set not to use global default
+							// because we already validated it
+							$fallback = false;
 						}
-						elseif ($user->authorise($view.'edit.own', 'com_componentbuilder.'.$view.'.' . (int) $record->id))
+						else
 						{
-							// If the owner matches 'me' then allow.
-							if (isset($record->created_by) && $record->created_by > 0 && ($record->created_by == $user->id))
-							{
-								$result->set($action->name, true);
-								// set not to use component default
-								$fallback = false;
-							}
-							else
-							{
-								$result->set($action->name, false);
-								// set not to use component default
-								$fallback = false;
-							}
-						}
-						elseif ($user->authorise('core.edit.own', 'com_componentbuilder'))
-						{
-							// If the owner matches 'me' then allow.
-							if (isset($record->created_by) && $record->created_by > 0 && ($record->created_by == $user->id))
-							{
-								$result->set($action->name, true);
-								// set not to use component default
-								$fallback = false;
-							}
-							else
-							{
-								$result->set($action->name, false);
-								// set not to use component default
-								$fallback = false;
-							}
-						}
-						elseif ($user->authorise($view.'edit.own', 'com_componentbuilder'))
-						{
-							// If the owner matches 'me' then allow.
-							if (isset($record->created_by) && $record->created_by > 0 && ($record->created_by == $user->id))
-							{
-								$result->set($action->name, true);
-								// set not to use component default
-								$fallback = false;
-							}
-							else
-							{
-								$result->set($action->name, false);
-								// set not to use component default
-								$fallback = false;
-							}
+							// do not allow edit
+							$result->set($action->name, false);
+							$fallback = false;
 						}
 					}
 				}
 				elseif (self::checkString($views) && isset($record->catid) && $record->catid > 0)
 				{
+					// we are in item
+					$area = 'category';
+					// set the core check
+					$coreCheck = explode('.', $action->name);
+					$core = $coreCheck[0];
 					// make sure we use the core. action check for the categories
-					if (strpos($action->name,$view) !== false && strpos($action->name,'core.') === false ) {
-						$coreCheck		= explode('.',$action->name);
-						$coreCheck[0]	= 'core';
-						$categoryCheck	= implode('.',$coreCheck);
+					if (strpos($action->name, $view) !== false && strpos($action->name, 'core.') === false )
+					{
+						$coreCheck[0] = 'core';
+						$categoryCheck = implode('.', $coreCheck);
 					}
 					else
 					{
 						$categoryCheck = $action->name;
 					}
 					// The record has a category. Check the category permissions.
-					$catpermission = $user->authorise($categoryCheck, 'com_componentbuilder.'.$views.'.category.' . (int) $record->catid);
+					$catpermission = $user->authorise($categoryCheck, 'com_' . $component . '.' . $views . '.category.' . (int) $record->catid);
 					if (!$catpermission && !is_null($catpermission))
 					{
-						if ($action->name == 'core.edit' || $action->name == $view.'.edit')
+						// With edit, if the created_by matches current user then dig deeper.
+						if (($action->name === 'core.edit' || $action->name === $view . '.edit') && $record->created_by > 0 && ($record->created_by == $user->id))
 						{
-							if ($user->authorise('core.edit.own', 'com_componentbuilder.'.$views.'.category.' . (int) $record->catid))
+							// check that we have both local and global access
+							if ($user->authorise('core.edit.own', 'com_' . $component . '.' . $views . '.category.' . (int) $record->catid) &&
+								$user->authorise($core . '.edit.own', 'com_' . $component))
 							{
-								// If the owner matches 'me' then allow.
-								if (isset($record->created_by) && $record->created_by > 0 && ($record->created_by == $user->id))
-								{
-									$result->set($action->name, true);
-									// set not to use component default
-									$fallback = false;
-								}
-								else
-								{
-									$result->set($action->name, false);
-									// set not to use component default
-									$fallback = false;
-								}
+								// allow edit
+								$result->set($action->name, true);
+								// set not to use global default
+								// because we already validated it
+								$fallback = false;
 							}
-							elseif ($user->authorise($view.'edit.own', 'com_componentbuilder.'.$views.'.category.' . (int) $record->catid))
+							else
 							{
-								// If the owner matches 'me' then allow.
-								if (isset($record->created_by) && $record->created_by > 0 && ($record->created_by == $user->id))
-								{
-									$result->set($action->name, true);
-									// set not to use component default
-									$fallback = false;
-								}
-								else
-								{
-									$result->set($action->name, false);
-									// set not to use component default
-									$fallback = false;
-								}
-							}
-							elseif ($user->authorise('core.edit.own', 'com_componentbuilder'))
-							{
-								// If the owner matches 'me' then allow.
-								if (isset($record->created_by) && $record->created_by > 0 && ($record->created_by == $user->id))
-								{
-									$result->set($action->name, true);
-									// set not to use component default
-									$fallback = false;
-								}
-								else
-								{
-									$result->set($action->name, false);
-									// set not to use component default
-									$fallback = false;
-								}
-							}
-							elseif ($user->authorise($view.'edit.own', 'com_componentbuilder'))
-							{
-								// If the owner matches 'me' then allow.
-								if (isset($record->created_by) && $record->created_by > 0 && ($record->created_by == $user->id))
-								{
-									$result->set($action->name, true);
-									// set not to use component default
-									$fallback = false;
-								}
-								else
-								{
-									$result->set($action->name, false);
-									// set not to use component default
-									$fallback = false;
-								}
+								// do not allow edit
+								$result->set($action->name, false);
+								$fallback = false;
 							}
 						}
 					}
@@ -4270,18 +5383,53 @@ abstract class ComponentbuilderHelper
 			// if allowed then fallback on component global settings
 			if ($fallback)
 			{
-				$result->set($action->name, $user->authorise($action->name, 'com_componentbuilder'));
+				// if item/category blocks access then don't fall back on global
+				if ((($area === 'item') && !$permission) || (($area === 'category') && !$catpermission))
+				{
+					// do not allow
+					$result->set($action->name, false);
+				}
+				// Finally remember the global settings have the final say. (even if item allow)
+				// The local item permissions can block, but it can't open and override of global permissions.
+				// Since items are created by users and global permissions is set by system admin.
+				else
+				{
+					$result->set($action->name, $user->authorise($action->name, 'com_' . $component));
+				}
 			}
 		}
 		return $result;
 	}
 
 	/**
-	*	Check if have an json string
+	* Filter the action permissions
 	*
-	*	@input	string   The json string to check
+	* @param  string   $action   The action to check
+	* @param  array    $targets  The array of target actions
 	*
-	*	@returns bool true on success
+	* @return  boolean   true if action should be filtered out
+	* 
+	**/
+	protected static function filterActions(&$view, &$action, &$targets)
+	{
+		foreach ($targets as $target)
+		{
+			if (strpos($action, $view . '.' . $target) !== false ||
+				strpos($action, 'core.' . $target) !== false)
+			{
+				return false;
+				break;
+			}
+		}
+		return true;
+	}
+
+	/**
+	* Check if have an json string
+	*
+	* @input	string   The json string to check
+	*
+	* @returns bool true on success
 	**/
 	public static function checkJson($string)
 	{
@@ -4294,11 +5442,11 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Check if have an object with a length
+	* Check if have an object with a length
 	*
-	*	@input	object   The object to check
+	* @input	object   The object to check
 	*
-	*	@returns bool true on success
+	* @returns bool true on success
 	**/
 	public static function checkObject($object)
 	{
@@ -4310,15 +5458,15 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Check if have an array with a length
+	* Check if have an array with a length
 	*
-	*	@input	array   The array to check
+	* @input	array   The array to check
 	*
-	*	@returns bool true on success
+	* @returns bool/int  number of items in array on success
 	**/
 	public static function checkArray($array, $removeEmptyString = false)
 	{
-		if (isset($array) && is_array($array) && count($array) > 0)
+		if (isset($array) && is_array($array) && ($nr = count((array)$array)) > 0)
 		{
 			// also make sure the empty strings are removed
 			if ($removeEmptyString)
@@ -4332,17 +5480,17 @@ abstract class ComponentbuilderHelper
 				}
 				return self::checkArray($array, false);
 			}
-			return true;
+			return $nr;
 		}
 		return false;
 	}
 
 	/**
-	*	Check if have a string with a length
+	* Check if have a string with a length
 	*
-	*	@input	string   The string to check
+	* @input	string   The string to check
 	*
-	*	@returns bool true on success
+	* @returns bool true on success
 	**/
 	public static function checkString($string)
 	{
@@ -4354,10 +5502,10 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Check if we are connected
-	*	Thanks https://stackoverflow.com/a/4860432/1429677
+	* Check if we are connected
+	* Thanks https://stackoverflow.com/a/4860432/1429677
 	*
-	*	@returns bool true on success
+	* @returns bool true on success
 	**/
 	public static function isConnected()
 	{
@@ -4379,11 +5527,11 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Merge an array of array's
+	* Merge an array of array's
 	*
-	*	@input	array   The arrays you would like to merge
+	* @input	array   The arrays you would like to merge
 	*
-	*	@returns array on success
+	* @returns array on success
 	**/
 	public static function mergeArrays($arrays)
 	{
@@ -4409,11 +5557,11 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Shorten a string
+	* Shorten a string
 	*
-	*	@input	string   The you would like to shorten
+	* @input	string   The you would like to shorten
 	*
-	*	@returns string on success
+	* @returns string on success
 	**/
 	public static function shorten($string, $length = 40, $addTip = true)
 	{
@@ -4421,7 +5569,7 @@ abstract class ComponentbuilderHelper
 		{
 			$initial = strlen($string);
 			$words = preg_split('/([\s\n\r]+)/', $string, null, PREG_SPLIT_DELIM_CAPTURE);
-			$words_count = count($words);
+			$words_count = count((array)$words);
 
 			$word_length = 0;
 			$last_word = 0;
@@ -4450,13 +5598,13 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Making strings safe (various ways)
+	* Making strings safe (various ways)
 	*
-	*	@input	string   The you would like to make safe
+	* @input	string   The you would like to make safe
 	*
-	*	@returns string on success
+	* @returns string on success
 	**/
-	public static function safeString($string, $type = 'L', $spacer = '_', $replaceNumbers = true)
+	public static function safeString($string, $type = 'L', $spacer = '_', $replaceNumbers = true, $keepOnlyCharacters = true)
 	{
 		if ($replaceNumbers === true)
 		{
@@ -4485,7 +5633,16 @@ abstract class ComponentbuilderHelper
 			$string = trim($string);
 			$string = preg_replace('/'.$spacer.'+/', ' ', $string);
 			$string = preg_replace('/\s+/', ' ', $string);
-			$string = preg_replace("/[^A-Za-z ]/", '', $string);
+			// remove all and keep only characters
+			if ($keepOnlyCharacters)
+			{
+				$string = preg_replace("/[^A-Za-z ]/", '', $string);
+			}
+			// keep both numbers and characters
+			else
+			{
+				$string = preg_replace("/[^A-Za-z0-9 ]/", '', $string);
+			}
 			// select final adaptations
 			if ($type === 'L' || $type === 'strtolower')
 			{
@@ -4585,11 +5742,11 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Convert an integer into an English word string
-	*	Thanks to Tom Nicholson <http://php.net/manual/en/function.strval.php#41988>
+	* Convert an integer into an English word string
+	* Thanks to Tom Nicholson <http://php.net/manual/en/function.strval.php#41988>
 	*
-	*	@input	an int
-	*	@returns a string
+	* @input	an int
+	* @returns a string
 	**/
 	public static function numberToString($x)
 	{
@@ -4676,9 +5833,9 @@ abstract class ComponentbuilderHelper
 	}
 
 	/**
-	*	Random Key
+	* Random Key
 	*
-	*	@returns a string
+	* @returns a string
 	**/
 	public static function randomkey($size)
 	{

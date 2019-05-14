@@ -93,6 +93,7 @@
 			description="COM_COMPONENTBUILDER_ADMIN_FIELDS_ADMIN_VIEW_DESCRIPTION"
 			class="list_class"
 			multiple="false"
+			default=""
 			required="true"
 			readonly="true"
 			button="false"
@@ -105,6 +106,7 @@
 			layout="joomla.form.field.subform.repeatable-table"
 			multiple="true"
 			description="COM_COMPONENTBUILDER_ADMIN_FIELDS_ADDFIELDS_DESCRIPTION"
+			default=""
 			icon="list"
 			min="1">
 			<form hidden="true" name="list_addfields_modal" repeat="true">
@@ -114,8 +116,9 @@
 					name="field"
 					label="COM_COMPONENTBUILDER_ADMIN_FIELDS_FIELD_LABEL"
 					description="COM_COMPONENTBUILDER_ADMIN_FIELDS_FIELD_DESCRIPTION"
-					class="list_class"
+					class="list_class fieldFull"
 					multiple="false"
+					default=""
 					required="false"
 					button="false"
 				/>
@@ -133,7 +136,11 @@
 					<option value="">
 						COM_COMPONENTBUILDER_ADMIN_FIELDS_DEFAULT</option>
 					<option value="1">
-						COM_COMPONENTBUILDER_ADMIN_FIELDS_SHOW_IN_LIST_VIEW</option>
+						COM_COMPONENTBUILDER_ADMIN_FIELDS_SHOW_IN_ALL_LIST_VIEWS</option>
+					<option value="3">
+						COM_COMPONENTBUILDER_ADMIN_FIELDS_ONLY_IN_ADMIN_LIST_VIEW</option>
+					<option value="4">
+						COM_COMPONENTBUILDER_ADMIN_FIELDS_ONLY_IN_LINKED_LIST_VIEWS</option>
 					<option value="2">
 						COM_COMPONENTBUILDER_ADMIN_FIELDS_NONE_DB</option>
 				</field>
@@ -156,6 +163,7 @@
 					name="title"
 					label="COM_COMPONENTBUILDER_ADMIN_FIELDS_TITLE_LABEL"
 					value="1"
+					default=""
 					required="false"
 					description="COM_COMPONENTBUILDER_ADMIN_FIELDS_TITLE_DESCRIPTION"
 					class="inputbox"
@@ -167,6 +175,7 @@
 					name="alias"
 					label="COM_COMPONENTBUILDER_ADMIN_FIELDS_ALIAS_LABEL"
 					value="1"
+					default=""
 					required="false"
 					description="COM_COMPONENTBUILDER_ADMIN_FIELDS_ALIAS_DESCRIPTION"
 					class="inputbox"
@@ -178,6 +187,7 @@
 					name="sort"
 					label="COM_COMPONENTBUILDER_ADMIN_FIELDS_SORT_LABEL"
 					value="1"
+					default=""
 					required="false"
 					description="COM_COMPONENTBUILDER_ADMIN_FIELDS_SORT_DESCRIPTION"
 					class="inputbox"
@@ -188,6 +198,7 @@
 					name="search"
 					label="COM_COMPONENTBUILDER_ADMIN_FIELDS_SEARCH_LABEL"
 					value="1"
+					default=""
 					required="false"
 					description="COM_COMPONENTBUILDER_ADMIN_FIELDS_SEARCH_DESCRIPTION"
 					class="inputbox"
@@ -198,6 +209,7 @@
 					name="filter"
 					label="COM_COMPONENTBUILDER_ADMIN_FIELDS_FILTER_LABEL"
 					value="1"
+					default=""
 					required="false"
 					description="COM_COMPONENTBUILDER_ADMIN_FIELDS_FILTER_DESCRIPTION"
 					class="inputbox"
@@ -208,6 +220,7 @@
 					name="link"
 					label="COM_COMPONENTBUILDER_ADMIN_FIELDS_LINK_LABEL"
 					value="1"
+					default=""
 					required="false"
 					description="COM_COMPONENTBUILDER_ADMIN_FIELDS_LINK_DESCRIPTION"
 					class="inputbox"
@@ -270,14 +283,16 @@
 					name="permission"
 					label="COM_COMPONENTBUILDER_ADMIN_FIELDS_PERMISSION_LABEL"
 					description="COM_COMPONENTBUILDER_ADMIN_FIELDS_PERMISSION_DESCRIPTION"
-					class="fieldMid"
-					multiple="false"
+					class="fieldMedium"
+					multiple="true"
 					required="false">
 					<!-- Option Set. -->
-					<option value="0">
-						COM_COMPONENTBUILDER_ADMIN_FIELDS_NONE</option>
-					<option value=" 1">
+					<option value="1">
 						COM_COMPONENTBUILDER_ADMIN_FIELDS_EDITING</option>
+					<option value="2">
+						COM_COMPONENTBUILDER_ADMIN_FIELDS_ACCESS</option>
+					<option value="3">
+						COM_COMPONENTBUILDER_ADMIN_FIELDS_VIEW</option>
 				</field>
 			</form>
 		</field>

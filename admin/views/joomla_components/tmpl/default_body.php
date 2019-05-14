@@ -1,27 +1,13 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		default_body.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access'); 
@@ -75,66 +61,139 @@ $edit = "index.php?option=com_componentbuilder&view=joomla_components&task=jooml
 		<?php endif; ?>
 		</td>
 		<td class="nowrap">
+			<div>
 			<?php if ($canDo->get('joomla_component.edit')): ?>
-				<div class="name">
-					<a href="<?php echo $edit; ?>&id=<?php echo $item->id; ?>"><?php echo $this->escape($item->system_name); ?></a>
-					<?php if ($item->checked_out): ?>
-						<?php echo JHtml::_('jgrid.checkedout', $i, $userChkOut->name, $item->checked_out_time, 'joomla_components.', $canCheckin); ?>
-					<?php endif; ?>
-				</div>
+				<a href="<?php echo $edit; ?>&id=<?php echo $item->id; ?>"><?php echo $this->escape($item->system_name); ?></a>
+				<?php if ($item->checked_out): ?>
+					<?php echo JHtml::_('jgrid.checkedout', $i, $userChkOut->name, $item->checked_out_time, 'joomla_components.', $canCheckin); ?>
+				<?php endif; ?>
 			<?php else: ?>
-				<div class="name"><?php echo $this->escape($item->system_name); ?></div>
+				<?php echo $this->escape($item->system_name); ?>
 			<?php endif; ?>
-
+				- <?php echo $this->escape($item->component_version); ?>
+			</div>
+			<?php	// setup the return path
+				if (!isset($returnpath))
+				{
+					$returnpath = urlencode(base64_encode((string) JUri::getInstance()));
+				}
+				// setup the buttons
+				if (!isset($_buttons) || !ComponentbuilderHelper::checkArray($_buttons))
+				{
+					$_buttons = array();
+					$_buttons[0] = array(
+						array(
+							'view' => 'component_admin_views',
+							'views' => 'components_admin_views',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_ADMIN_VIEWS'),
+							'icon' => 'stack'),
+						array(
+							'view' => 'component_custom_admin_views',
+							'views' => 'components_custom_admin_views',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_CUSTOM_ADMIN_VIEWS'),
+							'icon' => 'screen'),
+						array(
+							'view' => 'component_site_views',
+							'views' => 'components_site_views',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_SITE_VIEWS'),
+							'icon' => 'palette'),
+						array(
+							'view' => 'component_config',
+							'views' => 'components_config',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_CONFIG'),
+							'icon' => 'options')
+						);
+					$_buttons[1] = array(
+						array(
+							'view' => 'component_placeholders',
+							'views' => 'components_placeholders',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_PLACEHOLDERS'),
+							'icon' => 'search'),
+						array(
+							'view' => 'component_updates',
+							'views' => 'components_updates',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_UPDATES'),
+							'icon' => 'database'),
+						array(
+							'view' => 'component_mysql_tweaks',
+							'views' => 'components_mysql_tweaks',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_MYSQL_TWEAKS'),
+							'icon' => 'screwdriver'),
+						array(
+							'view' => 'component_files_folders',
+							'views' => 'components_files_folders',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_FILES_FOLDERS'),
+							'icon' => 'briefcase')
+						);
+					$_buttons[2] = array(
+						array(
+							'view' => 'component_custom_admin_menus',
+							'views' => 'components_custom_admin_menus',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_CUSTOM_ADMIN_MENUS'),
+							'icon' => 'plus'),
+						array(
+							'view' => 'component_dashboard',
+							'views' => 'components_dashboard',
+							'title' => JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_DASHBOARD'),
+							'icon' => 'dashboard')
+						);
+				}
+			?>
 			<div class="btn-group" style="margin: 5px 0 0 0;">
-				<?php if ($canDo->get('component_admin_views.edit') && $component_admin_views_id = ComponentbuilderHelper::getVar('component_admin_views', $item->id, 'joomla_component', 'id')): ?>
-					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=components_admin_views&task=component_admin_views.edit&id=<?php echo $component_admin_views_id; ?>&ref=joomla_components" title="<?php echo JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_ADMIN_VIEWS'); ?>" ><span class="icon-stack"></span></a>
+			<?php foreach ($_buttons[0] as $_button): ?>
+				<?php if ($canDo->get($_button['view'].'.edit') && ($id = ComponentbuilderHelper::getVar($_button['view'], $item->id, 'joomla_component', 'id')) !== false): ?>
+					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=<?php echo $_button['views'] ?>&task=<?php echo $_button['view'] ?>.edit&id=<?php echo $id; ?>&return=<?php echo $returnpath; ?>" title="<?php echo $_button['title']; ?>" ><span class="icon-<?php echo $_button['icon']; ?>"></span></a>
+				<?php elseif ($canDo->get($_button['view'].'.create')): ?>
+					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=<?php echo $_button['views'] ?>&task=<?php echo $_button['view'] ?>.edit&ref=joomla_component&refid=<?php echo $item->id; ?>&return=<?php echo $returnpath; ?>" title="<?php echo $_button['title']; ?>" ><span class="icon-<?php echo $_button['icon']; ?>"></span></a>
 				<?php endif; ?>
-				<?php if ($canDo->get('component_custom_admin_views.edit') && $component_custom_admin_views_id = ComponentbuilderHelper::getVar('component_custom_admin_views', $item->id, 'joomla_component', 'id')): ?>
-					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=components_custom_admin_views&task=component_custom_admin_views.edit&id=<?php echo $component_custom_admin_views_id; ?>&ref=joomla_components" title="<?php echo JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_CUSTOM_ADMIN_VIEWS'); ?>" ><span class="icon-screen"></span></a>
-				<?php endif; ?>
-				<?php if ($canDo->get('component_site_views.edit') && $component_site_views_id = ComponentbuilderHelper::getVar('component_site_views', $item->id, 'joomla_component', 'id')): ?>
-					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=components_site_views&task=component_site_views.edit&id=<?php echo $component_site_views_id; ?>&ref=joomla_components" title="<?php echo JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_SITE_VIEWS'); ?>" ><span class="icon-palette"></span></a>
-				<?php endif; ?>
-				<?php if ($canDo->get('component_config.edit') && $component_config_id = ComponentbuilderHelper::getVar('component_config', $item->id, 'joomla_component', 'id')): ?>
-					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=components_config&task=component_config.edit&id=<?php echo $component_config_id; ?>&ref=joomla_components" title="<?php echo JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_CONFIG'); ?>" ><span class="icon-options"></span></a>
-				<?php endif; ?>
+			<?php endforeach; ?>
 			</div>
 		</td>
 		<td class="hidden-phone">
-			<div><?php echo $this->escape($item->name_code); ?></div>
+			<div>
+			<?php echo $this->escape($item->name_code); ?>
+			</div>
 			<div class="btn-group" style="margin: 5px 0 0 0;">
-				<?php if ($canDo->get('component_updates.edit') && $component_updates_id = ComponentbuilderHelper::getVar('component_updates', $item->id, 'joomla_component', 'id')): ?>
-					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=components_updates&task=component_updates.edit&id=<?php echo $component_updates_id; ?>&ref=joomla_components" title="<?php echo JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_UPDATES'); ?>" ><span class="icon-database"></span></a>
+			<?php foreach ($_buttons[1] as $_button): ?>
+				<?php if ($canDo->get($_button['view'].'.edit') && ($id = ComponentbuilderHelper::getVar($_button['view'], $item->id, 'joomla_component', 'id')) !== false): ?>
+					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=<?php echo $_button['views'] ?>&task=<?php echo $_button['view'] ?>.edit&id=<?php echo $id; ?>&return=<?php echo $returnpath; ?>" title="<?php echo $_button['title']; ?>" ><span class="icon-<?php echo $_button['icon']; ?>"></span></a>
+				<?php elseif ($canDo->get($_button['view'].'.create')): ?>
+					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=<?php echo $_button['views'] ?>&task=<?php echo $_button['view'] ?>.edit&ref=joomla_component&refid=<?php echo $item->id; ?>&return=<?php echo $returnpath; ?>" title="<?php echo $_button['title']; ?>" ><span class="icon-<?php echo $_button['icon']; ?>"></span></a>
 				<?php endif; ?>
-				<?php if ($canDo->get('component_mysql_tweaks.edit') && $component_mysql_tweaks_id = ComponentbuilderHelper::getVar('component_mysql_tweaks', $item->id, 'joomla_component', 'id')): ?>
-					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=components_mysql_tweaks&task=component_mysql_tweaks.edit&id=<?php echo $component_mysql_tweaks_id; ?>&ref=joomla_components" title="<?php echo JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_MYSQL_TWEAKS'); ?>" ><span class="icon-screwdriver"></span></a>
-				<?php endif; ?>
-				<?php if ($canDo->get('component_files_folders.edit') && $component_files_folders_id = ComponentbuilderHelper::getVar('component_files_folders', $item->id, 'joomla_component', 'id')): ?>
-					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=components_files_folders&task=component_files_folders.edit&id=<?php echo $component_files_folders_id; ?>&ref=joomla_components" title="<?php echo JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_FILES_FOLDERS'); ?>" ><span class="icon-briefcase"></span></a>
-				<?php endif; ?>
+			<?php endforeach; ?>
 			</div>
 		</td>
 		<td class="hidden-phone">
-			<?php echo $this->escape($item->component_version); ?>
-		</td>
-		<td class="hidden-phone">
-			<div><?php echo $this->escape($item->short_description); ?></div>
+			<div>
+			<?php echo $this->escape($item->short_description); ?>
+			</div>
 			<div class="btn-group" style="margin: 5px 0 0 0;">
-				<?php if ($canDo->get('component_custom_admin_menus.edit') && $component_custom_admin_menus_id = ComponentbuilderHelper::getVar('component_custom_admin_menus', $item->id, 'joomla_component', 'id')): ?>
-					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=components_custom_admin_menus&task=component_custom_admin_menus.edit&id=<?php echo $component_custom_admin_menus_id; ?>&ref=joomla_components" title="<?php echo JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_CUSTOM_ADMIN_MENUS'); ?>" ><span class="icon-plus"></span></a>
+			<?php foreach ($_buttons[2] as $_button): ?>
+				<?php if ($canDo->get($_button['view'].'.edit') && ($id = ComponentbuilderHelper::getVar($_button['view'], $item->id, 'joomla_component', 'id')) !== false): ?>
+					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=<?php echo $_button['views'] ?>&task=<?php echo $_button['view'] ?>.edit&id=<?php echo $id; ?>&return=<?php echo $returnpath; ?>" title="<?php echo $_button['title']; ?>" ><span class="icon-<?php echo $_button['icon']; ?>"></span></a>
+				<?php elseif ($canDo->get($_button['view'].'.create')): ?>
+					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=<?php echo $_button['views'] ?>&task=<?php echo $_button['view'] ?>.edit&ref=joomla_component&refid=<?php echo $item->id; ?>&return=<?php echo $returnpath; ?>" title="<?php echo $_button['title']; ?>" ><span class="icon-<?php echo $_button['icon']; ?>"></span></a>
 				<?php endif; ?>
-				<?php if ($canDo->get('component_dashboard.edit') && $component_dashboard_id = ComponentbuilderHelper::getVar('component_dashboard', $item->id, 'joomla_component', 'id')): ?>
-					<a class="hasTooltip btn btn-mini" href="index.php?option=com_componentbuilder&view=components_dashboard&task=component_dashboard.edit&id=<?php echo $component_dashboard_id; ?>&ref=joomla_components" title="<?php echo JText::_('COM_COMPONENTBUILDER_THE_COMPONENT_DASHBOARD'); ?>" ><span class="icon-dashboard"></span></a>
-				<?php endif; ?>
+			<?php endforeach; ?>
 			</div>
 		</td>
-
 		<td class="hidden-phone">
-			<?php echo $this->escape($item->companyname); ?>
-		</td>
-		<td class="hidden-phone">
-			<?php echo $this->escape($item->author); ?>
+			<div><b><?php echo $this->escape($item->companyname); ?></b><br />
+			<?php if (ComponentbuilderHelper::checkString($item->author)) : ?>
+				<em><?php echo $this->escape($item->author); ?><em><br />
+			<?php endif; ?>
+			<?php if (ComponentbuilderHelper::checkString($item->email) && ComponentbuilderHelper::checkString($item->author)) : ?>
+				<a href="mailto:<?php echo $this->escape($item->email); ?>" title="<?php echo JText::sprintf('COM_COMPONENTBUILDER_EMAIL_S', $item->author); ?>" target="_blank">
+					<?php echo $this->escape($item->email); ?>
+				</a>
+				<br />
+			<?php endif; ?>
+			<?php if (ComponentbuilderHelper::checkString($item->website) && ComponentbuilderHelper::checkString($item->author)) : ?>
+				<a href="<?php echo $this->escape($item->website); ?>" title="<?php echo JText::sprintf('COM_COMPONENTBUILDER_WEBSITE_OF_S', $item->companyname); ?>" target="_blank">
+					<?php echo $this->escape($item->website); ?>
+				</a>
+			<?php endif; ?>
+			</div>
 		</td>
 		<td class="center">
 		<?php if ($canDo->get('joomla_component.edit.state')) : ?>

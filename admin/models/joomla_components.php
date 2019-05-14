@@ -1,33 +1,16 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		joomla_components.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-
-// import the Joomla modellist library
-jimport('joomla.application.component.modellist');
 
 /**
  * Joomla_components Model
@@ -46,7 +29,6 @@ class ComponentbuilderModelJoomla_components extends JModelList
 				'a.modified_by','modified_by',
 				'a.system_name','system_name',
 				'a.name_code','name_code',
-				'a.component_version','component_version',
 				'a.short_description','short_description',
 				'a.companyname','companyname',
 				'a.author','author'
@@ -62,7 +44,7 @@ class ComponentbuilderModelJoomla_components extends JModelList
 	public $zipPath = false;
 	public $key = array();
 	public $exportBuyLinks = array();
-	public $exportPackageLinks = array();
+	public $joomlaSourceLinks = array();
 	public $info = array(
 		'name' => array(),
 		'short_description' => array(),
@@ -76,6 +58,7 @@ class ComponentbuilderModelJoomla_components extends JModelList
 		'getKeyFrom' => null
 		);
 	public $activeType = 'export';
+	public $backupType = 1;
 
 	protected $params;
 	protected $tempPath;
@@ -83,6 +66,8 @@ class ComponentbuilderModelJoomla_components extends JModelList
 	protected $smartBox = array();
 	protected $smartIDs = array();
 	protected $customCodeM = array();
+	protected $placeholderM = array();
+	protected $placeholderS = array();
 	protected $fieldTypes = array();
 	protected $isMultiple = array();
 
@@ -259,19 +244,21 @@ class ComponentbuilderModelJoomla_components extends JModelList
 				// set the export buy links
 				if (isset($item->export_buy_link) && ComponentbuilderHelper::checkString($item->export_buy_link))
 				{
-					// keep the key locked for exported data set
-					$this->exportBuyLinks[$keyName] = $item->export_buy_link;
+					// set the export buy link
+					$this->info['export_buy_link'][$item->id] = $item->export_buy_link;
 				}
 				// set the export buy links
-				if (isset($item->export_package_link) && ComponentbuilderHelper::checkString($item->export_package_link))
+				if (isset($item->joomla_source_link) && ComponentbuilderHelper::checkString($item->joomla_source_link))
 				{
-					// keep the key locked for exported data set
-					$this->exportPackageLinks[$keyName] = $item->export_package_link;
+					// set the source link
+					$this->info['joomla_source_link'][$item->id] = $item->joomla_source_link;
 				}
 				// component image
 				$this->moveIt(array($item->image), 'image');
 				// set the custom code ID's
-				$this->setCustomCodeIds($item, 'joomla_component');
+				$this->setCodePlaceholdersIds($item, 'joomla_component');
+				// set the placeholder ID's
+				$this->setCodePlaceholdersIds($item, 'joomla_component', 'placeholder');
 				// set the language strings for this component
 				$this->setLanguageTranslation($item->id);
 				// load to global object
@@ -315,17 +302,20 @@ class ComponentbuilderModelJoomla_components extends JModelList
 			'component_updates' => 'joomla_component',
 			'component_mysql_tweaks' => 'joomla_component',
 			'component_custom_admin_menus' => 'joomla_component',
-			'component_dashboard' => 'joomla_component' );
+			'component_dashboard' => 'joomla_component',
+			'component_placeholders' => 'joomla_component' );
 		// load all tables linked to joomla_component
 		foreach($linkedTables as $table => $field)
 		{
 			$this->setData($table, $pks, $field);
 		}
-		// add fields and conditions
+		// add fields conditions and relations
 		if (isset($this->smartIDs['admin_view']) && ComponentbuilderHelper::checkArray($this->smartIDs['admin_view']))
 		{
 			$this->setData('admin_fields', array_values($this->smartIDs['admin_view']), 'admin_view');
 			$this->setData('admin_fields_conditions', array_values($this->smartIDs['admin_view']), 'admin_view');
+			$this->setData('admin_fields_relations', array_values($this->smartIDs['admin_view']), 'admin_view');
+			$this->setData('admin_custom_tabs', array_values($this->smartIDs['admin_view']), 'admin_view');
 		}
 		// add validation rules
 		if (isset($this->smartIDs['validation_rule']) && ComponentbuilderHelper::checkArray($this->smartIDs['validation_rule']))
@@ -364,6 +354,20 @@ class ComponentbuilderModelJoomla_components extends JModelList
 			if (isset($this->smartIDs['custom_code']) && ComponentbuilderHelper::checkArray($this->smartIDs['custom_code']))
 			{
 				$this->setData('custom_code', array_values($this->smartIDs['custom_code']), 'id');
+			}
+			// add placeholder
+			if (isset($this->smartIDs['placeholder']) && ComponentbuilderHelper::checkArray($this->smartIDs['placeholder']))
+			{
+				$this->setData('placeholder', array_values($this->smartIDs['placeholder']), 'id');
+			}
+			// set limiter
+			$limit = 0;
+			// and add those custom codes found in custom codes
+			while (isset($this->smartIDs['custom_code']) && ComponentbuilderHelper::checkArray($this->smartIDs['custom_code']) && $limit < 100)
+			{
+				$this->setData('custom_code', array_values($this->smartIDs['custom_code']), 'id');
+				// make sure we break
+				$limit++; // just in case (should not be needed)
 			}
 		}
 	}
@@ -619,6 +623,14 @@ class ComponentbuilderModelJoomla_components extends JModelList
 				{
 					$this->smartIDs['layout'] = array();
 				}
+				elseif ('custom_code' === $table && 'id' === $key && !isset($this->smartIDs['custom_code']))
+				{
+					$this->smartIDs['custom_code'] = array();
+				}
+				elseif ('placeholder' === $table && 'id' === $key && !isset($this->smartIDs['placeholder']))
+				{
+					$this->smartIDs['placeholder'] = array();
+				}
 				// start loading the data
 				if (!isset($this->smartBox[$table]))
 				{
@@ -667,7 +679,9 @@ class ComponentbuilderModelJoomla_components extends JModelList
 					// load to global object
 					$this->smartBox[$table][$item->id] = $item;
 					// set the custom code ID's
-					$this->setCustomCodeIds($item, $table);
+					$this->setCodePlaceholdersIds($item, $table);
+					// set the placeholder ID's
+					$this->setCodePlaceholdersIds($item, $table, 'placeholder');
 					// actions to take if table is component_files_folders
 					if ('component_files_folders' === $table && 'clone' !== $this->activeType)
 					{
@@ -729,9 +743,16 @@ class ComponentbuilderModelJoomla_components extends JModelList
 					// actions to take if table is admin_fields_conditions
 					if ('admin_fields_conditions' === $table)
 					{
-						// add fields
+						// add fields (all should already be added)
 						$this->setData('field', $this->getValues($item->addconditions, 'subform', 'target_field'), 'id');
 						$this->setData('field', $this->getValues($item->addconditions, 'subform', 'match_field'), 'id');
+					}
+					// actions to take if table is admin_fields_relations
+					if ('admin_fields_relations' === $table)
+					{
+						// add fields (all should already be added)
+						$this->setData('field', $this->getValues($item->addrelations, 'subform', 'listfield'), 'id');
+						$this->setData('field', $this->getValues($item->addrelations, 'subform', 'joinfields'), 'id');
 					}
 					// actions to take if table is field
 					if ('field' === $table)
@@ -860,10 +881,11 @@ class ComponentbuilderModelJoomla_components extends JModelList
 			// the array of tables to store
 			$tables = array(
 				'fieldtype', 'field', 'admin_view', 'snippet', 'dynamic_get', 'custom_admin_view', 'site_view',
-				'template', 'layout', 'joomla_component', 'language', 'language_translation', 'custom_code',
-				'admin_fields', 'admin_fields_conditions', 'component_admin_views', 'component_site_views',
-				'component_custom_admin_views', 'component_updates', 'component_mysql_tweaks',
-				'component_custom_admin_menus', 'component_config', 'component_dashboard', 'component_files_folders'
+				'template', 'layout', 'joomla_component', 'language', 'language_translation', 'custom_code', 'placeholder',
+				'admin_fields', 'admin_fields_conditions', 'admin_fields_relations',  'admin_custom_tabs', 'component_admin_views',
+				'component_site_views', 'component_custom_admin_views', 'component_updates', 'component_mysql_tweaks',
+				'component_custom_admin_menus', 'component_config', 'component_dashboard', 'component_files_folders',
+				'component_placeholders'
 			);
 			// smart table loop
 			foreach ($tables as $table)
@@ -875,7 +897,7 @@ class ComponentbuilderModelJoomla_components extends JModelList
 				}
 			}
 			// do an after all run on all items that need it
-			$model->updateAfter();
+			$model->updateAfterAll();
 			// finally move the old datasets
 			$model->moveDivergedData();
 			// we had success
@@ -896,35 +918,49 @@ class ComponentbuilderModelJoomla_components extends JModelList
 		{
 			// set db data
 			$data = serialize($this->smartBox);
+			// Set the key owner information
+			$this->info['source'] = array();
+			$this->info['source']['company'] = $this->params->get('export_company', null);
+			$this->info['source']['owner'] = $this->params->get('export_owner', null);
+			$this->info['source']['email'] = $this->params->get('export_email', null);
+			$this->info['source']['website'] = $this->params->get('export_website', null);
+			$this->info['source']['license'] = $this->params->get('export_license', null);
+			$this->info['source']['copyright'] = $this->params->get('export_copyright', null);
 			// lock the data if set
 			if (ComponentbuilderHelper::checkArray($this->key))
 			{
 				// lock the data
 				$this->key = md5(implode('', $this->key));
 				$locker = new FOFEncryptAes($this->key, 128);
-				$data = $locker->encryptString($data);		
+				$data = $locker->encryptString($data);
 				// Set the key owner information
 				$this->info['getKeyFrom'] = array();
-				$this->info['getKeyFrom']['company'] = $this->params->get('export_company', null);
-				$this->info['getKeyFrom']['owner'] = $this->params->get('export_owner', null);
-				$this->info['getKeyFrom']['email'] = $this->params->get('export_email', null);
-				$this->info['getKeyFrom']['website'] = $this->params->get('export_website', null);
-				$this->info['getKeyFrom']['license'] = $this->params->get('export_license', null);
-				$this->info['getKeyFrom']['copyright'] = $this->params->get('export_copyright', null);
-				// making provision for future changes 
-				if (count($this->exportBuyLinks) == 1)
+				$this->info['getKeyFrom']['company'] = $this->info['source']['company'];
+				$this->info['getKeyFrom']['owner'] = $this->info['source']['owner'];
+				$this->info['getKeyFrom']['email'] = $this->info['source']['email'];
+				$this->info['getKeyFrom']['website'] = $this->info['source']['website'];
+				$this->info['getKeyFrom']['license'] = $this->info['source']['license'];
+				$this->info['getKeyFrom']['copyright'] = $this->info['source']['copyright'];
+				// add buy link if only one link is set
+				if (isset($this->info['export_buy_link']) && ComponentbuilderHelper::checkArray($this->info['export_buy_link']) && count((array) $this->info['export_buy_link']) == 1)
 				{
-					$this->info['getKeyFrom']['buy_links'] = $this->exportBuyLinks;
+					$this->info['getKeyFrom']['buy_link'] = array_values($this->info['export_buy_link'])[0];
 				}
 				else
 				{
-					// use global if more then one component is exported, or if none has a buy link
+					// use global if more then one component is exported (since they now have one key), or if none has a buy link
 					$this->info['getKeyFrom']['buy_link'] = $this->params->get('export_buy_link', null);
 				}
-				$this->info['getKeyFrom']['package_links']	= $this->exportPackageLinks;
+				// no remove the buy links
+				unset($this->info['export_buy_link']);
+				// if we have multi links add them also
+				// we started adding this at v2.7.7
+				$this->info['key'] = true;
 			}
 			else
 			{
+				// we started adding this at v2.7.7
+				$this->info['key'] = false;
 				// Set the owner information
 				$data = base64_encode($data);
 			}
@@ -936,7 +972,8 @@ class ComponentbuilderModelJoomla_components extends JModelList
 				return false;
 			}
 			// set info data
-			$locker = new FOFEncryptAes('V4stD3vel0pmEntMethOd@YoUrS3rv!s', 128);
+			$db = 'COM_COMPONENTBUILDER_SZDEQZDMVSMHBTRWFIFTYTSQFLVVXJTMTHREEJTWOIXM';
+			$locker = new FOFEncryptAes(base64_decode(JText::sprintf($db, 'VjR', 'WV0aE9k')), 128);
 			$info = $locker->encryptString(json_encode($this->info));
 			// set the path
 			$infoPath = $this->packagePath . '/info.vdm';
@@ -1356,15 +1393,16 @@ class ComponentbuilderModelJoomla_components extends JModelList
 	}
 
 	/**
-	* Set the ids of the found custom code
+	* Set the ids of the found code placeholders
 	*
 	*  @param   object    $item   The item being searched
 	*  @param   string    $target  The target table
+	*  @param   string    $type    The type of placeholder to search and set
 	* 
 	*  @return  void
 	* 
 	*/
-	protected function setCustomCodeIds($item, $target)
+	protected function setCodePlaceholdersIds($item, $target, $type = 'custom_code')
 	{
 		if ($keys = $this->getCodeSearchKeys($target))
 		{
@@ -1376,37 +1414,87 @@ class ComponentbuilderModelJoomla_components extends JModelList
 				}
 				elseif (!isset($keys['not_base64'][$key]))
 				{
-					$value = base64_decode($item->{$key});
+					$value = ComponentbuilderHelper::openValidBase64($item->{$key}, null);
+				}
+				elseif (isset($keys['not_base64'][$key]) && 'json' === $keys['not_base64'][$key] && 'xml' === $key) // just for field search
+				{
+					$value = json_decode($item->{$key});
 				}
 				else
 				{
 					$value = $item->{$key};
 				}
-				// search the value to see if it has custom code
-				$codeArray = ComponentbuilderHelper::getAllBetween($value, '[CUSTOMC' . 'ODE=',']');
-				if (ComponentbuilderHelper::checkArray($codeArray))
+				// check if we should search for base64 string inside the text
+				if (isset($keys['base64_search']) && isset($keys['base64_search'][$key])
+					&& isset($keys['base64_search'][$key]['start']) && strpos($value, $keys['base64_search'][$key]['start']) !== false)
 				{
-					foreach ($codeArray as $func)
+					// search and open the base64 strings
+					$this->searchOpenBase64($value, $keys['base64_search'][$key]);
+				}
+				// based on the type of search
+				if ('custom_code' === $type)
+				{
+					// search the value to see if it has custom code
+					$codeArray = ComponentbuilderHelper::getAllBetween($value, '[CUSTOMC' . 'ODE=',']');
+					if (ComponentbuilderHelper::checkArray($codeArray))
 					{
-						// first make sure we have only the function key
-						if (strpos($func, '+') !== false)
+						foreach ($codeArray as $func)
 						{
-							$funcArray = explode('+', $func);
-							$func = $funcArray[0];
-						}
-						if (!isset($this->customCodeM[$func]))
-						{
-							$this->customCodeM[$func] = $func;
-							// if numeric add to ids
-							if (is_numeric($func))
+							// first make sure we have only the function key
+							if (strpos($func, '+') !== false)
 							{
-								$this->setSmartIDs($func, 'custom_code');
+								$funcArray = explode('+', $func);
+								$func = $funcArray[0];
 							}
-							elseif (ComponentbuilderHelper::checkString($func))
+							if (!isset($this->customCodeM[$func]))
 							{
-								if ($funcID = ComponentbuilderHelper::getVar('custom_code', $func, 'function_name', 'id'))
+								$this->customCodeM[$func] = $func;
+								// if numeric add to ids
+								if (is_numeric($func))
 								{
-									$this->setSmartIDs($funcID, 'custom_code');
+									$this->setSmartIDs($func, $type);
+								}
+								elseif (ComponentbuilderHelper::checkString($func))
+								{
+									if (($funcID = ComponentbuilderHelper::getVar($type, $func, 'function_name', 'id')) !== false && is_numeric($funcID))
+									{
+										$this->setSmartIDs($funcID, $type);
+									}
+									else
+									{
+										// set a notice that custom code was not found (weird)
+									}
+								}
+							}
+						}
+					}
+				}
+				elseif ('placeholder' === $type)
+				{
+					// check if we already have the placeholder search array
+					if (!componentbuilderHelper::checkArray($this->placeholderM) && !componentbuilderHelper::checkArray($this->placeholderS))
+					{
+						$this->placeholderS = ComponentbuilderHelper::getVars($type, 1, 'published', 'target');
+					}
+					// only continue search if placeholders found
+					if (componentbuilderHelper::checkArray($this->placeholderS))
+					{
+						foreach ($this->placeholderS as $remove => $placeholder)
+						{
+							// search the value to see if it has this placeholder and is not already set
+							if (!isset($this->placeholderM[$placeholder]) && strpos($value, $placeholder) !== false)
+							{
+								// add only once
+								$this->placeholderM[$placeholder] = $placeholder;
+								unset($this->placeholderS[$remove]);
+								// get the ID
+								if (($placeholderID = ComponentbuilderHelper::getVar($type, $placeholder, 'target', 'id')) !== false && is_numeric($placeholderID))
+								{
+									$this->setSmartIDs($placeholderID, $type);
+								}
+								else
+								{
+									// set a notice that placeholder was not found (weird)
 								}
 							}
 						}
@@ -1540,9 +1628,192 @@ class ComponentbuilderModelJoomla_components extends JModelList
 	}
 
 	/**
+	* Search for base64 strings and decode them
+	*
+	*  @param   string    $value  The string to search
+	*  @param   array    $target   The target search values
+	* 
+	*  @return  void
+	* 
+	*/
+	protected function searchOpenBase64(&$value, &$target)
+	{
+		// first get the start property (if dynamic)
+		$starts =  array();
+		if (isset($target['_start']))
+		{
+			// get all values
+			$allBetween = ComponentbuilderHelper::getAllBetween($value, $target['start'], $target['_start']);
+			// just again make sure we found some
+			if (ComponentbuilderHelper::checkArray($allBetween))
+			{
+				if (count((array) $allBetween) > 1)
+				{
+					// search for many
+					foreach ($allBetween as $between)
+					{
+						// load the starting property
+						$start = $target['start'];
+						$start .= $between;
+						$start .= $target['_start'];
+
+						$starts[] = $start;
+					}
+				}
+				else
+				{
+					// load the starting property
+					$start = $target['start'];
+					$start .= array_values($allBetween)[0];
+					$start .= $target['_start'];
+
+					$starts[] = $start;
+				}
+			}
+		}
+		else
+		{
+			$starts[] = $target['start'];
+		}
+		// has any been found
+		if (ComponentbuilderHelper::checkArray($starts))
+		{
+			foreach ($starts as $_start)
+			{
+				// get the base64 string
+				$base64 = ComponentbuilderHelper::getBetween($value, $_start, $target['end']);
+				// now open the base64 text
+				$tmp = ComponentbuilderHelper::openValidBase64($base64);
+				// insert it back into the value (so we still search the whole string)
+				$value = str_replace($base64, $tmp, $value);
+			}
+		}
+	}
+
+
+	/**
+	 * The code search keys/targets
+	 * 
+	 * @var      array
+	 */
+	protected $codeSearchKeys = array(
+		// #__componentbuilder_joomla_component (a)
+		'joomla_component' => array(
+			'search' => array('id', 'system_name', 'php_preflight_install', 'php_postflight_install',
+				'php_preflight_update', 'php_postflight_update', 'php_method_uninstall',
+				'php_helper_admin', 'php_admin_event', 'php_helper_both', 'php_helper_site',
+				'php_site_event', 'javascript'),
+			'views' => 'joomla_components',
+			'not_base64' => array(),
+			'name' => 'system_name'
+		),
+		// #__componentbuilder_component_dashboard (b)
+		'component_dashboard' => array(
+			'search' => array('id', 'joomla_component', 'php_dashboard_methods', 'dashboard_tab'),
+			'views' => 'components_dashboard',
+			'not_base64' => array('dashboard_tab' => 'json'),
+			'name' => 'joomla_component->id:joomla_component.system_name'
+		),
+		// #__componentbuilder_admin_view (c)
+		'admin_view' => array(
+			'search' => array('id', 'system_name', 'javascript_view_file', 'javascript_view_footer',
+				'javascript_views_file', 'javascript_views_footer', 'html_import_view',
+				'php_after_delete', 'php_after_publish', 'php_ajaxmethod', 'php_allowedit', 'php_batchcopy',
+				'php_batchmove', 'php_before_delete', 'php_before_publish', 'php_before_save', 'php_controller',
+				'php_controller_list', 'php_document', 'php_getitem', 'php_getitems', 'php_getitems_after_all',
+				'php_getlistquery', 'php_import', 'php_import_display', 'php_import_ext', 'php_import_headers', 'php_getform',
+				'php_import_save', 'php_import_setdata', 'php_model', 'php_model_list', 'php_postsavehook', 'php_save'),
+			'views' => 'admin_views',
+			'not_base64' => array(),
+			'name' => 'system_name'
+		),
+		// #__componentbuilder_admin_fields_relations (d)
+		'admin_fields_relations' => array(
+			'search' => array('id', 'admin_view', 'addrelations'),
+			'views' => 'admins_fields_relations',
+			'not_base64' => array('addrelations' => 'json'),
+			'name' => 'admin_view->id:admin_view.system_name'
+		),
+		// #__componentbuilder_custom_admin_view (e)
+		'custom_admin_view' => array(
+			'search' => array('id', 'system_name', 'default', 'php_view', 'php_jview', 'php_jview_display', 'php_document',
+				'js_document', 'css_document', 'css', 'php_ajaxmethod', 'php_model', 'php_controller'),
+			'views' => 'custom_admin_views',
+			'not_base64' => array(),
+			'name' => 'system_name'
+		),
+		// #__componentbuilder_site_view (f)
+		'site_view' => array(
+			'search' => array('id', 'system_name', 'default', 'php_view', 'php_jview', 'php_jview_display', 'php_document',
+				'js_document', 'css_document', 'css', 'php_ajaxmethod', 'php_model', 'php_controller'),
+			'views' => 'site_views',
+			'not_base64' => array(),
+			'name' => 'system_name'
+		),
+		// #__componentbuilder_field (g)
+		'field' => array(
+			'search' => array('id', 'name', 'xml', 'javascript_view_footer', 'javascript_views_footer'),
+			'views' => 'fields',
+			'not_base64' => array('xml' => 'json'),
+			'base64_search' => array('xml' => array('start' => 'type_php', '_start' => '="', 'end' => '"')),
+			'name' => 'name'
+		),
+		// #__componentbuilder_fieldtype (h)
+		'fieldtype' => array(
+			'search' => array('id', 'name', 'properties'),
+			'views' => 'fieldtypes',
+			'not_base64' => array('properties' => 'json'),
+			'name' => 'name'
+		),
+		// #__componentbuilder_dynamic_get (i)
+		'dynamic_get' => array(
+			'search' => array('id', 'name', 'php_before_getitem', 'php_after_getitem', 'php_before_getitems', 'php_after_getitems',
+				'php_getlistquery'),
+			'views' => 'dynamic_gets',
+			'not_base64' => array(),
+			'name' => 'name'
+		),
+		// #__componentbuilder_template (j)
+		'template' => array(
+			'search' => array('id', 'name', 'php_view', 'template'),
+			'views' => 'templates',
+			'not_base64' => array(),
+			'name' => 'name'
+		),
+		// #__componentbuilder_layout (k)
+		'layout' => array(
+			'search' => array('id', 'name', 'php_view', 'layout'),
+			'views' => 'layouts',
+			'not_base64' => array(),
+			'name' => 'name'
+		),
+		// #__componentbuilder_library (l)
+		'library' => array(
+			'search' => array('id', 'name', 'php_setdocument'),
+			'views' => 'libraries',
+			'not_base64' => array(),
+			'name' => 'name'
+		),
+		// #__componentbuilder_custom_code (m)
+		'custom_code' => array(
+			'search' => array('id', 'system_name', 'code'),
+			'views' => 'custom_codes',
+			'not_base64' => array(),
+			'name' => 'system_name'
+		),
+		// #__componentbuilder_validation_rule (n)
+		'validation_rule' => array(
+			'search' => array('id', 'name', 'php'),
+			'views' => 'validation_rules',
+			'not_base64' => array(),
+			'name' => 'name'
+		)
+	);
+
+	/**
 	* Get the keys of the values to search custom code in
 	*
-	*  @param   string    $targe  The table targeted
+	*  @param   string    $target  The table targeted
 	*  @param   string    $type   The type of get
 	* 
 	*  @return  array      The query options
@@ -1553,129 +1824,43 @@ class ComponentbuilderModelJoomla_components extends JModelList
 		// set the template if type is query
 		if ('query' === $type)
 		{
-			$tables = array(
-				'a' => 'joomla_component',
-				'b' => 'admin_view',
-				'c' => 'custom_admin_view',
-				'd' => 'site_view',
-				'e' => 'field',
-				'f' => 'dynamic_get',
-				'g' => 'template',
-				'h' => 'layout',
-				'i' => 'component_dashboard',
-				'j' => 'library',
-			);
+			// setup the tables
+			$tables = array();
+			$key = 'a';
+			foreach (array_keys($this->codeSearchKeys) as $table)
+			{
+				$tables[$key] = $table;
+				$key++;
+			}
 			// check if we have a match
 			if (isset($tables[$target]))
 			{
 				$target = $tables[$target];
 			}
 		}
-		// start target arrays
-		$targets = array();
-		// #__componentbuilder_joomla_component
-		$targets['joomla_component'] = array();
-		$targets['joomla_component']['search'] = array('id', 'system_name', 'php_preflight_install','php_postflight_install',
-			'php_preflight_update','php_postflight_update','php_method_uninstall',
-			'php_helper_admin','php_admin_event','php_helper_both','php_helper_site',
-			'php_site_event','javascript');
-		$targets['joomla_component']['view'] = 'joomla_components';
-		$targets['joomla_component']['not_base64'] = array();
-		$targets['joomla_component']['name'] = 'system_name';
-
-		// #__componentbuilder_component_dashboard
-		$targets['component_dashboard'] = array();
-		$targets['component_dashboard']['search'] = array('id', 'joomla_component', 'php_dashboard_methods','dashboard_tab');
-		$targets['component_dashboard']['view'] = 'components_dashboard';
-		$targets['component_dashboard']['not_base64'] = array('dashboard_tab' => 'json');
-		$targets['component_dashboard']['name'] = 'joomla_component->id:joomla_component.system_name';
-
-		// #__componentbuilder_admin_view
-		$targets['admin_view'] = array();
-		$targets['admin_view']['search'] = array('id', 'system_name', 'javascript_view_file','javascript_view_footer',
-			'javascript_views_file','javascript_views_footer','html_import_view',
-			'php_after_delete','php_after_publish','php_ajaxmethod','php_allowedit','php_batchcopy',
-			'php_batchmove','php_before_delete','php_before_publish','php_before_save','php_controller',
-			'php_controller_list','php_document','php_getitem','php_getitems','php_getitems_after_all',
-			'php_getlistquery','php_import','php_import_display','php_import_ext','php_import_headers',
-			'php_import_save','php_import_setdata','php_model','php_model_list','php_postsavehook','php_save');
-		$targets['admin_view']['view'] = 'admin_views';
-		$targets['admin_view']['not_base64'] = array();
-		$targets['admin_view']['name'] = 'system_name';
-
-		// #__componentbuilder_custom_admin_view
-		$targets['custom_admin_view'] = array();
-		$targets['custom_admin_view']['search'] = array('id', 'system_name', 'default','php_view','php_jview','php_jview_display','php_document',
-			'js_document','css_document','css','php_ajaxmethod','php_model','php_controller');
-		$targets['custom_admin_view']['view'] = 'custom_admin_views';
-		$targets['custom_admin_view']['not_base64'] = array();
-		$targets['custom_admin_view']['name'] = 'system_name';
-
-		// #__componentbuilder_site_view
-		$targets['site_view'] = array();
-		$targets['site_view']['search'] = array('id', 'system_name', 'default','php_view','php_jview','php_jview_display','php_document',
-			'js_document','css_document','css','php_ajaxmethod','php_model','php_controller');
-		$targets['site_view']['view'] = 'site_views';
-		$targets['site_view']['not_base64'] = array();
-		$targets['site_view']['name'] = 'system_name';
-
-		// #__componentbuilder_field
-		$targets['field'] = array();
-		$targets['field']['search'] = array('id', 'name', 'xml','javascript_view_footer','javascript_views_footer');
-		$targets['field']['view'] = 'fields';
-		$targets['field']['not_base64'] = array('xml' => 'json');
-		$targets['field']['name'] = 'name';
-
-		// #__componentbuilder_dynamic_get
-		$targets['dynamic_get'] = array();
-		$targets['dynamic_get']['search'] = array('id', 'name', 'php_before_getitem','php_after_getitem','php_before_getitems','php_after_getitems',
-			'php_getlistquery');
-		$targets['dynamic_get']['view'] = 'dynamic_gets';
-		$targets['dynamic_get']['not_base64'] = array();
-		$targets['dynamic_get']['name'] = 'name';
-
-		// #__componentbuilder_template
-		$targets['template'] = array();
-		$targets['template']['search'] = array('id', 'name', 'php_view','template');
-		$targets['template']['view'] = 'templates';
-		$targets['template']['not_base64'] = array();
-		$targets['template']['name'] = 'name';
-
-		// #__componentbuilder_layout
-		$targets['layout'] = array();
-		$targets['layout']['search'] = array('id', 'name', 'php_view','layout');
-		$targets['layout']['view'] = 'layouts';
-		$targets['layout']['not_base64'] = array();
-		$targets['layout']['name'] = 'name';
-
-		// #__componentbuilder_library
-		$targets['library'] = array();
-		$targets['library']['view'] = 'libraries';
-		$targets['library']['search'] = array('id', 'name', 'php_setdocument');
-		$targets['library']['view'] = 'libraries';
-		$targets['library']['not_base64'] = array();
-		$targets['library']['name'] = 'name';
-
 		// return result ready for a.query
-		if ('query' === $type && isset($targets[$target]))
+		if (('query' === $type || 'query_' === $type) && isset($this->codeSearchKeys[$target]))
 		{
+			// set the targets
+			$codeSearchTarget = $this->codeSearchKeys[$target];
 			// add the .a to the selection array
-			$targets[$target]['select'] = array_map( function($select) { return 'a.'.$select; }, $targets[$target]['search']);
+			$codeSearchTarget['select'] = array_map( function($select) { return 'a.' . $select; }, $codeSearchTarget['search']);
 			// also set the table
-			$targets[$target]['table'] = $target;
+			$codeSearchTarget['table'] = $target;
 			// remove search
-			unset($targets[$target]['search']);
-			// return
-			return $targets[$target];
+			unset($codeSearchTarget['search']);
+			// return targeted array to use in query
+			return $codeSearchTarget;
 		}
-		// return the query string to search
-		elseif (isset($targets[$target]))
+		// does the target exist
+		elseif (isset($this->codeSearchKeys[$target]))
 		{
-			// remove name and id
-			return $targets[$target];
+			// return target array values to use in search
+			return $this->codeSearchKeys[$target];
 		}
 		return false;
 	}
+
 	
 	/**
 	 * Method to auto-populate the model state.
@@ -1696,9 +1881,6 @@ class ComponentbuilderModelJoomla_components extends JModelList
 
 		$name_code = $this->getUserStateFromRequest($this->context . '.filter.name_code', 'filter_name_code');
 		$this->setState('filter.name_code', $name_code);
-
-		$component_version = $this->getUserStateFromRequest($this->context . '.filter.component_version', 'filter_component_version');
-		$this->setState('filter.component_version', $component_version);
 
 		$short_description = $this->getUserStateFromRequest($this->context . '.filter.short_description', 'filter_short_description');
 		$this->setState('filter.short_description', $short_description);
@@ -1737,7 +1919,7 @@ class ComponentbuilderModelJoomla_components extends JModelList
 	 * @return  mixed  An array of data items on success, false on failure.
 	 */
 	public function getItems()
-	{ 
+	{
 		// check in items
 		$this->checkInNow();
 
@@ -1747,11 +1929,9 @@ class ComponentbuilderModelJoomla_components extends JModelList
 		// set values to display correctly.
 		if (ComponentbuilderHelper::checkArray($items))
 		{
-			// get user object.
-			$user = JFactory::getUser();
 			foreach ($items as $nr => &$item)
 			{
-				$access = ($user->authorise('joomla_component.access', 'com_componentbuilder.joomla_component.' . (int) $item->id) && $user->authorise('joomla_component.access', 'com_componentbuilder'));
+				$access = (JFactory::getUser()->authorise('joomla_component.access', 'com_componentbuilder.joomla_component.' . (int) $item->id) && JFactory::getUser()->authorise('joomla_component.access', 'com_componentbuilder'));
 				if (!$access)
 				{
 					unset($items[$nr]);
@@ -1759,7 +1939,7 @@ class ComponentbuilderModelJoomla_components extends JModelList
 				}
 
 			}
-		}  
+		}
         
 		// return items
 		return $items;
@@ -1820,7 +2000,7 @@ class ComponentbuilderModelJoomla_components extends JModelList
 			else
 			{
 				$search = $db->quote('%' . $db->escape($search) . '%');
-				$query->where('(a.system_name LIKE '.$search.' OR a.name_code LIKE '.$search.' OR a.short_description LIKE '.$search.' OR a.companyname LIKE '.$search.' OR a.author LIKE '.$search.' OR a.name LIKE '.$search.')');
+				$query->where('(a.system_name LIKE '.$search.' OR a.name_code LIKE '.$search.' OR a.short_description LIKE '.$search.' OR a.companyname LIKE '.$search.' OR a.author LIKE '.$search.' OR a.email LIKE '.$search.' OR a.website LIKE '.$search.' OR a.name LIKE '.$search.')');
 			}
 		}
 
@@ -1847,10 +2027,10 @@ class ComponentbuilderModelJoomla_components extends JModelList
 	}
 
 	/**
-	* Method to get list export data.
-	*
-	* @return mixed  An array of data items on success, false on failure.
-	*/
+	 * Method to get list export data.
+	 *
+	 * @return mixed  An array of data items on success, false on failure.
+	 */
 	public function getExportData($pks)
 	{
 		// setup the query
@@ -1895,52 +2075,52 @@ class ComponentbuilderModelJoomla_components extends JModelList
 				// set values to display correctly.
 				if (ComponentbuilderHelper::checkArray($items))
 				{
-					// get user object.
-					$user = JFactory::getUser();
 					foreach ($items as $nr => &$item)
 					{
-						$access = ($user->authorise('joomla_component.access', 'com_componentbuilder.joomla_component.' . (int) $item->id) && $user->authorise('joomla_component.access', 'com_componentbuilder'));
+						$access = (JFactory::getUser()->authorise('joomla_component.access', 'com_componentbuilder.joomla_component.' . (int) $item->id) && JFactory::getUser()->authorise('joomla_component.access', 'com_componentbuilder'));
 						if (!$access)
 						{
 							unset($items[$nr]);
 							continue;
 						}
 
-						// decode php_postflight_update
-						$item->php_postflight_update = base64_decode($item->php_postflight_update);
-						// decode php_preflight_update
-						$item->php_preflight_update = base64_decode($item->php_preflight_update);
-						// decode javascript
-						$item->javascript = base64_decode($item->javascript);
-						// decode css_site
-						$item->css_site = base64_decode($item->css_site);
-						// decode sql
-						$item->sql = base64_decode($item->sql);
 						// decode php_helper_admin
 						$item->php_helper_admin = base64_decode($item->php_helper_admin);
+						// decode sql
+						$item->sql = base64_decode($item->sql);
+						// decode php_preflight_update
+						$item->php_preflight_update = base64_decode($item->php_preflight_update);
+						// decode css_site
+						$item->css_site = base64_decode($item->css_site);
 						// decode php_helper_site
 						$item->php_helper_site = base64_decode($item->php_helper_site);
+						// decode javascript
+						$item->javascript = base64_decode($item->javascript);
+						// decode php_postflight_update
+						$item->php_postflight_update = base64_decode($item->php_postflight_update);
+						// decode readme
+						$item->readme = base64_decode($item->readme);
 						// decode php_helper_both
 						$item->php_helper_both = base64_decode($item->php_helper_both);
 						// decode php_admin_event
 						$item->php_admin_event = base64_decode($item->php_admin_event);
-						// decode php_site_event
-						$item->php_site_event = base64_decode($item->php_site_event);
-						// decode css_admin
-						$item->css_admin = base64_decode($item->css_admin);
 						if ($basickey && !is_numeric($item->whmcs_key) && $item->whmcs_key === base64_encode(base64_decode($item->whmcs_key, true)))
 						{
 							// decrypt whmcs_key
 							$item->whmcs_key = $basic->decryptString($item->whmcs_key);
 						}
+						// decode php_site_event
+						$item->php_site_event = base64_decode($item->php_site_event);
+						// decode css_admin
+						$item->css_admin = base64_decode($item->css_admin);
 						// decode php_preflight_install
 						$item->php_preflight_install = base64_decode($item->php_preflight_install);
 						// decode php_postflight_install
 						$item->php_postflight_install = base64_decode($item->php_postflight_install);
 						// decode php_method_uninstall
 						$item->php_method_uninstall = base64_decode($item->php_method_uninstall);
-						// decode readme
-						$item->readme = base64_decode($item->readme);
+						// decode sql_uninstall
+						$item->sql_uninstall = base64_decode($item->sql_uninstall);
 						if ($basickey && !is_numeric($item->export_key) && $item->export_key === base64_encode(base64_decode($item->export_key, true)))
 						{
 							// decrypt export_key
@@ -1991,7 +2171,7 @@ class ComponentbuilderModelJoomla_components extends JModelList
 			return $headers;
 		}
 		return false;
-	} 
+	}
 	
 	/**
 	 * Method to get a store id based on model configuration state.
@@ -2010,7 +2190,6 @@ class ComponentbuilderModelJoomla_components extends JModelList
 		$id .= ':' . $this->getState('filter.modified_by');
 		$id .= ':' . $this->getState('filter.system_name');
 		$id .= ':' . $this->getState('filter.name_code');
-		$id .= ':' . $this->getState('filter.component_version');
 		$id .= ':' . $this->getState('filter.short_description');
 		$id .= ':' . $this->getState('filter.companyname');
 		$id .= ':' . $this->getState('filter.author');
@@ -2019,16 +2198,16 @@ class ComponentbuilderModelJoomla_components extends JModelList
 	}
 
 	/**
-	* Build an SQL query to checkin all items left checked out longer then a set time.
-	*
-	* @return  a bool
-	*
-	*/
+	 * Build an SQL query to checkin all items left checked out longer then a set time.
+	 *
+	 * @return  a bool
+	 *
+	 */
 	protected function checkInNow()
 	{
 		// Get set check in time
 		$time = JComponentHelper::getParams('com_componentbuilder')->get('check_in');
-		
+
 		if ($time)
 		{
 

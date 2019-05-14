@@ -1,33 +1,16 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		view.html.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-
-// import Joomla view library
-jimport('joomla.application.component.view');
 
 /**
  * Componentbuilder View class for the Admin_views
@@ -54,6 +37,8 @@ class ComponentbuilderViewAdmin_views extends JViewLegacy
 		$this->listOrder = $this->escape($this->state->get('list.ordering'));
 		$this->listDirn = $this->escape($this->state->get('list.direction'));
 		$this->saveOrder = $this->listOrder == 'ordering';
+		// set the return here value
+		$this->return_here = urlencode(base64_encode((string) JUri::getInstance()));
 		// get global action permissions
 		$this->canDo = ComponentbuilderHelper::getActions('admin_view');
 		$this->canEdit = $this->canDo->get('admin_view.edit');
@@ -133,7 +118,7 @@ class ComponentbuilderViewAdmin_views extends JViewLegacy
 				// add the button to the page
 				$dhtml = $layout->render(array('title' => $title));
 				$bar->appendButton('Custom', $dhtml, 'batch');
-			} 
+			}
 
 			if ($this->state->get('filter.published') == -2 && ($this->canState && $this->canDelete))
 			{
@@ -148,7 +133,12 @@ class ComponentbuilderViewAdmin_views extends JViewLegacy
 			{
 				JToolBarHelper::custom('admin_views.exportData', 'download', '', 'COM_COMPONENTBUILDER_EXPORT_DATA', true);
 			}
-		} 
+		}
+		if ($this->user->authorise('admin_view.run_expansion', 'com_componentbuilder'))
+		{
+			// add Run Expansion button.
+			JToolBarHelper::custom('admin_views.runExpansion', 'expand-2', '', 'COM_COMPONENTBUILDER_RUN_EXPANSION', false);
+		}
 
 		if ($this->canDo->get('core.import') && $this->canDo->get('admin_view.import'))
 		{
@@ -199,7 +189,117 @@ class ComponentbuilderViewAdmin_views extends JViewLegacy
 				'batch[access]',
 				JHtml::_('select.options', JHtml::_('access.assetgroups'), 'value', 'text')
 			);
-		} 
+		}
+
+		// Set Add Fadein Selection
+		$this->add_fadeinOptions = $this->getTheAdd_fadeinSelections();
+		if ($this->add_fadeinOptions)
+		{
+			// Add Fadein Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_ADD_FADEIN_LABEL').' -',
+				'filter_add_fadein',
+				JHtml::_('select.options', $this->add_fadeinOptions, 'value', 'text', $this->state->get('filter.add_fadein'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Add Fadein Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_ADD_FADEIN_LABEL').' -',
+					'batch[add_fadein]',
+					JHtml::_('select.options', $this->add_fadeinOptions, 'value', 'text')
+				);
+			}
+		}
+
+		// Set Type Selection
+		$this->typeOptions = $this->getTheTypeSelections();
+		if ($this->typeOptions)
+		{
+			// Type Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_TYPE_LABEL').' -',
+				'filter_type',
+				JHtml::_('select.options', $this->typeOptions, 'value', 'text', $this->state->get('filter.type'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Type Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_TYPE_LABEL').' -',
+					'batch[type]',
+					JHtml::_('select.options', $this->typeOptions, 'value', 'text')
+				);
+			}
+		}
+
+		// Set Add Custom Import Selection
+		$this->add_custom_importOptions = $this->getTheAdd_custom_importSelections();
+		if ($this->add_custom_importOptions)
+		{
+			// Add Custom Import Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_ADD_CUSTOM_IMPORT_LABEL').' -',
+				'filter_add_custom_import',
+				JHtml::_('select.options', $this->add_custom_importOptions, 'value', 'text', $this->state->get('filter.add_custom_import'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Add Custom Import Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_ADD_CUSTOM_IMPORT_LABEL').' -',
+					'batch[add_custom_import]',
+					JHtml::_('select.options', $this->add_custom_importOptions, 'value', 'text')
+				);
+			}
+		}
+
+		// Set Add Custom Button Selection
+		$this->add_custom_buttonOptions = $this->getTheAdd_custom_buttonSelections();
+		if ($this->add_custom_buttonOptions)
+		{
+			// Add Custom Button Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_ADD_CUSTOM_BUTTON_LABEL').' -',
+				'filter_add_custom_button',
+				JHtml::_('select.options', $this->add_custom_buttonOptions, 'value', 'text', $this->state->get('filter.add_custom_button'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Add Custom Button Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_ADD_CUSTOM_BUTTON_LABEL').' -',
+					'batch[add_custom_button]',
+					JHtml::_('select.options', $this->add_custom_buttonOptions, 'value', 'text')
+				);
+			}
+		}
+
+		// Set Add Php Ajax Selection
+		$this->add_php_ajaxOptions = $this->getTheAdd_php_ajaxSelections();
+		if ($this->add_php_ajaxOptions)
+		{
+			// Add Php Ajax Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_ADD_PHP_AJAX_LABEL').' -',
+				'filter_add_php_ajax',
+				JHtml::_('select.options', $this->add_php_ajaxOptions, 'value', 'text', $this->state->get('filter.add_php_ajax'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Add Php Ajax Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_ADD_PHP_AJAX_LABEL').' -',
+					'batch[add_php_ajax]',
+					JHtml::_('select.options', $this->add_php_ajaxOptions, 'value', 'text')
+				);
+			}
+		}
 	}
 
 	/**
@@ -247,9 +347,188 @@ class ComponentbuilderViewAdmin_views extends JViewLegacy
 			'a.published' => JText::_('JSTATUS'),
 			'a.system_name' => JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_SYSTEM_NAME_LABEL'),
 			'a.name_single' => JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_NAME_SINGLE_LABEL'),
-			'a.name_list' => JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_NAME_LIST_LABEL'),
 			'a.short_description' => JText::_('COM_COMPONENTBUILDER_ADMIN_VIEW_SHORT_DESCRIPTION_LABEL'),
 			'a.id' => JText::_('JGRID_HEADING_ID')
 		);
+	}
+
+	protected function getTheAdd_fadeinSelections()
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+
+		// Select the text.
+		$query->select($db->quoteName('add_fadein'));
+		$query->from($db->quoteName('#__componentbuilder_admin_view'));
+		$query->order($db->quoteName('add_fadein') . ' ASC');
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+
+		$results = $db->loadColumn();
+
+		if ($results)
+		{
+			// get model
+			$model = $this->getModel();
+			$results = array_unique($results);
+			$_filter = array();
+			foreach ($results as $add_fadein)
+			{
+				// Translate the add_fadein selection
+				$text = $model->selectionTranslation($add_fadein,'add_fadein');
+				// Now add the add_fadein and its text to the options array
+				$_filter[] = JHtml::_('select.option', $add_fadein, JText::_($text));
+			}
+			return $_filter;
+		}
+		return false;
+	}
+
+	protected function getTheTypeSelections()
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+
+		// Select the text.
+		$query->select($db->quoteName('type'));
+		$query->from($db->quoteName('#__componentbuilder_admin_view'));
+		$query->order($db->quoteName('type') . ' ASC');
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+
+		$results = $db->loadColumn();
+
+		if ($results)
+		{
+			// get model
+			$model = $this->getModel();
+			$results = array_unique($results);
+			$_filter = array();
+			foreach ($results as $type)
+			{
+				// Translate the type selection
+				$text = $model->selectionTranslation($type,'type');
+				// Now add the type and its text to the options array
+				$_filter[] = JHtml::_('select.option', $type, JText::_($text));
+			}
+			return $_filter;
+		}
+		return false;
+	}
+
+	protected function getTheAdd_custom_importSelections()
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+
+		// Select the text.
+		$query->select($db->quoteName('add_custom_import'));
+		$query->from($db->quoteName('#__componentbuilder_admin_view'));
+		$query->order($db->quoteName('add_custom_import') . ' ASC');
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+
+		$results = $db->loadColumn();
+
+		if ($results)
+		{
+			// get model
+			$model = $this->getModel();
+			$results = array_unique($results);
+			$_filter = array();
+			foreach ($results as $add_custom_import)
+			{
+				// Translate the add_custom_import selection
+				$text = $model->selectionTranslation($add_custom_import,'add_custom_import');
+				// Now add the add_custom_import and its text to the options array
+				$_filter[] = JHtml::_('select.option', $add_custom_import, JText::_($text));
+			}
+			return $_filter;
+		}
+		return false;
+	}
+
+	protected function getTheAdd_custom_buttonSelections()
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+
+		// Select the text.
+		$query->select($db->quoteName('add_custom_button'));
+		$query->from($db->quoteName('#__componentbuilder_admin_view'));
+		$query->order($db->quoteName('add_custom_button') . ' ASC');
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+
+		$results = $db->loadColumn();
+
+		if ($results)
+		{
+			// get model
+			$model = $this->getModel();
+			$results = array_unique($results);
+			$_filter = array();
+			foreach ($results as $add_custom_button)
+			{
+				// Translate the add_custom_button selection
+				$text = $model->selectionTranslation($add_custom_button,'add_custom_button');
+				// Now add the add_custom_button and its text to the options array
+				$_filter[] = JHtml::_('select.option', $add_custom_button, JText::_($text));
+			}
+			return $_filter;
+		}
+		return false;
+	}
+
+	protected function getTheAdd_php_ajaxSelections()
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+
+		// Select the text.
+		$query->select($db->quoteName('add_php_ajax'));
+		$query->from($db->quoteName('#__componentbuilder_admin_view'));
+		$query->order($db->quoteName('add_php_ajax') . ' ASC');
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+
+		$results = $db->loadColumn();
+
+		if ($results)
+		{
+			// get model
+			$model = $this->getModel();
+			$results = array_unique($results);
+			$_filter = array();
+			foreach ($results as $add_php_ajax)
+			{
+				// Translate the add_php_ajax selection
+				$text = $model->selectionTranslation($add_php_ajax,'add_php_ajax');
+				// Now add the add_php_ajax and its text to the options array
+				$_filter[] = JHtml::_('select.option', $add_php_ajax, JText::_($text));
+			}
+			return $_filter;
+		}
+		return false;
 	}
 }

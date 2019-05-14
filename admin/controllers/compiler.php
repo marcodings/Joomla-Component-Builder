@@ -1,33 +1,16 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		compiler.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-
-// import Joomla controlleradmin library
-jimport('joomla.application.component.controlleradmin');
 
 /**
  * Compiler Controller
@@ -52,10 +35,83 @@ class ComponentbuilderControllerCompiler extends JControllerAdmin
 		return;
 	}
 
+
 	/**
-	 * Import an spreadsheet.
+	 * Run the Expansion
 	 *
 	 * @return  void
+	 */
+	public function runExpansion()
+	{
+		// Check for request forgeries
+		JSession::checkToken() or jexit(JText::_('JINVALID_TOKEN'));
+		// check if user has the right
+		$user = JFactory::getUser();
+		// set page redirect
+		$redirect_url = JRoute::_('index.php?option=com_componentbuilder&view=compiler', false);
+		// set massage
+		$message = JText::_('COM_COMPONENTBUILDER_YOU_DO_NOT_HAVE_PERMISSION_TO_RUN_THE_EXPANSION_MODULE');
+		// check if this user has the right to run expansion
+		if($user->authorise('compiler.run_expansion', 'com_componentbuilder'))
+		{
+			// set massage
+			$message = JText::_('COM_COMPONENTBUILDER_EXPANSION_FAILED_PLEASE_CHECK_YOUR_SETTINGS_IN_THE_GLOBAL_OPTIONS_OF_JCB_UNDER_THE_DEVELOPMENT_METHOD_TAB');
+			// run expansion via API
+			$result = ComponentbuilderHelper::getFileContents(JURI::root() . 'index.php?option=com_componentbuilder&task=api.expand');
+			// is there a message returned
+			if (!is_numeric($result) && ComponentbuilderHelper::checkString($result))
+			{
+				$this->setRedirect($redirect_url, $result);
+				return true;
+			}
+			elseif (is_numeric($result) && 1 == $result)
+			{
+				$message = JText::_('COM_COMPONENTBUILDER_BTHE_EXPANSION_WAS_SUCCESSFULLYB_TO_SEE_MORE_INFORMATION_CHANGE_THE_BRETURN_OPTIONS_FOR_BUILDB_TO_BDISPLAY_MESSAGEB_IN_THE_GLOBAL_OPTIONS_OF_JCB_UNDER_THE_DEVELOPMENT_METHOD_TABB');
+				$this->setRedirect($redirect_url, $message, 'message');
+				return true;
+			}
+		}
+		$this->setRedirect($redirect_url, $message, 'error');
+		return false;
+	}
+
+
+	/**
+	 * Clear tmp folder
+	 *
+	 * @return  true on success
+	 */
+	public function clearTmp()
+	{
+		// Check for request forgeries
+		JSession::checkToken() or jexit(JText::_('JINVALID_TOKEN'));
+		// check if user has the right
+		$user = JFactory::getUser();
+		// set page redirect
+		$redirect_url = JRoute::_('index.php?option=com_componentbuilder&view=compiler', false);
+		$message = JText::_('COM_COMPONENTBUILDER_COULD_NOT_CLEAR_THE_TMP_FOLDER');
+		if($user->authorise('core.admin', 'com_componentbuilder'))
+		{
+			// get the model
+			$model = $this->getModel('compiler');
+			// get tmp folder
+			$comConfig = JFactory::getConfig();
+			$tmp = $comConfig->get('tmp_path');
+			if ($model->emptyFolder($tmp))
+			{
+				$message = JText::_('COM_COMPONENTBUILDER_BTHE_TMP_FOLDER_HAS_BEEN_CLEAR_SUCCESSFULLYB');
+				$this->setRedirect($redirect_url, $message, 'message');
+				return true;
+			}
+		}
+		$this->setRedirect($redirect_url, $message, 'error');
+		return false;
+	}
+
+	/**
+	 * Run the Compiler
+	 *
+	 * @return  true on success
 	 */
 	public function compiler()
 	{
@@ -142,33 +198,11 @@ class ComponentbuilderControllerCompiler extends JControllerAdmin
 		return false;
 	}
 
-	public function clearTmp()
-	{
-		// Check for request forgeries
-		JSession::checkToken() or jexit(JText::_('JINVALID_TOKEN'));
-		// check if user has the right
-		$user = JFactory::getUser();
-		// set page redirect
-		$redirect_url = JRoute::_('index.php?option=com_componentbuilder&view=compiler', false);
-		$message = 'Could not clear the tmp folder';
-		if($user->authorise('core.admin', 'com_componentbuilder'))
-		{
-			// get the model
-			$model = $this->getModel('compiler');
-			// get tmp folder
-			$comConfig = JFactory::getConfig();
-			$tmp = $comConfig->get('tmp_path');
-			if ($model->emptyFolder($tmp))
-			{
-				$message = '<b>The tmp folder has been clear successfully!</b>';
-				$this->setRedirect($redirect_url,$message,'message');
-				return true;
-			}
-		}
-		$this->setRedirect($redirect_url,$message,'error');
-		return false;
-	}
-
+	/**
+	 * Install Compiled Extension
+	 *
+	 * @return  true on success
+	 */
 	public function installExtention()
 	{
 		// Check for request forgeries

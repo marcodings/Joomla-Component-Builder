@@ -1,33 +1,16 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		custom_admin_views.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-
-// import the Joomla modellist library
-jimport('joomla.application.component.modellist');
 
 /**
  * Custom_admin_views Model
@@ -46,8 +29,10 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 				'a.modified_by','modified_by',
 				'a.system_name','system_name',
 				'a.name','name',
-				'a.codename','codename',
-				'a.description','description'
+				'a.description','description',
+				'a.main_get','main_get',
+				'a.add_php_ajax','add_php_ajax',
+				'a.add_custom_button','add_custom_button'
 			);
 		}
 
@@ -74,11 +59,17 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 		$name = $this->getUserStateFromRequest($this->context . '.filter.name', 'filter_name');
 		$this->setState('filter.name', $name);
 
-		$codename = $this->getUserStateFromRequest($this->context . '.filter.codename', 'filter_codename');
-		$this->setState('filter.codename', $codename);
-
 		$description = $this->getUserStateFromRequest($this->context . '.filter.description', 'filter_description');
 		$this->setState('filter.description', $description);
+
+		$main_get = $this->getUserStateFromRequest($this->context . '.filter.main_get', 'filter_main_get');
+		$this->setState('filter.main_get', $main_get);
+
+		$add_php_ajax = $this->getUserStateFromRequest($this->context . '.filter.add_php_ajax', 'filter_add_php_ajax');
+		$this->setState('filter.add_php_ajax', $add_php_ajax);
+
+		$add_custom_button = $this->getUserStateFromRequest($this->context . '.filter.add_custom_button', 'filter_add_custom_button');
+		$this->setState('filter.add_custom_button', $add_custom_button);
         
 		$sorting = $this->getUserStateFromRequest($this->context . '.filter.sorting', 'filter_sorting', 0, 'int');
 		$this->setState('filter.sorting', $sorting);
@@ -108,7 +99,7 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 	 * @return  mixed  An array of data items on success, false on failure.
 	 */
 	public function getItems()
-	{ 
+	{
 		// check in items
 		$this->checkInNow();
 
@@ -118,11 +109,9 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 		// set values to display correctly.
 		if (ComponentbuilderHelper::checkArray($items))
 		{
-			// get user object.
-			$user = JFactory::getUser();
 			foreach ($items as $nr => &$item)
 			{
-				$access = ($user->authorise('custom_admin_view.access', 'com_componentbuilder.custom_admin_view.' . (int) $item->id) && $user->authorise('custom_admin_view.access', 'com_componentbuilder'));
+				$access = (JFactory::getUser()->authorise('custom_admin_view.access', 'com_componentbuilder.custom_admin_view.' . (int) $item->id) && JFactory::getUser()->authorise('custom_admin_view.access', 'com_componentbuilder'));
 				if (!$access)
 				{
 					unset($items[$nr]);
@@ -130,10 +119,59 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 				}
 
 			}
-		}  
+		}
+
+		// set selection value to a translatable value
+		if (ComponentbuilderHelper::checkArray($items))
+		{
+			foreach ($items as $nr => &$item)
+			{
+				// convert add_php_ajax
+				$item->add_php_ajax = $this->selectionTranslation($item->add_php_ajax, 'add_php_ajax');
+				// convert add_custom_button
+				$item->add_custom_button = $this->selectionTranslation($item->add_custom_button, 'add_custom_button');
+			}
+		}
+
         
 		// return items
 		return $items;
+	}
+
+	/**
+	 * Method to convert selection values to translatable string.
+	 *
+	 * @return translatable string
+	 */
+	public function selectionTranslation($value,$name)
+	{
+		// Array of add_php_ajax language strings
+		if ($name === 'add_php_ajax')
+		{
+			$add_php_ajaxArray = array(
+				1 => 'COM_COMPONENTBUILDER_CUSTOM_ADMIN_VIEW_YES',
+				0 => 'COM_COMPONENTBUILDER_CUSTOM_ADMIN_VIEW_NO'
+			);
+			// Now check if value is found in this array
+			if (isset($add_php_ajaxArray[$value]) && ComponentbuilderHelper::checkString($add_php_ajaxArray[$value]))
+			{
+				return $add_php_ajaxArray[$value];
+			}
+		}
+		// Array of add_custom_button language strings
+		if ($name === 'add_custom_button')
+		{
+			$add_custom_buttonArray = array(
+				1 => 'COM_COMPONENTBUILDER_CUSTOM_ADMIN_VIEW_YES',
+				0 => 'COM_COMPONENTBUILDER_CUSTOM_ADMIN_VIEW_NO'
+			);
+			// Now check if value is found in this array
+			if (isset($add_custom_buttonArray[$value]) && ComponentbuilderHelper::checkString($add_custom_buttonArray[$value]))
+			{
+				return $add_custom_buttonArray[$value];
+			}
+		}
+		return $value;
 	}
 	
 	/**
@@ -155,9 +193,9 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 		// From the componentbuilder_item table
 		$query->from($db->quoteName('#__componentbuilder_custom_admin_view', 'a'));
 
-		// From the componentbuilder_snippet table.
-		$query->select($db->quoteName('g.name','snippet_name'));
-		$query->join('LEFT', $db->quoteName('#__componentbuilder_snippet', 'g') . ' ON (' . $db->quoteName('a.snippet') . ' = ' . $db->quoteName('g.id') . ')');
+		// From the componentbuilder_dynamic_get table.
+		$query->select($db->quoteName('g.name','main_get_name'));
+		$query->join('LEFT', $db->quoteName('#__componentbuilder_dynamic_get', 'g') . ' ON (' . $db->quoteName('a.main_get') . ' = ' . $db->quoteName('g.id') . ')');
 
 		// Filter by published state
 		$published = $this->getState('filter.published');
@@ -195,10 +233,25 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 			else
 			{
 				$search = $db->quote('%' . $db->escape($search) . '%');
-				$query->where('(a.system_name LIKE '.$search.' OR a.name LIKE '.$search.' OR a.codename LIKE '.$search.' OR a.description LIKE '.$search.')');
+				$query->where('(a.system_name LIKE '.$search.' OR a.name LIKE '.$search.' OR a.description LIKE '.$search.' OR a.main_get LIKE '.$search.' OR g.name LIKE '.$search.' OR a.context LIKE '.$search.' OR a.codename LIKE '.$search.')');
 			}
 		}
 
+		// Filter by main_get.
+		if ($main_get = $this->getState('filter.main_get'))
+		{
+			$query->where('a.main_get = ' . $db->quote($db->escape($main_get)));
+		}
+		// Filter by Add_php_ajax.
+		if ($add_php_ajax = $this->getState('filter.add_php_ajax'))
+		{
+			$query->where('a.add_php_ajax = ' . $db->quote($db->escape($add_php_ajax)));
+		}
+		// Filter by Add_custom_button.
+		if ($add_custom_button = $this->getState('filter.add_custom_button'))
+		{
+			$query->where('a.add_custom_button = ' . $db->quote($db->escape($add_custom_button)));
+		}
 
 		// Add the list ordering clause.
 		$orderCol = $this->state->get('list.ordering', 'a.id');
@@ -212,10 +265,10 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 	}
 
 	/**
-	* Method to get list export data.
-	*
-	* @return mixed  An array of data items on success, false on failure.
-	*/
+	 * Method to get list export data.
+	 *
+	 * @return mixed  An array of data items on success, false on failure.
+	 */
 	public function getExportData($pks)
 	{
 		// setup the query
@@ -255,11 +308,9 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 				// set values to display correctly.
 				if (ComponentbuilderHelper::checkArray($items))
 				{
-					// get user object.
-					$user = JFactory::getUser();
 					foreach ($items as $nr => &$item)
 					{
-						$access = ($user->authorise('custom_admin_view.access', 'com_componentbuilder.custom_admin_view.' . (int) $item->id) && $user->authorise('custom_admin_view.access', 'com_componentbuilder'));
+						$access = (JFactory::getUser()->authorise('custom_admin_view.access', 'com_componentbuilder.custom_admin_view.' . (int) $item->id) && JFactory::getUser()->authorise('custom_admin_view.access', 'com_componentbuilder'));
 						if (!$access)
 						{
 							unset($items[$nr]);
@@ -270,8 +321,6 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 						$item->php_jview_display = base64_decode($item->php_jview_display);
 						// decode php_view
 						$item->php_view = base64_decode($item->php_view);
-						// decode php_document
-						$item->php_document = base64_decode($item->php_document);
 						// decode default
 						$item->default = base64_decode($item->default);
 						// decode php_jview
@@ -282,6 +331,8 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 						$item->javascript_file = base64_decode($item->javascript_file);
 						// decode css_document
 						$item->css_document = base64_decode($item->css_document);
+						// decode php_document
+						$item->php_document = base64_decode($item->php_document);
 						// decode css
 						$item->css = base64_decode($item->css);
 						// decode php_ajaxmethod
@@ -333,7 +384,7 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 			return $headers;
 		}
 		return false;
-	} 
+	}
 	
 	/**
 	 * Method to get a store id based on model configuration state.
@@ -352,23 +403,25 @@ class ComponentbuilderModelCustom_admin_views extends JModelList
 		$id .= ':' . $this->getState('filter.modified_by');
 		$id .= ':' . $this->getState('filter.system_name');
 		$id .= ':' . $this->getState('filter.name');
-		$id .= ':' . $this->getState('filter.codename');
 		$id .= ':' . $this->getState('filter.description');
+		$id .= ':' . $this->getState('filter.main_get');
+		$id .= ':' . $this->getState('filter.add_php_ajax');
+		$id .= ':' . $this->getState('filter.add_custom_button');
 
 		return parent::getStoreId($id);
 	}
 
 	/**
-	* Build an SQL query to checkin all items left checked out longer then a set time.
-	*
-	* @return  a bool
-	*
-	*/
+	 * Build an SQL query to checkin all items left checked out longer then a set time.
+	 *
+	 * @return  a bool
+	 *
+	 */
 	protected function checkInNow()
 	{
 		// Get set check in time
 		$time = JComponentHelper::getParams('com_componentbuilder')->get('check_in');
-		
+
 		if ($time)
 		{
 

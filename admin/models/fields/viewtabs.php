@@ -1,27 +1,13 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		viewtabs.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
@@ -45,11 +31,11 @@ class JFormFieldViewtabs extends JFormFieldList
 	/**
 	 * Method to get a list of options for a list input.
 	 *
-	 * @return	array		An array of JHtml options.
+	 * @return	array    An array of JHtml options.
 	 */
-	public function getOptions()
+	protected function getOptions()
 	{
-		// get the input from url
+				// get the input from url
 		$jinput = JFactory::getApplication()->input;
 		// get the view name & id
 		$fieldsID = $jinput->getInt('id', 0);
@@ -57,14 +43,38 @@ class JFormFieldViewtabs extends JFormFieldList
 		$query = $db->getQuery(true);
 		$query->select($db->quoteName(array('a.id','a.addtabs'),array('id','addtabs')));
 		$query->from($db->quoteName('#__componentbuilder_admin_view', 'a'));
-		$query->join('LEFT', $db->quoteName('#__componentbuilder_admin_fields', 'b') . ' ON (' . $db->quoteName('a.id') . ' = ' . $db->quoteName('b.admin_view') . ')');
+		if ($fieldsID > 0)
+		{
+			$viewName = $jinput->get('view', null, 'WORD');
+			// only allow for fields and custom tabs
+			if ('admin_fields' !== $viewName && 'admin_custom_tabs' !== $viewName)
+			{
+				return false;
+			}
+			$query->join('LEFT', $db->quoteName('#__componentbuilder_' . $viewName, 'b') . ' ON (' . $db->quoteName('a.id') . ' = ' . $db->quoteName('b.admin_view') . ')');
+			$query->where($db->quoteName('b.id') . '  = ' . (int) $fieldsID);
+		}
+		else
+		{
+			// get the refs if found
+			$ref = $jinput->get('ref', null, 'WORD');
+			$refid = $jinput->getInt('refid', 0);
+			if ('admin_view' === $ref && $refid > 0)
+			{
+				$query->where($db->quoteName('a.id') . ' = ' . (int) $refid);
+			}
+			else
+			{
+				// kry maar niks
+				$query->where($db->quoteName('a.id') . ' = 0');
+			}
+		}
 		$query->where($db->quoteName('a.published') . ' >= 1');
-		$query->where($db->quoteName('b.id') . '  = ' . (int) $fieldsID);
 		$query->order('a.addtabs ASC');
 		$db->setQuery((string)$query);
 		$item = $db->loadObject();
 		$options = array();
-		if (isset($item->addtabs) && strlen($item->addtabs) > 5)
+		if (isset($item->addtabs) && ComponentbuilderHelper::checkJson($item->addtabs))
 		{
 			$items = json_decode($item->addtabs, true);
 			$nr = 1;

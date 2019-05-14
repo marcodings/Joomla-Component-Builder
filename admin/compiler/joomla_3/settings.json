@@ -400,6 +400,11 @@
 					"rename": "layoutmetadata",
 					"type": "layoutmetadata"
 				},
+				"JFormFieldCustom.php": {
+					"path": "c0mp0n3nt/admin/models/fields",
+					"rename": "JFormFieldCustom",
+					"type": "fieldcustom"
+				},
 				"JFormFieldList.php": {
 					"path": "c0mp0n3nt/admin/models/fields",
 					"rename": "JFormFieldList",
@@ -498,6 +503,11 @@
 					"path": "c0mp0n3nt/",
 					"rename": "update_server",
 					"type": "update_server"
+				},
+				"viewFile.js": {
+					"path": "c0mp0n3nt/admin/assets/js",
+					"rename": "viewFile",
+					"type": "javascript_file"
 				}
 			},
 			"site": {
@@ -589,6 +599,11 @@
 					"path": "c0mp0n3nt/site/views/VIEW/tmpl",
 					"rename": false,
 					"type": "menu"
+				},
+				"edit.xml": {
+					"path": "c0mp0n3nt/site/views/VIEW/tmpl",
+					"rename": false,
+					"type": "admin_menu"
 				},
 				"module_forms.xml": {
 					"path": "c0mp0n3nt/site/models/forms",

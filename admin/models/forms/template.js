@@ -1,64 +1,51 @@
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		template.js
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // Some Global Values
-jform_vvvvvyyvys_required = false;
+jform_vvvvvzbvyv_required = false;
 
 // Initial Script
 jQuery(document).ready(function()
 {
-	var add_php_view_vvvvvyy = jQuery("#jform_add_php_view input[type='radio']:checked").val();
-	vvvvvyy(add_php_view_vvvvvyy);
+	var add_php_view_vvvvvzb = jQuery("#jform_add_php_view input[type='radio']:checked").val();
+	vvvvvzb(add_php_view_vvvvvzb);
 });
 
-// the vvvvvyy function
-function vvvvvyy(add_php_view_vvvvvyy)
+// the vvvvvzb function
+function vvvvvzb(add_php_view_vvvvvzb)
 {
 	// set the function logic
-	if (add_php_view_vvvvvyy == 1)
+	if (add_php_view_vvvvvzb == 1)
 	{
-		jQuery('#jform_php_view').closest('.control-group').show();
-		if (jform_vvvvvyyvys_required)
+		jQuery('#jform_php_view-lbl').closest('.control-group').show();
+		// add required attribute to php_view field
+		if (jform_vvvvvzbvyv_required)
 		{
 			updateFieldRequired('php_view',0);
 			jQuery('#jform_php_view').prop('required','required');
 			jQuery('#jform_php_view').attr('aria-required',true);
 			jQuery('#jform_php_view').addClass('required');
-			jform_vvvvvyyvys_required = false;
+			jform_vvvvvzbvyv_required = false;
 		}
-
 	}
 	else
 	{
-		jQuery('#jform_php_view').closest('.control-group').hide();
-		if (!jform_vvvvvyyvys_required)
+		jQuery('#jform_php_view-lbl').closest('.control-group').hide();
+		// remove required attribute from php_view field
+		if (!jform_vvvvvzbvyv_required)
 		{
 			updateFieldRequired('php_view',1);
 			jQuery('#jform_php_view').removeAttr('required');
 			jQuery('#jform_php_view').removeAttr('aria-required');
 			jQuery('#jform_php_view').removeClass('required');
-			jform_vvvvvyyvys_required = true;
+			jform_vvvvvzbvyv_required = true;
 		}
 	}
 }
@@ -100,6 +87,50 @@ function isSet(val)
 }
 
 
+jQuery(document).ready(function($)
+{
+	// check and load all the custom code edit buttons
+	getEditCustomCodeButtons();
+});
+
+function getEditCustomCodeButtons_server(id){
+	var getUrl = "index.php?option=com_componentbuilder&task=ajax.getEditCustomCodeButtons&format=json&raw=true&vdm="+vastDevMod;
+	if(token.length > 0 && id > 0){
+		var request = 'token='+token+'&id='+id+'&return_here='+return_here;
+	}
+	return jQuery.ajax({
+		type: 'GET',
+		url: getUrl,
+		dataType: 'json',
+		data: request,
+		jsonp: false
+	});
+}
+
+function getEditCustomCodeButtons(){
+	// get the id
+	id = jQuery("#jform_id").val();
+	getEditCustomCodeButtons_server(id).done(function(result) {
+		if(isObject(result)){
+			jQuery.each(result, function( field, buttons ) {
+				jQuery('<div class="control-group"><div class="control-label"><label>Edit Customcode</label></div><div class="controls control-customcode-buttons-'+field+'"></div></div>').insertBefore(".control-wrapper-"+ field);
+				jQuery.each(buttons, function( name, button ) {
+					jQuery(".control-customcode-buttons-"+field).append(button);
+				});
+			});
+		}
+	})
+}
+
+// check object is not empty
+function isObject(obj) {
+	for(var prop in obj) {
+		if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 function getSnippetDetails_server(snippetId){
 	var getUrl = "index.php?option=com_componentbuilder&task=ajax.snippetDetails&format=json";
@@ -247,16 +278,16 @@ jQuery(document).ready(function($)
 });
 
 function getSnippets_server(libraries){
-	var getUrl = "index.php?option=com_componentbuilder&task=ajax.getSnippets&format=json";
+	var getUrl = "index.php?option=com_componentbuilder&task=ajax.getSnippets&raw=true&format=json";
 	if(token.length > 0 && libraries.length > 0){
 		var request = 'token='+token+'&libraries='+JSON.stringify(libraries);
 	}
 	return jQuery.ajax({
 		type: 'GET',
 		url: getUrl,
-		dataType: 'jsonp',
+		dataType: 'json',
 		data: request,
-		jsonp: 'callback'
+		jsonp: false
 	});
 }
 function getSnippets(){

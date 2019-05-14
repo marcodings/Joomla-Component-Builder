@@ -1,27 +1,13 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		aliasbuilder.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
@@ -45,11 +31,11 @@ class JFormFieldAliasbuilder extends JFormFieldList
 	/**
 	 * Method to get a list of options for a list input.
 	 *
-	 * @return	array		An array of JHtml options.
+	 * @return	array    An array of JHtml options.
 	 */
-	public function getOptions()
+	protected function getOptions()
 	{
-		// load the db opbject
+		// load the db object
 		$db = JFactory::getDBO();		
 		// get the input from url
 		$jinput = JFactory::getApplication()->input;
@@ -78,28 +64,36 @@ class JFormFieldAliasbuilder extends JFormFieldList
 				}
 			}
 		}
-		$query = $db->getQuery(true);
-		$query->select($db->quoteName(array('a.id','a.name','b.name'),array('id','name','type')));
-		$query->from($db->quoteName('#__componentbuilder_field', 'a'));
-		$query->join('LEFT', $db->quoteName('#__componentbuilder_fieldtype', 'b') . ' ON (' . $db->quoteName('a.fieldtype') . ' = ' . $db->quoteName('b.id') . ')');
-		$query->where($db->quoteName('a.published') . ' >= 1');
 		// filter by fields linked
 		if (ComponentbuilderHelper::checkArray($fieldIds))
 		{
+			// get list of field types that does not work in list views (note, spacer)
+			$spacers = ComponentbuilderHelper::getSpacerIds();
+			$query = $db->getQuery(true);
+			$query->select($db->quoteName(array('a.id','a.name','b.name'),array('id','name','type')));
+			$query->from($db->quoteName('#__componentbuilder_field', 'a'));
+			$query->join('LEFT', $db->quoteName('#__componentbuilder_fieldtype', 'b') . ' ON (' . $db->quoteName('a.fieldtype') . ' = ' . $db->quoteName('b.id') . ')');
+			$query->where($db->quoteName('a.published') . ' >= 1');
 			// only load these fields
 			$query->where($db->quoteName('a.id') . ' IN (' . implode(',', $fieldIds) . ')');
-		}
-		$query->order('a.name ASC');
-		$db->setQuery((string)$query);
-		$items = $db->loadObjectList();
-		$options = array();
-		if ($items)
-		{
-			foreach($items as $item)
+			// none of these field types
+			if (ComponentbuilderHelper::checkArray($spacers))
 			{
-				$options[] = JHtml::_('select.option', $item->id, $item->name . ' [' . $item->type . ']');
+				$query->where($db->quoteName('a.fieldtype') . ' NOT IN (' . implode(',', $spacers) . ')');
+			}
+			$query->order('a.name ASC');
+			$db->setQuery((string)$query);
+			$items = $db->loadObjectList();
+			$options = array();
+			if ($items)
+			{
+				foreach($items as $item)
+				{
+					$options[] = JHtml::_('select.option', $item->id, $item->name . ' [' . $item->type . ']');
+				}
+				return $options;
 			}
 		}
-		return $options;
+		return array(JHtml::_('select.option', '', JText::_('COM_COMPONENTBUILDER_ADD_MORE_FIELDS_TO_THIS_ADMIN_VIEW')));
 	}
 }

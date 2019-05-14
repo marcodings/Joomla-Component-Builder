@@ -1,33 +1,16 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		view.html.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-
-// import Joomla view library
-jimport('joomla.application.component.view');
 
 /**
  * Componentbuilder View class for the Site_views
@@ -54,6 +37,8 @@ class ComponentbuilderViewSite_views extends JViewLegacy
 		$this->listOrder = $this->escape($this->state->get('list.ordering'));
 		$this->listDirn = $this->escape($this->state->get('list.direction'));
 		$this->saveOrder = $this->listOrder == 'ordering';
+		// set the return here value
+		$this->return_here = urlencode(base64_encode((string) JUri::getInstance()));
 		// get global action permissions
 		$this->canDo = ComponentbuilderHelper::getActions('site_view');
 		$this->canEdit = $this->canDo->get('core.edit');
@@ -133,7 +118,7 @@ class ComponentbuilderViewSite_views extends JViewLegacy
 				// add the button to the page
 				$dhtml = $layout->render(array('title' => $title));
 				$bar->appendButton('Custom', $dhtml, 'batch');
-			} 
+			}
 
 			if ($this->state->get('filter.published') == -2 && ($this->canState && $this->canDelete))
 			{
@@ -153,7 +138,7 @@ class ComponentbuilderViewSite_views extends JViewLegacy
 		{
 			// add Get Snippets button.
 			JToolBarHelper::custom('site_views.getSnippets', 'search', '', 'COM_COMPONENTBUILDER_GET_SNIPPETS', false);
-		} 
+		}
 
 		if ($this->canDo->get('core.import') && $this->canDo->get('site_view.import'))
 		{
@@ -204,7 +189,73 @@ class ComponentbuilderViewSite_views extends JViewLegacy
 				'batch[access]',
 				JHtml::_('select.options', JHtml::_('access.assetgroups'), 'value', 'text')
 			);
-		} 
+		}
+
+		// Set Main Get Name Selection
+		$this->main_getNameOptions = JFormHelper::loadFieldType('Maingets')->options;
+		if ($this->main_getNameOptions)
+		{
+			// Main Get Name Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_SITE_VIEW_MAIN_GET_LABEL').' -',
+				'filter_main_get',
+				JHtml::_('select.options', $this->main_getNameOptions, 'value', 'text', $this->state->get('filter.main_get'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Main Get Name Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_SITE_VIEW_MAIN_GET_LABEL').' -',
+					'batch[main_get]',
+					JHtml::_('select.options', $this->main_getNameOptions, 'value', 'text')
+				);
+			}
+		}
+
+		// Set Add Php Ajax Selection
+		$this->add_php_ajaxOptions = $this->getTheAdd_php_ajaxSelections();
+		if ($this->add_php_ajaxOptions)
+		{
+			// Add Php Ajax Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_SITE_VIEW_ADD_PHP_AJAX_LABEL').' -',
+				'filter_add_php_ajax',
+				JHtml::_('select.options', $this->add_php_ajaxOptions, 'value', 'text', $this->state->get('filter.add_php_ajax'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Add Php Ajax Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_SITE_VIEW_ADD_PHP_AJAX_LABEL').' -',
+					'batch[add_php_ajax]',
+					JHtml::_('select.options', $this->add_php_ajaxOptions, 'value', 'text')
+				);
+			}
+		}
+
+		// Set Add Custom Button Selection
+		$this->add_custom_buttonOptions = $this->getTheAdd_custom_buttonSelections();
+		if ($this->add_custom_buttonOptions)
+		{
+			// Add Custom Button Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_SITE_VIEW_ADD_CUSTOM_BUTTON_LABEL').' -',
+				'filter_add_custom_button',
+				JHtml::_('select.options', $this->add_custom_buttonOptions, 'value', 'text', $this->state->get('filter.add_custom_button'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Add Custom Button Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_SITE_VIEW_ADD_CUSTOM_BUTTON_LABEL').' -',
+					'batch[add_custom_button]',
+					JHtml::_('select.options', $this->add_custom_buttonOptions, 'value', 'text')
+				);
+			}
+		}
 	}
 
 	/**
@@ -252,9 +303,82 @@ class ComponentbuilderViewSite_views extends JViewLegacy
 			'a.published' => JText::_('JSTATUS'),
 			'a.system_name' => JText::_('COM_COMPONENTBUILDER_SITE_VIEW_SYSTEM_NAME_LABEL'),
 			'a.name' => JText::_('COM_COMPONENTBUILDER_SITE_VIEW_NAME_LABEL'),
-			'a.codename' => JText::_('COM_COMPONENTBUILDER_SITE_VIEW_CODENAME_LABEL'),
 			'a.description' => JText::_('COM_COMPONENTBUILDER_SITE_VIEW_DESCRIPTION_LABEL'),
+			'g.name' => JText::_('COM_COMPONENTBUILDER_SITE_VIEW_MAIN_GET_LABEL'),
+			'a.context' => JText::_('COM_COMPONENTBUILDER_SITE_VIEW_CONTEXT_LABEL'),
 			'a.id' => JText::_('JGRID_HEADING_ID')
 		);
+	}
+
+	protected function getTheAdd_php_ajaxSelections()
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+
+		// Select the text.
+		$query->select($db->quoteName('add_php_ajax'));
+		$query->from($db->quoteName('#__componentbuilder_site_view'));
+		$query->order($db->quoteName('add_php_ajax') . ' ASC');
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+
+		$results = $db->loadColumn();
+
+		if ($results)
+		{
+			// get model
+			$model = $this->getModel();
+			$results = array_unique($results);
+			$_filter = array();
+			foreach ($results as $add_php_ajax)
+			{
+				// Translate the add_php_ajax selection
+				$text = $model->selectionTranslation($add_php_ajax,'add_php_ajax');
+				// Now add the add_php_ajax and its text to the options array
+				$_filter[] = JHtml::_('select.option', $add_php_ajax, JText::_($text));
+			}
+			return $_filter;
+		}
+		return false;
+	}
+
+	protected function getTheAdd_custom_buttonSelections()
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+
+		// Select the text.
+		$query->select($db->quoteName('add_custom_button'));
+		$query->from($db->quoteName('#__componentbuilder_site_view'));
+		$query->order($db->quoteName('add_custom_button') . ' ASC');
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+
+		$results = $db->loadColumn();
+
+		if ($results)
+		{
+			// get model
+			$model = $this->getModel();
+			$results = array_unique($results);
+			$_filter = array();
+			foreach ($results as $add_custom_button)
+			{
+				// Translate the add_custom_button selection
+				$text = $model->selectionTranslation($add_custom_button,'add_custom_button');
+				// Now add the add_custom_button and its text to the options array
+				$_filter[] = JHtml::_('select.option', $add_custom_button, JText::_($text));
+			}
+			return $_filter;
+		}
+		return false;
 	}
 }

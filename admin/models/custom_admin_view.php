@@ -1,35 +1,18 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		custom_admin_view.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
 
 use Joomla\Registry\Registry;
-
-// import Joomla modelform library
-jimport('joomla.application.component.modeladmin');
 
 /**
  * Componentbuilder Custom_admin_view Model
@@ -63,6 +46,9 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 	 */
 	public function getTable($type = 'custom_admin_view', $prefix = 'ComponentbuilderTable', $config = array())
 	{
+		// add table path for when model gets used from other component
+		$this->addTablePath(JPATH_ADMINISTRATOR . '/components/com_componentbuilder/tables');
+		// get instance of the table
 		return JTable::getInstance($type, $prefix, $config);
 	}
 
@@ -112,12 +98,6 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 				$item->php_view = base64_decode($item->php_view);
 			}
 
-			if (!empty($item->php_document))
-			{
-				// base64 Decode php_document.
-				$item->php_document = base64_decode($item->php_document);
-			}
-
 			if (!empty($item->default))
 			{
 				// base64 Decode default.
@@ -148,6 +128,12 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 				$item->css_document = base64_decode($item->css_document);
 			}
 
+			if (!empty($item->php_document))
+			{
+				// base64 Decode php_document.
+				$item->php_document = base64_decode($item->php_document);
+			}
+
 			if (!empty($item->css))
 			{
 				// base64 Decode css.
@@ -172,6 +158,14 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 				$item->php_model = base64_decode($item->php_model);
 			}
 
+			if (!empty($item->custom_get))
+			{
+				// Convert the custom_get field to an array.
+				$custom_get = new Registry;
+				$custom_get->loadString($item->custom_get);
+				$item->custom_get = $custom_get->toArray();
+			}
+
 			if (!empty($item->ajax_input))
 			{
 				// Convert the ajax_input field to an array.
@@ -186,14 +180,6 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 				$libraries = new Registry;
 				$libraries->loadString($item->libraries);
 				$item->libraries = $libraries->toArray();
-			}
-
-			if (!empty($item->custom_get))
-			{
-				// Convert the custom_get field to an array.
-				$custom_get = new Registry;
-				$custom_get->loadString($item->custom_get);
-				$item->custom_get = $custom_get->toArray();
 			}
 
 			if (!empty($item->custom_button))
@@ -212,7 +198,7 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 			else
 			{
 				$id = $item->id;
-			}			
+			}
 			// set the id and view name to session
 			if ($vdm = ComponentbuilderHelper::get('custom_admin_view__'.$id))
 			{
@@ -220,9 +206,14 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 			}
 			else
 			{
+				// set the vast development method key
 				$this->vastDevMod = ComponentbuilderHelper::randomkey(50);
 				ComponentbuilderHelper::set($this->vastDevMod, 'custom_admin_view__'.$id);
 				ComponentbuilderHelper::set('custom_admin_view__'.$id, $this->vastDevMod);
+				// set a return value if found
+				$jinput = JFactory::getApplication()->input;
+				$return = $jinput->get('return', null, 'base64');
+				ComponentbuilderHelper::set($this->vastDevMod . '__return', $return);
 			}
 
 			// check what type of custom_button array we have here (should be subform... but just incase)
@@ -254,22 +245,25 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 		}
 
 		return $item;
-	} 
+	}
 
 	/**
 	 * Method to get the record form.
 	 *
 	 * @param   array    $data      Data for the form.
 	 * @param   boolean  $loadData  True if the form is to load its own data (default case), false if not.
+	 * @param   array    $options   Optional array of options for the form creation.
 	 *
 	 * @return  mixed  A JForm object on success, false on failure
 	 *
 	 * @since   1.6
 	 */
-	public function getForm($data = array(), $loadData = true)
+	public function getForm($data = array(), $loadData = true, $options = array('control' => 'jform'))
 	{
+		// set load data option
+		$options['load_data'] = $loadData;
 		// Get the form.
-		$form = $this->loadForm('com_componentbuilder.custom_admin_view', 'custom_admin_view', array('control' => 'jform', 'load_data' => $loadData));
+		$form = $this->loadForm('com_componentbuilder.custom_admin_view', 'custom_admin_view', $options);
 
 		if (empty($form))
 		{
@@ -330,14 +324,34 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 		// Only load these values if no id is found
 		if (0 == $id)
 		{
-			// Set redirected field name
-			$redirectedField = $jinput->get('ref', null, 'STRING');
-			// Set redirected field value
-			$redirectedValue = $jinput->get('refid', 0, 'INT');
+			// Set redirected view name
+			$redirectedView = $jinput->get('ref', null, 'STRING');
+			// Set field name (or fall back to view name)
+			$redirectedField = $jinput->get('field', $redirectedView, 'STRING');
+			// Set redirected view id
+			$redirectedId = $jinput->get('refid', 0, 'INT');
+			// Set field id (or fall back to redirected view id)
+			$redirectedValue = $jinput->get('field_id', $redirectedId, 'INT');
 			if (0 != $redirectedValue && $redirectedField)
 			{
 				// Now set the local-redirected field default value
 				$form->setValue($redirectedField, null, $redirectedValue);
+			}
+		}
+
+		// update all editors to use this components global editor
+		$global_editor = JComponentHelper::getParams('com_componentbuilder')->get('editor', 'none');
+		// now get all the editor fields
+		$editors = $form->getXml()->xpath("//field[@type='editor']");
+		// check if we found any
+		if (ComponentbuilderHelper::checkArray($editors))
+		{
+			foreach ($editors as $editor)
+			{
+				// get the field names
+				$name = (string) $editor['name'];
+				// set the field editor value (with none as fallback)
+				$form->setFieldAttribute($name, 'editor', $global_editor . '|none');
 			}
 		}
 
@@ -391,7 +405,7 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 	protected function canEditState($record)
 	{
 		$user = JFactory::getUser();
-		$recordId	= (!empty($record->id)) ? $record->id : 0;
+		$recordId = (!empty($record->id)) ? $record->id : 0;
 
 		if ($recordId)
 		{
@@ -502,18 +516,18 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 	}
 
 	/**
-	* Method to validate the form data.
-	*
-	* @param   JForm   $form   The form to validate against.
-	* @param   array   $data   The data to validate.
-	* @param   string  $group  The name of the field group to validate.
-	*
-	* @return  mixed  Array of filtered data if valid, false otherwise.
-	*
-	* @see     JFormRule
-	* @see     JFilterInput
-	* @since   12.2
-	*/
+	 * Method to validate the form data.
+	 *
+	 * @param   JForm   $form   The form to validate against.
+	 * @param   array   $data   The data to validate.
+	 * @param   string  $group  The name of the field group to validate.
+	 *
+	 * @return  mixed  Array of filtered data if valid, false otherwise.
+	 *
+	 * @see     JFormRule
+	 * @see     JFilterInput
+	 * @since   12.2
+	 */
 	public function validate($form, $data, $group = null)
 	{
 		// check if the not_required field is set
@@ -535,7 +549,7 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 			}
 		}
 		return parent::validate($form, $data, $group);
-	} 
+	}
 
 	/**
 	 * Method to get the unique fields of this table.
@@ -693,7 +707,7 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 	 *
 	 * @return  mixed  An array of new IDs on success, boolean false on failure.
 	 *
-	 * @since	12.2
+	 * @since 12.2
 	 */
 	protected function batchCopy($values, $pks, $contexts)
 	{
@@ -791,7 +805,7 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 			$this->table->id = 0;
 
 			// TODO: Deal with ordering?
-			// $this->table->ordering	= 1;
+			// $this->table->ordering = 1;
 
 			// Check the row.
 			if (!$this->table->check())
@@ -825,7 +839,7 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 		$this->cleanCache();
 
 		return $newIds;
-	} 
+	}
 
 	/**
 	 * Batch move items to a new category
@@ -836,7 +850,7 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 	 *
 	 * @return  boolean  True if successful, false otherwise and internal error is set.
 	 *
-	 * @since	12.2
+	 * @since 12.2
 	 */
 	protected function batchMove($values, $pks, $contexts)
 	{
@@ -957,10 +971,48 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 			$metadata = new JRegistry;
 			$metadata->loadArray($data['metadata']);
 			$data['metadata'] = (string) $metadata;
-		} 
+		}
 
 		// always reset the snippets
 		$data['snippet'] = 0;
+		// if system name is empty create from name
+		if (empty($data['system_name']) || !ComponentbuilderHelper::checkString($data['system_name']))
+		{
+			$data['system_name'] = $data['name'];
+		}
+		// if codename is empty create from name
+		if (empty($data['codename']) || !ComponentbuilderHelper::checkString($data['codename']))
+		{
+			$data['codename'] = ComponentbuilderHelper::safeString($data['name']);
+		}
+		else
+		{
+			// always make safe string
+			$data['codename'] = ComponentbuilderHelper::safeString($data['codename']);
+		}
+		// if context is empty create from codename
+		if (empty($data['context']) || !ComponentbuilderHelper::checkString($data['context']))
+		{
+			$data['context'] = $data['codename'];
+		}
+		else
+		{
+			// always make safe string
+			$data['context'] = ComponentbuilderHelper::safeString($data['context']);
+		}
+
+		// Set the custom_get items to data.
+		if (isset($data['custom_get']) && is_array($data['custom_get']))
+		{
+			$custom_get = new JRegistry;
+			$custom_get->loadArray($data['custom_get']);
+			$data['custom_get'] = (string) $custom_get;
+		}
+		elseif (!isset($data['custom_get']))
+		{
+			// Set the empty custom_get to data
+			$data['custom_get'] = '';
+		}
 
 		// Set the ajax_input items to data.
 		if (isset($data['ajax_input']) && is_array($data['ajax_input']))
@@ -988,19 +1040,6 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 			$data['libraries'] = '';
 		}
 
-		// Set the custom_get items to data.
-		if (isset($data['custom_get']) && is_array($data['custom_get']))
-		{
-			$custom_get = new JRegistry;
-			$custom_get->loadArray($data['custom_get']);
-			$data['custom_get'] = (string) $custom_get;
-		}
-		elseif (!isset($data['custom_get']))
-		{
-			// Set the empty custom_get to data
-			$data['custom_get'] = '';
-		}
-
 		// Set the custom_button items to data.
 		if (isset($data['custom_button']) && is_array($data['custom_button']))
 		{
@@ -1024,12 +1063,6 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 		if (isset($data['php_view']))
 		{
 			$data['php_view'] = base64_encode($data['php_view']);
-		}
-
-		// Set the php_document string to base64 string.
-		if (isset($data['php_document']))
-		{
-			$data['php_document'] = base64_encode($data['php_document']);
 		}
 
 		// Set the default string to base64 string.
@@ -1060,6 +1093,12 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 		if (isset($data['css_document']))
 		{
 			$data['css_document'] = base64_encode($data['css_document']);
+		}
+
+		// Set the php_document string to base64 string.
+		if (isset($data['php_document']))
+		{
+			$data['php_document'] = base64_encode($data['php_document']);
 		}
 
 		// Set the css string to base64 string.
@@ -1140,13 +1179,13 @@ class ComponentbuilderModelCustom_admin_view extends JModelAdmin
 	}
 
 	/**
-	* Method to change the title
-	*
-	* @param   string   $title   The title.
-	*
-	* @return	array  Contains the modified title and alias.
-	*
-	*/
+	 * Method to change the title
+	 *
+	 * @param   string   $title   The title.
+	 *
+	 * @return	array  Contains the modified title and alias.
+	 *
+	 */
 	protected function _generateNewTitle($title)
 	{
 

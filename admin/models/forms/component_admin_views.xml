@@ -93,6 +93,7 @@
 			description="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_JOOMLA_COMPONENT_DESCRIPTION"
 			class="list_class"
 			multiple="false"
+			default=""
 			required="true"
 			readonly="true"
 			button="false"
@@ -105,6 +106,7 @@
 			layout="joomla.form.field.subform.repeatable-table"
 			multiple="true"
 			description="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_ADDADMIN_VIEWS_DESCRIPTION"
+			default="[{&quot;submenu&quot;:&quot;1&quot;,&quot;checkin&quot;:&quot;1&quot;,&quot;history&quot;:&quot;1&quot;,&quot;access&quot;:&quot;1&quot;,&quot;port&quot;:&quot;1&quot;}]"
 			icon="list"
 			min="1">
 			<form hidden="true" name="list_addadmin_views_modal" repeat="true">
@@ -116,6 +118,7 @@
 					description="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_ADMINVIEW_DESCRIPTION"
 					class="fieldMedium"
 					multiple="false"
+					default=""
 					required="false"
 					button="false"
 				/>
@@ -125,9 +128,10 @@
 					name="icomoon"
 					label="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_ICOMOON_LABEL"
 					description="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_ICOMOON_DESCRIPTION"
-					class="list_class fieldMedium"
+					class="list_class fieldMedium icomoon342"
 					multiple="false"
-					required="false">
+					required="false"
+					onchange="getIconImage(this);">
 					<!-- Option Set. -->
 					<option value="joomla">
 						COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_JOOMLA</option>
@@ -567,6 +571,7 @@
 					name="dashboard_add"
 					label="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_DASHBOARD_ADD_LABEL"
 					value="1"
+					default=""
 					required="false"
 					description="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_DASHBOARD_ADD_DESCRIPTION"
 					class="inputbox"
@@ -615,6 +620,17 @@
 					description="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_HISTORY_DESCRIPTION"
 					class="inputbox"
 				/>
+				<!-- Joomla_fields Field. Type: Checkbox. (joomla) -->
+				<field
+					type="checkbox"
+					name="joomla_fields"
+					label="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_JOOMLA_FIELDS_LABEL"
+					value="1"
+					default="1"
+					required="false"
+					description="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_JOOMLA_FIELDS_DESCRIPTION"
+					class="inputbox"
+				/>
 				<!-- Metadata Field. Type: Checkbox. (joomla) -->
 				<field
 					type="checkbox"
@@ -643,20 +659,28 @@
 					name="port"
 					label="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_PORT_LABEL"
 					value="1"
+					default=""
 					required="false"
 					description="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_PORT_DESCRIPTION"
 					class="inputbox"
 				/>
-				<!-- Edit_create_site_view Field. Type: Checkbox. (joomla) -->
+				<!-- Edit_create_site_view Field. Type: List. (joomla) -->
 				<field
-					type="checkbox"
+					type="list"
 					name="edit_create_site_view"
 					label="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_EDIT_CREATE_SITE_VIEW_LABEL"
-					value="1"
-					required="false"
 					description="COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_EDIT_CREATE_SITE_VIEW_DESCRIPTION"
-					class="inputbox"
-				/>
+					class="list_class fieldMedium"
+					multiple="false"
+					required="false">
+					<!-- Option Set. -->
+					<option value="">
+						COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_NONE</option>
+					<option value="1">
+						COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_ADD</option>
+					<option value="2">
+						COM_COMPONENTBUILDER_COMPONENT_ADMIN_VIEWS_ADDMENU</option>
+				</field>
 				<!-- Order Field. Type: Integer. (joomla) -->
 				<field
 					type="integer"

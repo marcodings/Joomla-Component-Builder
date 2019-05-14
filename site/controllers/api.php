@@ -1,33 +1,16 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		api.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-
-// import Joomla controllerform library
-jimport('joomla.application.component.controller');
 
 /**
  * Componentbuilder Api Controller
@@ -61,13 +44,13 @@ class ComponentbuilderControllerApi extends JControllerForm
 		$model = componentbuilderHelper::getModel('joomla_components', JPATH_ADMINISTRATOR . '/components/com_componentbuilder');
 		// set user
 		$model->user = $this->getApiUser();
+		// make sure to set active type (adding this script from custom code :)
+		$model->activeType = 'backup';
 		// check if export is allowed for this user. (we need this sorry)
 		if ($model->user->authorise('joomla_component.export', 'com_componentbuilder') && $model->user->authorise('core.export', 'com_componentbuilder'))
 		{
 			// get all component IDs to backup
 			$pks = componentbuilderHelper::getComponentIDs();
-			// make sure to set active type to backup
-			$model->activeType = 'backup';
 			// set auto loader
 			ComponentbuilderHelper::autoLoader('smart');
 			// manual backup message
@@ -188,7 +171,7 @@ class ComponentbuilderControllerApi extends JControllerForm
 				}				
 			}
 			// quite only if auto backup (adding this script from custom code :)
-			if ('backup' === 'backup')
+			if ('backup' === $model->activeType)
 			{
 				echo "# " . $backupNoticeStatus . "\n" .implode("\n", $backupNotice);
 				// clear session
@@ -199,9 +182,9 @@ class ComponentbuilderControllerApi extends JControllerForm
 			return;
 		}
 		// quite only if auto backup (adding this script from custom code :)
-		if ('backup' === 'backup')
+		if ('backup' === $model->activeType)
 		{
-			echo "# Error\n".JText::_('COM_COMPONENTBUILDER_ACCESS_DENIED');
+			echo "# Error\n" . JText::_('COM_COMPONENTBUILDER_ACCESS_DENIED');
 			// clear session
 			JFactory::getApplication()->getSession()->destroy();
 			jexit();
@@ -210,6 +193,11 @@ class ComponentbuilderControllerApi extends JControllerForm
 		return;
 	}
 
+	/**
+	 * Run the Expansion
+	 *
+	 * @return  mix
+	 */
 	public function expand()
 	{
 		// get params first
@@ -304,19 +292,29 @@ class ComponentbuilderControllerApi extends JControllerForm
 		// check if message is to be returned
 		if (1== $returnOptionsBuild)
 		{
-			jexit('Expansion Disabled!');
+			jexit('Expansion Disabled! Expansion can be enabled by your system administrator in the global Options of JCB under the Development Method tab.');
 		}
 		// return bool
 		echo 0;
 		jexit();
 	}
 
+	/**
+	 * Get API User
+	 *
+	 * @return  object
+	 */
 	protected function getApiUser()
 	{
 		// return user object
 		return JFactory::getUser($this->params->get('api', 0, 'INT'));
 	}
 
+	/**
+	 * Run worker request
+	 *
+	 * @return  mix
+	 */
 	public function worker()
 	{
 		// get input values
@@ -368,6 +366,11 @@ class ComponentbuilderControllerApi extends JControllerForm
 		jexit();
 	}
 
+	/**
+	 * Load the needed script
+	 *
+	 * @return  void
+	 */
 	protected function _autoloader()
 	{
 		// include component compiler

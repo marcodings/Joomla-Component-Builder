@@ -1,33 +1,16 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		snippet.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-
-// import Joomla controllerform library
-jimport('joomla.application.component.controllerform');
 
 /**
  * Snippet Controller
@@ -43,6 +26,13 @@ class ComponentbuilderControllerSnippet extends JControllerForm
 	 */
 	protected $task;
 
+	/**
+	 * Class constructor.
+	 *
+	 * @param   array  $config  A named array of configuration variables.
+	 *
+	 * @since   1.6
+	 */
 	public function __construct($config = array())
 	{
 		$this->view_list = 'Snippets'; // safeguard for setting the return view listing to the main view.
@@ -60,12 +50,15 @@ class ComponentbuilderControllerSnippet extends JControllerForm
 	 */
 	protected function allowAdd($data = array())
 	{
+		// Get user object.
+		$user = JFactory::getUser();
 		// Access check.
-		$access = JFactory::getUser()->authorise('snippet.access', 'com_componentbuilder');
+		$access = $user->authorise('snippet.access', 'com_componentbuilder');
 		if (!$access)
 		{
 			return false;
 		}
+
 		// In the absense of better information, revert to the component permissions.
 		return parent::allowAdd($data);
 	}
@@ -83,9 +76,9 @@ class ComponentbuilderControllerSnippet extends JControllerForm
 	protected function allowEdit($data = array(), $key = 'id')
 	{
 		// get user object.
-		$user		= JFactory::getUser();
+		$user = JFactory::getUser();
 		// get record id.
-		$recordId	= (int) isset($data[$key]) ? $data[$key] : 0;
+		$recordId = (int) isset($data[$key]) ? $data[$key] : 0;
 
 
 		// Access check.
@@ -141,42 +134,25 @@ class ComponentbuilderControllerSnippet extends JControllerForm
 	 *
 	 * @return  string  The arguments to append to the redirect URL.
 	 *
-	 * @since   12.2
+	 * @since   1.6
 	 */
 	protected function getRedirectToItemAppend($recordId = null, $urlVar = 'id')
 	{
-		$tmpl   = $this->input->get('tmpl');
-		$layout = $this->input->get('layout', 'edit', 'string');
+		// get the referral options (old method use return instead see parent)
+		$ref = $this->input->get('ref', 0, 'string');
+		$refid = $this->input->get('refid', 0, 'int');
 
-		$ref 	= $this->input->get('ref', 0, 'string');
-		$refid 	= $this->input->get('refid', 0, 'int');
+		// get redirect info.
+		$append = parent::getRedirectToItemAppend($recordId, $urlVar);
 
-		// Setup redirect info.
-
-		$append = '';
-
-		if ($refid)
+		// set the referral options
+		if ($refid && $ref)
                 {
-			$append .= '&ref='.(string)$ref.'&refid='.(int)$refid;
+			$append = '&ref=' . (string)$ref . '&refid='. (int)$refid . $append;
 		}
 		elseif ($ref)
 		{
-			$append .= '&ref='.(string)$ref;
-		}
-
-		if ($tmpl)
-		{
-			$append .= '&tmpl=' . $tmpl;
-		}
-
-		if ($layout)
-		{
-			$append .= '&layout=' . $layout;
-		}
-
-		if ($recordId)
-		{
-			$append .= '&' . $urlVar . '=' . $recordId;
+			$append = '&ref='. (string)$ref . $append;
 		}
 
 		return $append;
@@ -215,43 +191,45 @@ class ComponentbuilderControllerSnippet extends JControllerForm
 	 */
 	public function cancel($key = null)
 	{
-		// get the referal details
-		$this->ref 		= $this->input->get('ref', 0, 'word');
-		$this->refid 	= $this->input->get('refid', 0, 'int');
+		// get the referral options
+		$this->ref = $this->input->get('ref', 0, 'word');
+		$this->refid = $this->input->get('refid', 0, 'int');
+
+		// Check if there is a return value
+		$return = $this->input->get('return', null, 'base64');
 
 		$cancel = parent::cancel($key);
 
-		if ($cancel)
+		if (!is_null($return) && JUri::isInternal(base64_decode($return)))
 		{
-			if ($this->refid)
-			{
-				$redirect = '&view='.(string)$this->ref.'&layout=edit&id='.(int)$this->refid;
+			$redirect = base64_decode($return);
 
-				// Redirect to the item screen.
-				$this->setRedirect(
-					JRoute::_(
-						'index.php?option=' . $this->option . $redirect, false
-					)
-				);
-			}
-			elseif ($this->ref)
-			{
-				$redirect = '&view='.(string)$this->ref;
-
-				// Redirect to the list screen.
-				$this->setRedirect(
-					JRoute::_(
-						'index.php?option=' . $this->option . $redirect, false
-					)
-				);
-			}
-		}
-		else
-		{
-			// Redirect to the items screen.
+			// Redirect to the return value.
 			$this->setRedirect(
 				JRoute::_(
-					'index.php?option=' . $this->option . '&view=' . $this->view_list, false
+					$redirect, false
+				)
+			);
+		}
+		elseif ($this->refid && $this->ref)
+		{
+			$redirect = '&view=' . (string)$this->ref . '&layout=edit&id=' . (int)$this->refid;
+
+			// Redirect to the item screen.
+			$this->setRedirect(
+				JRoute::_(
+					'index.php?option=' . $this->option . $redirect, false
+				)
+			);
+		}
+		elseif ($this->ref)
+		{
+			$redirect = '&view='.(string)$this->ref;
+
+			// Redirect to the list screen.
+			$this->setRedirect(
+				JRoute::_(
+					'index.php?option=' . $this->option . $redirect, false
 				)
 			);
 		}
@@ -270,11 +248,15 @@ class ComponentbuilderControllerSnippet extends JControllerForm
 	 */
 	public function save($key = null, $urlVar = null)
 	{
-		// get the referal details
-		$this->ref 		= $this->input->get('ref', 0, 'word');
-		$this->refid 	= $this->input->get('refid', 0, 'int');
+		// get the referral options
+		$this->ref = $this->input->get('ref', 0, 'word');
+		$this->refid = $this->input->get('refid', 0, 'int');
 
-		if ($this->ref || $this->refid)
+		// Check if there is a return value
+		$return = $this->input->get('return', null, 'base64');
+		$canReturn = (!is_null($return) && JUri::isInternal(base64_decode($return)));
+
+		if ($this->ref || $this->refid || $canReturn)
 		{
 			// to make sure the item is checkedin on redirect
 			$this->task = 'save';
@@ -282,9 +264,22 @@ class ComponentbuilderControllerSnippet extends JControllerForm
 
 		$saved = parent::save($key, $urlVar);
 
-		if ($this->refid && $saved)
+		// This is not needed since parent save already does this
+		// Due to the ref and refid implementation we need to add this
+		if ($canReturn)
 		{
-			$redirect = '&view='.(string)$this->ref.'&layout=edit&id='.(int)$this->refid;
+			$redirect = base64_decode($return);
+
+			// Redirect to the return value.
+			$this->setRedirect(
+				JRoute::_(
+					$redirect, false
+				)
+			);
+		}
+		elseif ($this->refid && $this->ref)
+		{
+			$redirect = '&view=' . (string)$this->ref . '&layout=edit&id=' . (int)$this->refid;
 
 			// Redirect to the item screen.
 			$this->setRedirect(
@@ -293,9 +288,9 @@ class ComponentbuilderControllerSnippet extends JControllerForm
 				)
 			);
 		}
-		elseif ($this->ref && $saved)
+		elseif ($this->ref)
 		{
-			$redirect = '&view='.(string)$this->ref;
+			$redirect = '&view=' . (string)$this->ref;
 
 			// Redirect to the list screen.
 			$this->setRedirect(

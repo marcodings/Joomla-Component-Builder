@@ -1,27 +1,13 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		edit.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
@@ -31,7 +17,7 @@ JHtml::_('behavior.tooltip');
 JHtml::_('behavior.formvalidation');
 JHtml::_('formbehavior.chosen', 'select');
 JHtml::_('behavior.keepalive');
-$componentParams = JComponentHelper::getParams('com_componentbuilder');
+$componentParams = $this->params; // will be removed just use $this->params instead
 ?>
 <script type="text/javascript">
 	// waiting spinner
@@ -56,7 +42,7 @@ $componentParams = JComponentHelper::getParams('com_componentbuilder');
 	});
 </script>
 <div id="componentbuilder_loader" style="display: none;">
-<form action="<?php echo JRoute::_('index.php?option=com_componentbuilder&layout=edit&id='.(int) $this->item->id.$this->referral); ?>" method="post" name="adminForm" id="adminForm" class="form-validate" enctype="multipart/form-data">
+<form action="<?php echo JRoute::_('index.php?option=com_componentbuilder&layout=edit&id='. (int) $this->item->id . $this->referral); ?>" method="post" name="adminForm" id="adminForm" class="form-validate" enctype="multipart/form-data">
 
 	<?php echo JLayoutHelper::render('component_custom_admin_views.views_above', $this); ?>
 <div class="form-horizontal">
@@ -72,6 +58,10 @@ $componentParams = JComponentHelper::getParams('com_componentbuilder');
 			</div>
 		</div>
 	<?php echo JHtml::_('bootstrap.endTab'); ?>
+
+	<?php $this->ignore_fieldsets = array('details','metadata','vdmmetadata','accesscontrol'); ?>
+	<?php $this->tab_name = 'component_custom_admin_viewsTab'; ?>
+	<?php echo JLayoutHelper::render('joomla.edit.params', $this); ?>
 
 	<?php if ($this->canDo->get('component_custom_admin_views.delete') || $this->canDo->get('component_custom_admin_views.edit.created_by') || $this->canDo->get('component_custom_admin_views.edit.state') || $this->canDo->get('component_custom_admin_views.edit.created')) : ?>
 	<?php echo JHtml::_('bootstrap.addTab', 'component_custom_admin_viewsTab', 'publishing', JText::_('COM_COMPONENTBUILDER_COMPONENT_CUSTOM_ADMIN_VIEWS_PUBLISHING', true)); ?>
@@ -120,29 +110,22 @@ $componentParams = JComponentHelper::getParams('com_componentbuilder');
 
 
 
-<?php $fieldNrs = range(1,50,1); ?>
-<?php foreach($fieldNrs as $nr): ?>jQuery('#jform_addcustom_admin_views_modal').on('change', 'select[name="icomoon-<?php echo $nr; ?>"]',function (e) {
-	// update the icon if changed
-	var val_<?php echo $nr; ?> = jQuery('select[name="icomoon-<?php echo $nr; ?>"] option:selected').val();
-	// build new span
-	var span = '<span id="icon_addcustom_admin_views_fields_icomoon_<?php echo $nr; ?>" class="icon-'+val_<?php echo $nr; ?>+'"></span>';
-	// remove old one 
-	jQuery('#icon_addcustom_admin_views_fields_icomoon_<?php echo $nr; ?>').remove();
-	// add the new icon
-	jQuery('#jform_addcustom_admin_views_fields_icomoon_<?php echo $nr; ?>_chzn').closest("td").append(span);
+jQuery(document).ready(function(){
+	jQuery(document).on('subform-row-add', function(event, row){
+		getIconImage(jQuery(row).find('.icomoon342'));
+	});
 });
 
-jQuery(document).ready(function() {
-jQuery('input.form-field-repeatable').on('row-add', function (e) {
-	// show the icon if set
-	var val_<?php echo $nr; ?> = jQuery('#jform_addcustom_admin_views_fields_icomoon-<?php echo $nr; ?>').val();
-	// build new span
-	var span = '<span id="icon_addcustom_admin_views_fields_icomoon_<?php echo $nr; ?>" class="icon-'+val_<?php echo $nr; ?>+'"></span>';
+function getIconImage(field) {
+	// get the ID
+	var id = jQuery(field).attr('id');
 	// remove old one 
-	jQuery('#icon_addcustom_admin_views_fields_icomoon_<?php echo $nr; ?>').remove();
-	// add the new icon
-	jQuery('#jform_addcustom_admin_views_fields_icomoon_<?php echo $nr; ?>_chzn').closest("td").append(span);
-});
-});
-<?php endforeach; ?>
+	jQuery('#image_'+id).remove();
+	// get value
+	var value = jQuery('#'+id).val();
+	// build new one
+	var span = '<span id="image_'+id+'" class="icon-'+value+'" style="position: absolute; top: 8px; right: -20px;"></span>';
+	// add the icon
+	jQuery('#'+id+'_chzn').append(span);
+}
 </script>

@@ -1,27 +1,13 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		edit.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
@@ -31,7 +17,7 @@ JHtml::_('behavior.tooltip');
 JHtml::_('behavior.formvalidation');
 JHtml::_('formbehavior.chosen', 'select');
 JHtml::_('behavior.keepalive');
-$componentParams = JComponentHelper::getParams('com_componentbuilder');
+$componentParams = $this->params; // will be removed just use $this->params instead
 ?>
 <script type="text/javascript">
 	// waiting spinner
@@ -56,7 +42,7 @@ $componentParams = JComponentHelper::getParams('com_componentbuilder');
 	});
 </script>
 <div id="componentbuilder_loader" style="display: none;">
-<form action="<?php echo JRoute::_('index.php?option=com_componentbuilder&layout=edit&id='.(int) $this->item->id.$this->referral); ?>" method="post" name="adminForm" id="adminForm" class="form-validate" enctype="multipart/form-data">
+<form action="<?php echo JRoute::_('index.php?option=com_componentbuilder&layout=edit&id='. (int) $this->item->id . $this->referral); ?>" method="post" name="adminForm" id="adminForm" class="form-validate" enctype="multipart/form-data">
 
 	<?php echo JLayoutHelper::render('server.details_above', $this); ?>
 <div class="form-horizontal">
@@ -90,6 +76,10 @@ $componentParams = JComponentHelper::getParams('com_componentbuilder');
 		</div>
 	<?php echo JHtml::_('bootstrap.endTab'); ?>
 	<?php endif; ?>
+
+	<?php $this->ignore_fieldsets = array('details','metadata','vdmmetadata','accesscontrol'); ?>
+	<?php $this->tab_name = 'serverTab'; ?>
+	<?php echo JLayoutHelper::render('joomla.edit.params', $this); ?>
 
 	<?php if ($this->canDo->get('server.delete') || $this->canDo->get('server.edit.created_by') || $this->canDo->get('server.edit.state') || $this->canDo->get('server.edit.created')) : ?>
 	<?php echo JHtml::_('bootstrap.addTab', 'serverTab', 'publishing', JText::_('COM_COMPONENTBUILDER_SERVER_PUBLISHING', true)); ?>
@@ -136,169 +126,169 @@ $componentParams = JComponentHelper::getParams('com_componentbuilder');
 
 <script type="text/javascript">
 
-// #jform_protocol listeners for protocol_vvvvwav function
+// #jform_protocol listeners for protocol_vvvvwbm function
 jQuery('#jform_protocol').on('keyup',function()
 {
-	var protocol_vvvvwav = jQuery("#jform_protocol").val();
-	vvvvwav(protocol_vvvvwav);
+	var protocol_vvvvwbm = jQuery("#jform_protocol").val();
+	vvvvwbm(protocol_vvvvwbm);
 
 });
 jQuery('#adminForm').on('change', '#jform_protocol',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwav = jQuery("#jform_protocol").val();
-	vvvvwav(protocol_vvvvwav);
+	var protocol_vvvvwbm = jQuery("#jform_protocol").val();
+	vvvvwbm(protocol_vvvvwbm);
 
 });
 
-// #jform_protocol listeners for protocol_vvvvwaw function
+// #jform_protocol listeners for protocol_vvvvwbn function
 jQuery('#jform_protocol').on('keyup',function()
 {
-	var protocol_vvvvwaw = jQuery("#jform_protocol").val();
-	vvvvwaw(protocol_vvvvwaw);
+	var protocol_vvvvwbn = jQuery("#jform_protocol").val();
+	vvvvwbn(protocol_vvvvwbn);
 
 });
 jQuery('#adminForm').on('change', '#jform_protocol',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwaw = jQuery("#jform_protocol").val();
-	vvvvwaw(protocol_vvvvwaw);
+	var protocol_vvvvwbn = jQuery("#jform_protocol").val();
+	vvvvwbn(protocol_vvvvwbn);
 
 });
 
-// #jform_protocol listeners for protocol_vvvvwax function
+// #jform_protocol listeners for protocol_vvvvwbo function
 jQuery('#jform_protocol').on('keyup',function()
 {
-	var protocol_vvvvwax = jQuery("#jform_protocol").val();
-	var authentication_vvvvwax = jQuery("#jform_authentication").val();
-	vvvvwax(protocol_vvvvwax,authentication_vvvvwax);
+	var protocol_vvvvwbo = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbo = jQuery("#jform_authentication").val();
+	vvvvwbo(protocol_vvvvwbo,authentication_vvvvwbo);
 
 });
 jQuery('#adminForm').on('change', '#jform_protocol',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwax = jQuery("#jform_protocol").val();
-	var authentication_vvvvwax = jQuery("#jform_authentication").val();
-	vvvvwax(protocol_vvvvwax,authentication_vvvvwax);
+	var protocol_vvvvwbo = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbo = jQuery("#jform_authentication").val();
+	vvvvwbo(protocol_vvvvwbo,authentication_vvvvwbo);
 
 });
 
-// #jform_authentication listeners for authentication_vvvvwax function
+// #jform_authentication listeners for authentication_vvvvwbo function
 jQuery('#jform_authentication').on('keyup',function()
 {
-	var protocol_vvvvwax = jQuery("#jform_protocol").val();
-	var authentication_vvvvwax = jQuery("#jform_authentication").val();
-	vvvvwax(protocol_vvvvwax,authentication_vvvvwax);
+	var protocol_vvvvwbo = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbo = jQuery("#jform_authentication").val();
+	vvvvwbo(protocol_vvvvwbo,authentication_vvvvwbo);
 
 });
 jQuery('#adminForm').on('change', '#jform_authentication',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwax = jQuery("#jform_protocol").val();
-	var authentication_vvvvwax = jQuery("#jform_authentication").val();
-	vvvvwax(protocol_vvvvwax,authentication_vvvvwax);
+	var protocol_vvvvwbo = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbo = jQuery("#jform_authentication").val();
+	vvvvwbo(protocol_vvvvwbo,authentication_vvvvwbo);
 
 });
 
-// #jform_protocol listeners for protocol_vvvvwaz function
+// #jform_protocol listeners for protocol_vvvvwbq function
 jQuery('#jform_protocol').on('keyup',function()
 {
-	var protocol_vvvvwaz = jQuery("#jform_protocol").val();
-	var authentication_vvvvwaz = jQuery("#jform_authentication").val();
-	vvvvwaz(protocol_vvvvwaz,authentication_vvvvwaz);
+	var protocol_vvvvwbq = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbq = jQuery("#jform_authentication").val();
+	vvvvwbq(protocol_vvvvwbq,authentication_vvvvwbq);
 
 });
 jQuery('#adminForm').on('change', '#jform_protocol',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwaz = jQuery("#jform_protocol").val();
-	var authentication_vvvvwaz = jQuery("#jform_authentication").val();
-	vvvvwaz(protocol_vvvvwaz,authentication_vvvvwaz);
+	var protocol_vvvvwbq = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbq = jQuery("#jform_authentication").val();
+	vvvvwbq(protocol_vvvvwbq,authentication_vvvvwbq);
 
 });
 
-// #jform_authentication listeners for authentication_vvvvwaz function
+// #jform_authentication listeners for authentication_vvvvwbq function
 jQuery('#jform_authentication').on('keyup',function()
 {
-	var protocol_vvvvwaz = jQuery("#jform_protocol").val();
-	var authentication_vvvvwaz = jQuery("#jform_authentication").val();
-	vvvvwaz(protocol_vvvvwaz,authentication_vvvvwaz);
+	var protocol_vvvvwbq = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbq = jQuery("#jform_authentication").val();
+	vvvvwbq(protocol_vvvvwbq,authentication_vvvvwbq);
 
 });
 jQuery('#adminForm').on('change', '#jform_authentication',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwaz = jQuery("#jform_protocol").val();
-	var authentication_vvvvwaz = jQuery("#jform_authentication").val();
-	vvvvwaz(protocol_vvvvwaz,authentication_vvvvwaz);
+	var protocol_vvvvwbq = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbq = jQuery("#jform_authentication").val();
+	vvvvwbq(protocol_vvvvwbq,authentication_vvvvwbq);
 
 });
 
-// #jform_protocol listeners for protocol_vvvvwbb function
+// #jform_protocol listeners for protocol_vvvvwbs function
 jQuery('#jform_protocol').on('keyup',function()
 {
-	var protocol_vvvvwbb = jQuery("#jform_protocol").val();
-	var authentication_vvvvwbb = jQuery("#jform_authentication").val();
-	vvvvwbb(protocol_vvvvwbb,authentication_vvvvwbb);
+	var protocol_vvvvwbs = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbs = jQuery("#jform_authentication").val();
+	vvvvwbs(protocol_vvvvwbs,authentication_vvvvwbs);
 
 });
 jQuery('#adminForm').on('change', '#jform_protocol',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwbb = jQuery("#jform_protocol").val();
-	var authentication_vvvvwbb = jQuery("#jform_authentication").val();
-	vvvvwbb(protocol_vvvvwbb,authentication_vvvvwbb);
+	var protocol_vvvvwbs = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbs = jQuery("#jform_authentication").val();
+	vvvvwbs(protocol_vvvvwbs,authentication_vvvvwbs);
 
 });
 
-// #jform_authentication listeners for authentication_vvvvwbb function
+// #jform_authentication listeners for authentication_vvvvwbs function
 jQuery('#jform_authentication').on('keyup',function()
 {
-	var protocol_vvvvwbb = jQuery("#jform_protocol").val();
-	var authentication_vvvvwbb = jQuery("#jform_authentication").val();
-	vvvvwbb(protocol_vvvvwbb,authentication_vvvvwbb);
+	var protocol_vvvvwbs = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbs = jQuery("#jform_authentication").val();
+	vvvvwbs(protocol_vvvvwbs,authentication_vvvvwbs);
 
 });
 jQuery('#adminForm').on('change', '#jform_authentication',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwbb = jQuery("#jform_protocol").val();
-	var authentication_vvvvwbb = jQuery("#jform_authentication").val();
-	vvvvwbb(protocol_vvvvwbb,authentication_vvvvwbb);
+	var protocol_vvvvwbs = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbs = jQuery("#jform_authentication").val();
+	vvvvwbs(protocol_vvvvwbs,authentication_vvvvwbs);
 
 });
 
-// #jform_protocol listeners for protocol_vvvvwbd function
+// #jform_protocol listeners for protocol_vvvvwbu function
 jQuery('#jform_protocol').on('keyup',function()
 {
-	var protocol_vvvvwbd = jQuery("#jform_protocol").val();
-	var authentication_vvvvwbd = jQuery("#jform_authentication").val();
-	vvvvwbd(protocol_vvvvwbd,authentication_vvvvwbd);
+	var protocol_vvvvwbu = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbu = jQuery("#jform_authentication").val();
+	vvvvwbu(protocol_vvvvwbu,authentication_vvvvwbu);
 
 });
 jQuery('#adminForm').on('change', '#jform_protocol',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwbd = jQuery("#jform_protocol").val();
-	var authentication_vvvvwbd = jQuery("#jform_authentication").val();
-	vvvvwbd(protocol_vvvvwbd,authentication_vvvvwbd);
+	var protocol_vvvvwbu = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbu = jQuery("#jform_authentication").val();
+	vvvvwbu(protocol_vvvvwbu,authentication_vvvvwbu);
 
 });
 
-// #jform_authentication listeners for authentication_vvvvwbd function
+// #jform_authentication listeners for authentication_vvvvwbu function
 jQuery('#jform_authentication').on('keyup',function()
 {
-	var protocol_vvvvwbd = jQuery("#jform_protocol").val();
-	var authentication_vvvvwbd = jQuery("#jform_authentication").val();
-	vvvvwbd(protocol_vvvvwbd,authentication_vvvvwbd);
+	var protocol_vvvvwbu = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbu = jQuery("#jform_authentication").val();
+	vvvvwbu(protocol_vvvvwbu,authentication_vvvvwbu);
 
 });
 jQuery('#adminForm').on('change', '#jform_authentication',function (e)
 {
 	e.preventDefault();
-	var protocol_vvvvwbd = jQuery("#jform_protocol").val();
-	var authentication_vvvvwbd = jQuery("#jform_authentication").val();
-	vvvvwbd(protocol_vvvvwbd,authentication_vvvvwbd);
+	var protocol_vvvvwbu = jQuery("#jform_protocol").val();
+	var authentication_vvvvwbu = jQuery("#jform_authentication").val();
+	vvvvwbu(protocol_vvvvwbu,authentication_vvvvwbu);
 
 });
 

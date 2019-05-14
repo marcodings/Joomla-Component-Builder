@@ -1,28 +1,13 @@
 <?php
-
-/* --------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-  __      __       _     _____                 _                                  _     __  __      _   _               _
-  \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-   \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-    \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-     \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-      \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                      | |
-                                                      |_|
-  /-------------------------------------------------------------------------------------------------------------------------------/
-
-  @version		2.6.x
-  @created		30th April, 2015
-  @package		Component Builder
-  @subpackage	compiler.php
-  @author		Llewellyn van der Merwe <http://www.vdm.io>
-  @my wife		Roline van der Merwe <http://www.vdm.io/>
-  @copyright	Copyright (C) 2015. All Rights Reserved
-  @license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html
-
-  Builds Complex Joomla Components
-
-  /----------------------------------------------------------------------------------------------------------------------------- */
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
@@ -40,7 +25,6 @@ class Compiler extends Infusion
 	 * 
 	 * @var      string
 	 */
-
 	private $tempPath;
 
 	/*
@@ -82,12 +66,12 @@ class Compiler extends Infusion
 				$this->repoPath = $this->params->get('git_folder_path', null);
 			}
 			// remove site folder if not needed (TODO add check if custom script was moved to site folder then we must do a more complex cleanup here)
-			if ($this->removeSiteFolder)
+			if ($this->removeSiteFolder && $this->removeSiteEditFolder)
 			{
 				// first remove the files and folders
 				$this->removeFolder($this->componentPath . '/site');
 				// clear form component xml
-				$xmlPath = $this->componentPath . '/' . $this->fileContentStatic['###component###'] . '.xml';
+				$xmlPath = $this->componentPath . '/' . $this->fileContentStatic[$this->hhh . 'component' . $this->hhh] . '.xml';
 				$componentXML = ComponentbuilderHelper::getFileContents($xmlPath);
 				$textToSite = ComponentbuilderHelper::getBetween($componentXML, '<files folder="site">', '</files>');
 				$textToSiteLang = ComponentbuilderHelper::getBetween($componentXML, '<languages folder="site">', '</languages>');
@@ -111,10 +95,12 @@ class Compiler extends Infusion
 			{
 				if (ComponentbuilderHelper::checkArray($this->langNot))
 				{
+					$this->app->enqueueMessage(JText::_('<hr /><h3>Language Warning</h3>'), 'Warning');
 					foreach ($this->langNot as $tag => $percentage)
 					{
 						$this->app->enqueueMessage(JText::sprintf('The <b>%s</b> language has %s&#37; translated, you will need to translate %s&#37; of the language strings before it will be added.', $tag, $percentage, $this->percentageLanguageAdd), 'Warning');
 					}
+					$this->app->enqueueMessage(JText::_('<hr /><h3>Language Notice</h3>'), 'Notice');
 					$this->app->enqueueMessage(JText::sprintf('<b>You can change this percentage of translated strings required in the global options of JCB.</b><br />Please watch this <a href=%s>tutorial for more help surrounding the JCB translations manager</a>.', '"https://youtu.be/zzAcVkn_cWU?list=PLQRGFI8XZ_wtGvPQZWBfDzzlERLQgpMRE" target="_blank" title="JCB Tutorial surrounding Translation Manager"'), 'Notice');
 				}
 				// set why the strings were added
@@ -126,6 +112,7 @@ class Compiler extends Infusion
 				// show languages that were added
 				if (ComponentbuilderHelper::checkArray($this->langSet))
 				{
+					$this->app->enqueueMessage(JText::_('<hr /><h3>Language Notice</h3>'), 'Notice');
 					foreach ($this->langSet as $tag => $percentage)
 					{
 						$this->app->enqueueMessage(JText::sprintf('The <b>%s</b> language has %s&#37; translated. Was addeded %s', $tag, $percentage, $whyAddedLang), 'Notice');
@@ -158,6 +145,7 @@ class Compiler extends Infusion
 				// set a notice if we have a mismatch
 				if (isset($mismatch) && ComponentbuilderHelper::checkArray($mismatch))
 				{
+					$this->app->enqueueMessage(JText::_('<hr /><h3>Language Warning</h3>'), 'Warning');
 					if (count($mismatch) > 1)
 					{
 						$this->app->enqueueMessage(JText::_('<h3>Please check the following mismatching Joomla.JText language constants.</h3>'), 'Warning');
@@ -170,9 +158,8 @@ class Compiler extends Infusion
 					foreach ($mismatch as $string)
 					{
 						$constant = $this->langPrefix . '_' . ComponentbuilderHelper::safeString($string, 'U');
-						$this->app->enqueueMessage(JText::sprintf('The <b>Joomla.JText._(\'%s\')</b> language constant for <b>%s</b> does not have a corresponding <code>JText::script(\'%s\')</code> decalaration, please add it.', $constant, $string, $string), 'Warning');
+						$this->app->enqueueMessage(JText::sprintf('The <b>Joomla.JText._(&apos;%s&apos;)</b> language constant for <b>%s</b> does not have a corresponding <code>JText::script(&apos;%s&apos;)</code> decalaration, please add it.', $constant, $string, $string), 'Warning');
 					}
-					$this->app->enqueueMessage('<hr />', 'Warning');
 				}
 			}
 			// check if we should add a EXTERNALCODE notice
@@ -185,7 +172,6 @@ class Compiler extends Infusion
 				// the notice
 				$this->app->enqueueMessage(JText::_('<hr /><h3>External Code Notice</h3>'), 'Notice');
 				$this->app->enqueueMessage(JText::sprintf('There has been <b>%s - %s</b> added to this component as EXTERNALCODE. To avoid shipping your component with malicious %s always make sure that the correct <b>code/string values</b> were used.', $externalCount, $externalCodeString, $externalCodeString), 'Notice');
-				$this->app->enqueueMessage('<hr />', 'Notice');
 			}
 			// end the timer here
 			$this->time_end = microtime(true);
@@ -215,9 +201,9 @@ class Compiler extends Infusion
 
 	/**
 	 * Set the dynamic data to the created fils
-	 * 
+	 *
 	 * @return  bool true on success
-	 * 
+	 *
 	 */
 	protected function updateFiles()
 	{
@@ -230,28 +216,7 @@ class Compiler extends Infusion
 			{
 				if (JFile::exists($static['path']))
 				{
-					$this->fileContentStatic['###FILENAME###'] = $static['name'];
-					$php = '';
-					if (ComponentbuilderHelper::checkFileType($static['name'], 'php'))
-					{
-						$php = "<?php\n";
-					}
-					$string = ComponentbuilderHelper::getFileContents($static['path']);
-					if (strpos($string, '###BOM###') !== false)
-					{
-						list($wast, $code) = explode('###BOM###', $string);
-						$string = $php . $bom . $code;
-						$answer = $this->setPlaceholders($string, $this->fileContentStatic, 3);
-						// add to zip array
-						$this->writeFile($static['path'], $answer);
-					}
-					else
-					{
-						$answer = $this->setPlaceholders($string, $this->fileContentStatic, 3);
-						// add to zip array
-						$this->writeFile($static['path'], $answer);
-					}
-					$this->lineCount = $this->lineCount + substr_count($answer, PHP_EOL);
+					$this->setFileContent($static['name'], $static['path'], $bom);
 				}
 			}
 			// now we do the dynamic files
@@ -265,32 +230,7 @@ class Compiler extends Infusion
 						{
 							if (JFile::exists($file['path']))
 							{
-								$this->fileContentStatic['###FILENAME###'] = $file['name'];
-								// do some weird stuff to improve the verion and dates being added to the license
-								$this->fixLicenseValues($file);
-								$php = '';
-								if (ComponentbuilderHelper::checkFileType($file['name'], 'php'))
-								{
-									$php = "<?php\n";
-								}
-								$string = ComponentbuilderHelper::getFileContents($file['path']);
-								if (strpos($string, '###BOM###') !== false)
-								{
-									list($bin, $code) = explode('###BOM###', $string);
-									$string = $php . $bom . $code;
-									$answer = $this->setPlaceholders($string, $this->fileContentStatic, 3);
-									$answer = $this->setPlaceholders($answer, $this->fileContentDynamic[$view], 3);
-									// add to zip array
-									$this->writeFile($file['path'], $answer);
-								}
-								else
-								{
-									$answer = $this->setPlaceholders($string, $this->fileContentStatic, 3);
-									$answer = $this->setPlaceholders($answer, $this->fileContentDynamic[$view], 3);
-									// add to zip array
-									$this->writeFile($file['path'], $answer);
-								}
-								$this->lineCount = $this->lineCount + substr_count($answer, PHP_EOL);
+								$this->setFileContent($file['name'], $file['path'], $bom, $file['view']);
 							}
 						}
 					}
@@ -306,10 +246,52 @@ class Compiler extends Infusion
 	}
 
 	/**
-	 * move the local update server xml file to a remote ftp server
-	 * 
+	 * set the file content
+	 *
 	 * @return  void
-	 * 
+	 *
+	 */
+	protected function setFileContent(&$name, &$path, &$bom, $view = null)
+	{
+		// set the file name
+		$this->fileContentStatic[$this->hhh . 'FILENAME' . $this->hhh] = $name;
+		// check if the file should get PHP opening
+		$php = '';
+		if (ComponentbuilderHelper::checkFileType($name, 'php'))
+		{
+			$php = "<?php\n";
+		}
+		// get content of the file
+		$string = ComponentbuilderHelper::getFileContents($path);
+		// see if we should add a BOM
+		if (strpos($string, $this->hhh . 'BOM' . $this->hhh) !== false)
+		{
+			list($wast, $code) = explode($this->hhh . 'BOM' . $this->hhh, $string);
+			$string = $php . $bom . $code;
+		}
+		// set the answer
+		$answer = $this->setPlaceholders($string, $this->fileContentStatic, 3);
+		// set the dynamic answer
+		if ($view)
+		{
+			$answer = $this->setPlaceholders($answer, $this->fileContentDynamic[$view], 3);
+		}
+		// check if this file needs extra care :)
+		if (isset($this->updateFileContent[$path]))
+		{
+			$answer = $this->setDynamicValues($answer);
+		}
+		// add answer back to file
+		$this->writeFile($path, $answer);
+		// count the file lines
+		$this->lineCount = $this->lineCount + substr_count($answer, PHP_EOL);
+	}
+
+	/**
+	 * move the local update server xml file to a remote ftp server
+	 *
+	 * @return  void
+	 *
 	 */
 	protected function setUpdateServer()
 	{
@@ -336,7 +318,7 @@ class Compiler extends Infusion
 		{
 			foreach ($data['config'] as $key => $value)
 			{
-				if ('###VERSION###' === $key)
+				if ($this->hhh . 'VERSION' . $this->hhh === $key)
 				{
 					// hmm we sould in some way make it known that this version number
 					// is not in relation the the project but to the file only... any ideas?
@@ -355,9 +337,9 @@ class Compiler extends Infusion
 			return true;
 		}
 		// else insure to reset to global
-		$this->fileContentStatic['###CREATIONDATE###'] = $this->fileContentStatic['###CREATIONDATE###GLOBAL'];
-		$this->fileContentStatic['###BUILDDATE###'] = $this->fileContentStatic['###BUILDDATE###GLOBAL'];
-		$this->fileContentStatic['###VERSION###'] = $this->fileContentStatic['###VERSION###GLOBAL'];
+		$this->fileContentStatic[$this->hhh . 'CREATIONDATE' . $this->hhh] = $this->fileContentStatic[$this->hhh . 'CREATIONDATE' . $this->hhh . 'GLOBAL'];
+		$this->fileContentStatic[$this->hhh . 'BUILDDATE' . $this->hhh] = $this->fileContentStatic[$this->hhh . 'BUILDDATE' . $this->hhh . 'GLOBAL'];
+		$this->fileContentStatic[$this->hhh . 'VERSION' . $this->hhh] = $this->fileContentStatic[$this->hhh . 'VERSION' . $this->hhh . 'GLOBAL'];
 	}
 
 	// set all global numbers
@@ -414,7 +396,7 @@ class Compiler extends Infusion
 	private function setReadMe($path)
 	{
 		// set readme data if not set already
-		if (!isset($this->fileContentStatic['###LINE_COUNT###']) || $this->fileContentStatic['###LINE_COUNT###'] != $this->lineCount)
+		if (!isset($this->fileContentStatic[$this->hhh . 'LINE_COUNT' . $this->hhh]) || $this->fileContentStatic[$this->hhh . 'LINE_COUNT' . $this->hhh] != $this->lineCount)
 		{
 			$this->buildReadMeData();
 		}
@@ -429,39 +411,39 @@ class Compiler extends Infusion
 	private function buildReadMeData()
 	{
 		// set some defaults
-		$this->fileContentStatic['###LINE_COUNT###'] = $this->lineCount;
-		$this->fileContentStatic['###FIELD_COUNT###'] = $this->fieldCount;
-		$this->fileContentStatic['###FILE_COUNT###'] = $this->fileCount;
-		$this->fileContentStatic['###FOLDER_COUNT###'] = $this->folderCount;
-		$this->fileContentStatic['###PAGE_COUNT###'] = $this->pageCount;
-		$this->fileContentStatic['###folders###'] = $this->folderSeconds;
-		$this->fileContentStatic['###foldersSeconds###'] = $this->folderSeconds;
-		$this->fileContentStatic['###files###'] = $this->fileSeconds;
-		$this->fileContentStatic['###filesSeconds###'] = $this->fileSeconds;
-		$this->fileContentStatic['###lines###'] = $this->lineSeconds;
-		$this->fileContentStatic['###linesSeconds###'] = $this->lineSeconds;
-		$this->fileContentStatic['###seconds###'] = $this->actualSeconds;
-		$this->fileContentStatic['###actualSeconds###'] = $this->actualSeconds;
-		$this->fileContentStatic['###totalHours###'] = $this->totalHours;
-		$this->fileContentStatic['###totalDays###'] = $this->totalDays;
-		$this->fileContentStatic['###debugging###'] = $this->secondsDebugging;
-		$this->fileContentStatic['###secondsDebugging###'] = $this->secondsDebugging;
-		$this->fileContentStatic['###planning###'] = $this->secondsPlanning;
-		$this->fileContentStatic['###secondsPlanning###'] = $this->secondsPlanning;
-		$this->fileContentStatic['###mapping###'] = $this->secondsMapping;
-		$this->fileContentStatic['###secondsMapping###'] = $this->secondsMapping;
-		$this->fileContentStatic['###office###'] = $this->secondsOffice;
-		$this->fileContentStatic['###secondsOffice###'] = $this->secondsOffice;
-		$this->fileContentStatic['###actualTotalHours###'] = $this->actualTotalHours;
-		$this->fileContentStatic['###actualTotalDays###'] = $this->actualTotalDays;
-		$this->fileContentStatic['###debuggingHours###'] = $this->debuggingHours;
-		$this->fileContentStatic['###planningHours###'] = $this->planningHours;
-		$this->fileContentStatic['###mappingHours###'] = $this->mappingHours;
-		$this->fileContentStatic['###officeHours###'] = $this->officeHours;
-		$this->fileContentStatic['###actualHoursSpent###'] = $this->actualHoursSpent;
-		$this->fileContentStatic['###actualDaysSpent###'] = $this->actualDaysSpent;
-		$this->fileContentStatic['###projectWeekTime###'] = $this->projectWeekTime;
-		$this->fileContentStatic['###projectMonthTime###'] = $this->projectMonthTime;
+		$this->fileContentStatic[$this->hhh . 'LINE_COUNT' . $this->hhh] = $this->lineCount;
+		$this->fileContentStatic[$this->hhh . 'FIELD_COUNT' . $this->hhh] = $this->fieldCount;
+		$this->fileContentStatic[$this->hhh . 'FILE_COUNT' . $this->hhh] = $this->fileCount;
+		$this->fileContentStatic[$this->hhh . 'FOLDER_COUNT' . $this->hhh] = $this->folderCount;
+		$this->fileContentStatic[$this->hhh . 'PAGE_COUNT' . $this->hhh] = $this->pageCount;
+		$this->fileContentStatic[$this->hhh . 'folders' . $this->hhh] = $this->folderSeconds;
+		$this->fileContentStatic[$this->hhh . 'foldersSeconds' . $this->hhh] = $this->folderSeconds;
+		$this->fileContentStatic[$this->hhh . 'files' . $this->hhh] = $this->fileSeconds;
+		$this->fileContentStatic[$this->hhh . 'filesSeconds' . $this->hhh] = $this->fileSeconds;
+		$this->fileContentStatic[$this->hhh . 'lines' . $this->hhh] = $this->lineSeconds;
+		$this->fileContentStatic[$this->hhh . 'linesSeconds' . $this->hhh] = $this->lineSeconds;
+		$this->fileContentStatic[$this->hhh . 'seconds' . $this->hhh] = $this->actualSeconds;
+		$this->fileContentStatic[$this->hhh . 'actualSeconds' . $this->hhh] = $this->actualSeconds;
+		$this->fileContentStatic[$this->hhh . 'totalHours' . $this->hhh] = $this->totalHours;
+		$this->fileContentStatic[$this->hhh . 'totalDays' . $this->hhh] = $this->totalDays;
+		$this->fileContentStatic[$this->hhh . 'debugging' . $this->hhh] = $this->secondsDebugging;
+		$this->fileContentStatic[$this->hhh . 'secondsDebugging' . $this->hhh] = $this->secondsDebugging;
+		$this->fileContentStatic[$this->hhh . 'planning' . $this->hhh] = $this->secondsPlanning;
+		$this->fileContentStatic[$this->hhh . 'secondsPlanning' . $this->hhh] = $this->secondsPlanning;
+		$this->fileContentStatic[$this->hhh . 'mapping' . $this->hhh] = $this->secondsMapping;
+		$this->fileContentStatic[$this->hhh . 'secondsMapping' . $this->hhh] = $this->secondsMapping;
+		$this->fileContentStatic[$this->hhh . 'office' . $this->hhh] = $this->secondsOffice;
+		$this->fileContentStatic[$this->hhh . 'secondsOffice' . $this->hhh] = $this->secondsOffice;
+		$this->fileContentStatic[$this->hhh . 'actualTotalHours' . $this->hhh] = $this->actualTotalHours;
+		$this->fileContentStatic[$this->hhh . 'actualTotalDays' . $this->hhh] = $this->actualTotalDays;
+		$this->fileContentStatic[$this->hhh . 'debuggingHours' . $this->hhh] = $this->debuggingHours;
+		$this->fileContentStatic[$this->hhh . 'planningHours' . $this->hhh] = $this->planningHours;
+		$this->fileContentStatic[$this->hhh . 'mappingHours' . $this->hhh] = $this->mappingHours;
+		$this->fileContentStatic[$this->hhh . 'officeHours' . $this->hhh] = $this->officeHours;
+		$this->fileContentStatic[$this->hhh . 'actualHoursSpent' . $this->hhh] = $this->actualHoursSpent;
+		$this->fileContentStatic[$this->hhh . 'actualDaysSpent' . $this->hhh] = $this->actualDaysSpent;
+		$this->fileContentStatic[$this->hhh . 'projectWeekTime' . $this->hhh] = $this->projectWeekTime;
+		$this->fileContentStatic[$this->hhh . 'projectMonthTime' . $this->hhh] = $this->projectMonthTime;
 	}
 
 	private function zipComponent()
@@ -548,7 +530,7 @@ class Compiler extends Infusion
 						$lineBites[$lineNumber] = (int) mb_strlen($lineContent, '8bit');
 						if (!$found)
 						{
-							$bites = (int) $this->bcmath('add', $lineBites[$lineNumber], $bites);
+							$bites = (int) ComponentbuilderHelper::bcmath('add', $lineBites[$lineNumber], $bites);
 						}
 						if ($found && !$foundEnd)
 						{
@@ -619,6 +601,7 @@ class Compiler extends Infusion
 						{
 							// Load escaped code since the target endhash has changed
 							$this->loadEscapedCode($file, $target, $lineBites);
+							$this->app->enqueueMessage(JText::_('<hr /><h3>Custom Code Warning</h3>'), 'Warning');
 							$this->app->enqueueMessage(JText::sprintf('Custom code could not be added to <b>%s</b> please review the file at <b>line %s</b>. This could be due to a change to lines below the custom code.', $target['path'], $target['from_line']), 'Warning');
 						}
 					}
@@ -626,12 +609,14 @@ class Compiler extends Infusion
 					{
 						// Load escaped code since the target hash has changed
 						$this->loadEscapedCode($file, $target, $lineBites);
+						$this->app->enqueueMessage(JText::_('<hr /><h3>Custom Code Warning</h3>'), 'Warning');
 						$this->app->enqueueMessage(JText::sprintf('Custom code could not be added to <b>%s</b> please review the file at <b>line %s</b>. This could be due to a change to lines above the custom code.', $target['path'], $target['from_line']), 'Warning');
 					}
 				}
 				else
 				{
 					// Give developer a notice that file is not found.
+					$this->app->enqueueMessage(JText::_('<hr /><h3>Custom Code Warning</h3>'), 'Warning');
 					$this->app->enqueueMessage(JText::sprintf('File <b>%s</b> could not be found, so the custom code for this file could not be addded.', $target['path']), 'Warning');
 				}
 			}
@@ -684,12 +669,12 @@ class Compiler extends Infusion
 		// Add the data
 		fwrite($fpFile, $data);
 		// truncate file at the end of the data that was added
-		$remove = $this->bcmath('add', $position, mb_strlen($data, '8bit'));
+		$remove = ComponentbuilderHelper::bcmath('add', $position, mb_strlen($data, '8bit'));
 		ftruncate($fpFile, $remove);
 		// check if this was a replacement of data
 		if ($replace)
 		{
-			$position = $this->bcmath('add', $position, $replace);
+			$position = ComponentbuilderHelper::bcmath('add', $position, $replace);
 		}
 		// move to the position of the data that should remain below the new data
 		fseek($fpTemp, $position);

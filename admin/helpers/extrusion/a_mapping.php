@@ -55,32 +55,33 @@ class Mapping
 	/**
 	 *	The needed set of keys needed to set
 	 */
-	protected $setting = array('id' => 'default', 'buildcompsql' => 'base64', 'addadmin_views' => 'json', 'name_code' => 'safeString');
+	protected $setting = array('id' => 'default', 'buildcompsql' => 'base64', 'name_code' => 'safeString');
 	
 	/**
 	 *	The needed set of keys needed to set
 	 */
 	protected $notRequiered = array('id', 'asset_id', 'published', 
-					'created_by', 'modified_by', 'created', 'modified', 'checked_out','checked_out_time',
-					'version', 'hits', 'access', 'ordering', 
-					'metakey', 'metadesc', 'metadata', 'params');
+		'created_by', 'modified_by', 'created', 'modified', 'checked_out','checked_out_time',
+		'version', 'hits', 'access', 'ordering', 
+		'metakey', 'metadesc', 'metadata', 'params');
 	
 	/**
 	 *	The datatypes and it linked field types (basic)
 	 *	(TODO) We may need to set this dynamicly
 	 */
 	protected $dataTypes = array(	'VARCHAR' => 'Text', 'CHAR' => 'Text',
-					'MEDIUMTEXT' => 'Textarea', 'LONGTEXT'  => 'Textarea',
-					'TEXT' => 'Textarea', 'DATETIME' => 'Calendar',
-					'DATE' => 'Text', 'TIME' => 'Text', 'TINYINT' => 'Text',
-					'BIGINT' => 'Text', 'INT' => 'Text',  'FLOAT' => 'Text',
-					'DECIMAL' => 'Text', 'DOUBLE' => 'Text');
+		'MEDIUMTEXT' => 'Textarea', 'LONGTEXT'  => 'Textarea',
+		'TEXT' => 'Textarea', 'DATETIME' => 'Calendar',
+		'DATE' => 'Text', 'TIME' => 'Text', 'TINYINT' => 'Text',
+		'BIGINT' => 'Text', 'INT' => 'Text',  'FLOAT' => 'Text',
+		'DECIMAL' => 'Text', 'DOUBLE' => 'Text');
 	
 	/**
 	 *	The datasize identifiers
 	 */
-	protected $dataSize = array(	'CHAR', 'VARCHAR', 'INT', 'TINYINT',
-					'BIGINT', 'FLOAT', 'DECIMAL', 'DOUBLE');
+	protected $dataSize = array(
+		'CHAR', 'VARCHAR', 'INT', 'TINYINT',
+		'BIGINT', 'FLOAT', 'DECIMAL', 'DOUBLE');
 	
 	/**
 	 *	The default identifiers
@@ -100,47 +101,62 @@ class Mapping
 	{
 		// set the app to insure messages can be set
 		$this->app = JFactory::getApplication();
-		
-		if ($data)
+		// check that we have data
+		if (ComponentbuilderHelper::checkArray($data))
 		{
-			if (isset($data['buildcomp']) && 1 == $data['buildcomp'] && isset($data['buildcompsql']))
+			// make sure we have an id
+			if (isset($data['id']) && $data['id'] > 0)
 			{
-				foreach ($data as $key => $value)
+				if (isset($data['buildcomp']) && 1 == $data['buildcomp'] && isset($data['buildcompsql']))
 				{
-					if (isset($this->setting[$key]))
+					foreach ($data as $key => $value)
 					{
-						switch($this->setting[$key])
+						if (isset($this->setting[$key]))
 						{
-							case 'base64':
-								// set needed value
-								$this->$key = base64_decode($value);
-								break;
-							case 'json':
-								// set needed value
-								$this->$key = json_decode($value, true);
-								break;
-							case 'safeString':
-								// set needed value
-								$this->$key = ComponentbuilderHelper::safeString($value);
-								break;
-							default :
-								$this->$key = $value;
-								break;
+							switch($this->setting[$key])
+							{
+								case 'base64':
+									// set needed value
+									$this->$key = base64_decode($value);
+									break;
+								case 'json':
+									// set needed value
+									$this->$key = json_decode($value, true);
+									break;
+								case 'safeString':
+									// set needed value
+									$this->$key = ComponentbuilderHelper::safeString($value);
+									break;
+								default :
+									$this->$key = $value;
+									break;
+							}
 						}
 					}
+					// get linked admin views
+					$addadmin_views = ComponentbuilderHelper::getVar('component_admin_views', $data['id'], 'joomla_component', 'addadmin_views');
+					if (ComponentbuilderHelper::checkJson($addadmin_views))
+					{
+						$this->addadmin_views = json_decode($addadmin_views, true);
+					}
+					// set the map of the views needed
+					if ($this->setMap())
+					{
+						return true;
+					}
+					$this->app->enqueueMessage(
+						JText::_('No "CREATE TABLE.." were found, please check your sql.'),
+						'Error'
+					);
+					return false;
 				}
-				// set the map of the views needed
-				if ($this->setMap())
-				{
-					return true;
-				}
-				$this->app->enqueueMessage(
-					JText::_('No "CREATE TABLE.." were found, please check your sql.'),
-					'Error'
-				);
-				return false;
+				return false; // not set so just return without any error
 			}
-			return false; // not set so just return without any error
+			$this->app->enqueueMessage(
+				JText::_('Please try again, this error usualy happens if it is a new component, beacues we need a component ID to do this build with your sql dump.'),
+				'Error'
+			);
+			return false;
 		}
 		$this->app->enqueueMessage(
 			JText::_('Could not find the data needed to continue.'),
@@ -148,7 +164,7 @@ class Mapping
 		);
 		return false;
 	}
-	
+
 	/**
 	 *	The mapping function
 	 *	To Map the views and fields that are needed
@@ -162,7 +178,8 @@ class Mapping
 			foreach ($queries as $query)
 			{
 				// only use create table queries
-				if (strpos($query, 'CREATE TABLE IF NOT EXISTS `') !== false)
+				if (strpos($query, 'CREATE TABLE IF NOT EXISTS') !== false ||
+					strpos($query, 'CREATE TABLE') !== false)
 				{
 					if ($tableName = $this->getTableName($query))
 					{
@@ -198,15 +215,24 @@ class Mapping
 		}
 		return false;
 	}
-	
+
 	/**
 	 *	Get the table name
 	 */
 	protected function getTableName(&$query)
 	{
-		$tableName = ComponentbuilderHelper::getBetween($query, '`#__', "`");
+		if (strpos($query, '`#__') !== false)
+		{
+			// get table name
+			$tableName = ComponentbuilderHelper::getBetween($query, '`#__', "`");
+		}
+		elseif (strpos($query, "'#__") !== false)
+		{
+			// get table name
+			$tableName = ComponentbuilderHelper::getBetween($query, "'#__", "'");
+		}
 		// if it still was not found
-		if (!ComponentbuilderHelper::checkString($tableName))
+		if (!isset($tableName) || !ComponentbuilderHelper::checkString($tableName))
 		{
 			// skip this query
 			return false;
@@ -224,13 +250,13 @@ class Mapping
 		// skip this query
 		return false;
 	}
-	
+
 	/**
 	 *	Get the field details
 	 */
 	protected function getFields(&$query)
 	{	
-		$rows = array_map('trim', explode("\n", $query));
+		$rows = array_map('trim', explode(PHP_EOL, $query));
 		$fields = array();
 		foreach ($rows as $row)
 		{
@@ -299,7 +325,7 @@ class Mapping
 		}
 		return false;
 	}
-	
+
 	/**
 	 *	Get the field types
 	 */
@@ -318,7 +344,7 @@ class Mapping
 		}
 		return false;
 	}
-	
+
 	/**
 	 *	Get the field size
 	 */
@@ -330,7 +356,7 @@ class Mapping
 		}
 		return '';
 	}
-	
+
 	/**
 	 *	Get the field default
 	 */
@@ -348,7 +374,7 @@ class Mapping
 		}
 		return '';
 	}
-	
+
 	/**
 	 *	Get the field Null Value
 	 */
@@ -366,7 +392,7 @@ class Mapping
 		}
 		return 'NULL';
 	}
-	
+
 	/**
 	 *	Get the field key status
 	 */

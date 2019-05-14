@@ -1,34 +1,16 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		componentbuilder.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-
-// import the Joomla modellist library
-jimport('joomla.application.component.modellist');
-jimport('joomla.application.component.helper');
 
 /**
  * Componentbuilder Model
@@ -43,7 +25,7 @@ class ComponentbuilderModelComponentbuilder extends JModelList
 		$icons  = array();
 		// view groups array
 		$viewGroups = array(
-			'main' => array('png.compiler', 'png.joomla_component.add', 'png.joomla_components', 'png.admin_view.add', 'png.admin_views', 'png||importjcbpackages||index.php?option=com_componentbuilder&view=joomla_components&task=joomla_components.smartImport', 'png.custom_admin_view.add', 'png.custom_admin_views', 'png.site_view.add', 'png.site_views', 'png.template.add', 'png.templates', 'png.layout.add', 'png.layouts', 'png.dynamic_get.add', 'png.dynamic_gets', 'png.custom_codes', 'png.libraries', 'png.snippets', 'png.get_snippets', 'png.validation_rules', 'png.field.add', 'png.fields', 'png.fields.catid', 'png.fieldtype.add', 'png.fieldtypes', 'png.fieldtypes.catid', 'png.language_translations', 'png.servers', 'png.help_documents')
+			'main' => array('png.compiler', 'png.joomla_component.add', 'png.joomla_components', 'png.admin_view.add', 'png.admin_views', 'png||importjcbpackages||index.php?option=com_componentbuilder&view=joomla_components&task=joomla_components.smartImport', 'png.custom_admin_view.add', 'png.custom_admin_views', 'png.site_view.add', 'png.site_views', 'png.template.add', 'png.templates', 'png.layout.add', 'png.layouts', 'png.dynamic_get.add', 'png.dynamic_gets', 'png.custom_codes', 'png.placeholders', 'png.libraries', 'png.snippets', 'png.get_snippets', 'png.validation_rules', 'png.field.add', 'png.fields', 'png.fields.catid', 'png.fieldtypes', 'png.fieldtypes.catid', 'png.language_translations', 'png.servers', 'png.help_documents')
 		);
 		// view access array
 		$viewAccess = array(
@@ -94,6 +76,11 @@ class ComponentbuilderModelComponentbuilder extends JModelList
 			'custom_code.access' => 'custom_code.access',
 			'custom_codes.submenu' => 'custom_code.submenu',
 			'custom_codes.dashboard_list' => 'custom_code.dashboard_list',
+			'placeholder.create' => 'placeholder.create',
+			'placeholders.access' => 'placeholder.access',
+			'placeholder.access' => 'placeholder.access',
+			'placeholders.submenu' => 'placeholder.submenu',
+			'placeholders.dashboard_list' => 'placeholder.dashboard_list',
 			'library.create' => 'library.create',
 			'libraries.access' => 'library.access',
 			'library.access' => 'library.access',
@@ -119,7 +106,6 @@ class ComponentbuilderModelComponentbuilder extends JModelList
 			'fieldtype.access' => 'fieldtype.access',
 			'fieldtypes.submenu' => 'fieldtype.submenu',
 			'fieldtypes.dashboard_list' => 'fieldtype.dashboard_list',
-			'fieldtype.dashboard_add' => 'fieldtype.dashboard_add',
 			'language_translation.create' => 'language_translation.create',
 			'language_translations.access' => 'language_translation.access',
 			'language_translation.access' => 'language_translation.access',
@@ -145,6 +131,12 @@ class ComponentbuilderModelComponentbuilder extends JModelList
 			'admin_fields_conditions.create' => 'admin_fields_conditions.create',
 			'admins_fields_conditions.access' => 'admin_fields_conditions.access',
 			'admin_fields_conditions.access' => 'admin_fields_conditions.access',
+			'admin_fields_relations.create' => 'admin_fields_relations.create',
+			'admins_fields_relations.access' => 'admin_fields_relations.access',
+			'admin_fields_relations.access' => 'admin_fields_relations.access',
+			'admin_custom_tabs.create' => 'admin_custom_tabs.create',
+			'admins_custom_tabs.access' => 'admin_custom_tabs.access',
+			'admin_custom_tabs.access' => 'admin_custom_tabs.access',
 			'component_admin_views.create' => 'component_admin_views.create',
 			'components_admin_views.access' => 'component_admin_views.access',
 			'component_admin_views.access' => 'component_admin_views.access',
@@ -172,6 +164,9 @@ class ComponentbuilderModelComponentbuilder extends JModelList
 			'component_files_folders.create' => 'component_files_folders.create',
 			'components_files_folders.access' => 'component_files_folders.access',
 			'component_files_folders.access' => 'component_files_folders.access',
+			'component_placeholders.create' => 'component_placeholders.create',
+			'components_placeholders.access' => 'component_placeholders.access',
+			'component_placeholders.access' => 'component_placeholders.access',
 			'snippet_type.create' => 'snippet_type.create',
 			'snippet_types.access' => 'snippet_type.access',
 			'snippet_type.access' => 'snippet_type.access',
@@ -469,7 +464,7 @@ class ComponentbuilderModelComponentbuilder extends JModelList
 		return '<div id="wiki-md"><small>'.JText::_('COM_COMPONENTBUILDER_THE_WIKI_IS_LOADING').'.<span class="loading-dots">.</span></small></div>';
 	}
 
-	 
+	
 
 	public function getNoticeboard()
 	{

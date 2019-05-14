@@ -1,33 +1,26 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		componentbuilderemail.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 /**
  * Componentbuilder component email helper
  */
 abstract class ComponentbuilderEmail
 {
+	/**
+	 * The active recipient
+	 *
+	 * @var    activeRecipient (array)
+	 */
+	public static $active = array();
+
 	/**
 	 * Configuraiton object
 	 *
@@ -43,6 +36,13 @@ abstract class ComponentbuilderEmail
 	public static $mailer = null;
 
 	/**
+	 * Custom Headers
+	 *
+	 * @var    array
+	 */
+	protected static $header = array();
+
+	/**
 	 * Get a configuration object
 	 *
 	 */
@@ -55,7 +55,45 @@ abstract class ComponentbuilderEmail
 
 		return self::$config;
 	}
-	
+
+	/**
+	 * Returns the global mailer object, only creating it if it doesn't already exist.
+	 *
+	 */
+	public static function getMailerInstance()
+	{
+		if (!self::$mailer)
+		{
+			self::$mailer = self::createMailer();
+		}
+
+		return self::$mailer;
+	}
+
+	/**
+	 * Check that a string looks like an email address.
+	 * @param string $address The email address to check
+	 * @param string|callable $patternselect A selector for the validation pattern to use :
+	 * * `auto` Pick best pattern automatically;
+	 * * `pcre8` Use the squiloople.com pattern, requires PCRE > 8.0, PHP >= 5.3.2, 5.2.14;
+	 * * `pcre` Use old PCRE implementation;
+	 * * `php` Use PHP built-in FILTER_VALIDATE_EMAIL;
+	 * * `html5` Use the pattern given by the HTML5 spec for 'email' type form input elements.
+	 * * `noregex` Don't use a regex: super fast, really dumb.
+	 * Alternatively you may pass in a callable to inject your own validator, for example:
+	 * PHPMailer::validateAddress('user@example.com', function($address) {
+	 *     return (strpos($address, '@') !== false);
+	 * });
+	 * You can also set the PHPMailer::$validator static to a callable, allowing built-in methods to use your validator.
+	 * @return boolean
+	 * @static
+	 * @access public
+	 */
+	public static function validateAddress($address, $patternselect = null)
+	{
+		return self::getMailerInstance()->validateAddress($address, $patternselect);
+	}
+
 	/**
 	 * Get a mailer object.
 	 *
@@ -123,21 +161,21 @@ abstract class ComponentbuilderEmail
 			$smtpsecure	= $conf->get('smtpsecure');
 			$smtpport 	= $conf->get('smtpport');
 			$sendmail	= $conf->get('sendmail');
-			$mailfrom	= $conf->get('mailfrom');
+			$mailfrom	= $conf->get('emailfrom');
 			$fromname	= $conf->get('fromname');
 			$replyto	= $conf->get('replyto');
 			$replytoname	= $conf->get('replytoname');
 		}
+
+		// Set global sender
+		$mail->setSender(array($mailfrom, $fromname));
 			
 		// set the global reply-to if found
 		if ($replyto && $replytoname)
 		{
 			$mail->ClearReplyTos();
-			$mail->addReplyTo( array( $replyto, $replytoname ) );
+			$mail->addReplyTo($replyto, $replytoname);
 		}
-
-		// Set global sender
-		$mail->setSender(array($mailfrom, $fromname));
 
 		// Default mailer is to use PHP's mail function
 		switch ($mailer)
@@ -162,6 +200,17 @@ abstract class ComponentbuilderEmail
 	}
 
 	/**
+	 * Set a Mail custom header.
+	 *
+	 * @return  void
+	 */
+	public static function setHeader($target, $value)
+	{
+		// set the header
+		self::$header[$target] = $value;
+	}
+
+	/**
 	 * Send an email
 	 *
 	 * @return  bool on success
@@ -169,15 +218,11 @@ abstract class ComponentbuilderEmail
 	 */
 	public static function send($recipient, $subject, $body, $textonly, $mode = 0, $bounce_email = null, $idsession = null, $mailreply = null, $replyname = null , $mailfrom = null, $fromname = null, $cc = null, $bcc = null, $attachment = null, $embeded = null , $embeds = null)
 	{
-		
 	 	// Get a JMail instance
 		$mail = self::getMailer();
 		
 		// set component params
 		$conf = self::getConfig();
-		
-		// do some house cleaning
-		$mail->ClearReplyTos();
 		
 		// set if we have override
 		if ($mailfrom && $fromname)
@@ -196,7 +241,16 @@ abstract class ComponentbuilderEmail
 		{
 			$mail->addCustomHeader('X-VDMmethodID:'.$idsession);
 		}
-		
+
+		// set headers if found
+		if (isset(self::$header) && is_array(self::$header) && count((array)self::$header) > 0)
+		{
+			foreach (self::$header as $_target => $_value)
+			{
+				$mail->addCustomHeader($_target.':'.$_value);
+			}
+		}
+
 		// set the subject & Body
 		$mail->setSubject($subject);
 		$mail->setBody($body);
@@ -229,7 +283,7 @@ abstract class ComponentbuilderEmail
 		if (is_array($mailreply))
 		{
 			$mail->ClearReplyTos();
-			$numReplyTo = count($mailreply);
+			$numReplyTo = count((array)$mailreply);
 			for ($i=0; $i < $numReplyTo; $i++)
 			{
 				$mail->addReplyTo($mailreply[$i], $replyname[$i]);
@@ -240,7 +294,7 @@ abstract class ComponentbuilderEmail
 			$mail->ClearReplyTos();
 			$mail->addReplyTo($mailreply, $replyname);
 		}
-		
+
 		// check if we can add the DKIM to email
 		if ($conf->get('enable_dkim'))
 		{
@@ -258,21 +312,78 @@ abstract class ComponentbuilderEmail
 				$mail->DKIM_private	= $tmp;
 			}
 		}
-		
+
 		$sendmail = $mail->Send();
 		
 		if ($conf->get('enable_dkim') && !empty($conf->get('dkim_domain')) && !empty($conf->get('dkim_selector')) && !empty($conf->get('dkim_private')) && !empty($conf->get('dkim_public')))
 		{
 			@unlink($tmp);
 		}
-		
+
 		if (method_exists('ComponentbuilderHelper','storeMessage'))
 		{
-			// store the massage if the method is set
-			ComponentbuilderHelper::storeMessage($sendmail, $recipient, $subject, $body, $textonly, $mode, 'email');
+			// if we have active recipient details
+			if (isset(self::$active[$recipient]))
+			{
+				// store the massage if the method is set
+				ComponentbuilderHelper::storeMessage($sendmail, self::$active[$recipient], $subject, $body, $textonly, $mode, 'email');
+				// clear memory
+				unset(self::$active[$recipient]);
+			}
+			else
+			{
+				// store the massage if the method is set
+				ComponentbuilderHelper::storeMessage($sendmail, $recipient, $subject, $body, $textonly, $mode, 'email');
+			}
 		}
-		
+
 		return $sendmail;
+	}
+
+	/**
+	 * Set html text (in a row) and subject (as title) to a email table.
+	 *      do not use <p> instead use <br />
+	 *	in your html that you pass to this method
+	 *      since it is a table row it does not
+	 *      work well with paragraphs
+	 *
+	 * @return  string on success
+	 *
+	 */
+	public static function setBasicBody($html, $subject)
+	{
+		$body = array();
+		$body[] = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">";
+		$body[] = "<html xmlns=\"http://www.w3.org/1999/xhtml\">";
+		$body[] = "<head>";
+		$body[] = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
+		$body[] = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>";
+		$body[] = "<title>" . $subject . "</title>";
+		$body[] = "<style type=\"text/css\">";
+		$body[] = "#outlook a {padding:0;}";
+		$body[] = ".ExternalClass {width:100%;}";
+		$body[] = ".ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {line-height: 100%;} ";
+		$body[] = "p {margin: 0; padding: 0; font-size: 0px; line-height: 0px;} ";
+		$body[] = "table td {border-collapse: collapse;}";
+		$body[] = "table {border-collapse: collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }";
+		$body[] = "img {display: block; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic;}";
+		$body[] = "a img {border: none;}";
+		$body[] = "a {text-decoration: none; color: #000001;}";
+		$body[] = "a.phone {text-decoration: none; color: #000001 !important; pointer-events: auto; cursor: default;}";
+		$body[] = "span {font-size: 13px; line-height: 17px; font-family: monospace; color: #000001;}";
+		$body[] = "</style>";
+		$body[] = "<!--[if gte mso 9]>";
+		$body[] = "<style>";
+		$body[] = "/* Target Outlook 2007 and 2010 */";
+		$body[] = "</style>";
+		$body[] = "<![endif]-->";
+		$body[] = "</head>";
+		$body[] = "<body style=\"width:100%; margin:0; padding:0; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;\">";
+		$body[] = $html;
+		$body[] = "</body>";
+		$body[] = "</html>";
+
+		return implode("\n", $body);
 	}
 
 	/**
@@ -293,7 +404,7 @@ abstract class ComponentbuilderEmail
 		$body[] = "<head>";
 		$body[] = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
 		$body[] = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>";
-		$body[] = "<title>".$subject."</title>";
+		$body[] = "<title>" . $subject . "</title>";
 		$body[] = "<style type=\"text/css\">";
 		$body[] = "#outlook a {padding:0;}";
 		$body[] = ".ExternalClass {width:100%;}";

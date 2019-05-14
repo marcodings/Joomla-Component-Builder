@@ -1,28 +1,13 @@
 <?php
-
-/* --------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-  __      __       _     _____                 _                                  _     __  __      _   _               _
-  \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-   \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-    \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-     \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-      \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                      | |
-                                                      |_|
-  /-------------------------------------------------------------------------------------------------------------------------------/
-
-  @version		2.6.x
-  @created		30th April, 2015
-  @package		Component Builder
-  @subpackage	compiler.php
-  @author		Llewellyn van der Merwe <http://www.vdm.io>
-  @my wife		Roline van der Merwe <http://www.vdm.io/>
-  @copyright	Copyright (C) 2015. All Rights Reserved
-  @license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html
-
-  Builds Complex Joomla Components
-
-  /----------------------------------------------------------------------------------------------------------------------------- */
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
@@ -32,6 +17,27 @@ defined('_JEXEC') or die('Restricted access');
  */
 class Get
 {
+
+	/**
+	 * The hash placeholder
+	 * 
+	 * @var     string
+	 */
+	public $hhh = '#' . '#' . '#';
+
+	/**
+	 * The open bracket placeholder
+	 * 
+	 * @var     string
+	 */
+	public $bbb = '[' . '[' . '[';
+
+	/**
+	 * The close bracket placeholder
+	 * 
+	 * @var     string
+	 */
+	public $ddd = ']' . ']' . ']';
 
 	/**
 	 * The app
@@ -46,6 +52,13 @@ class Get
 	 * @var     object
 	 */
 	public $params;
+
+	/**
+	 * The global placeholders
+	 * 
+	 * @var     array
+	 */
+	public $globalPlaceholders = array();
 
 	/**
 	 * The placeholders
@@ -67,6 +80,19 @@ class Get
 	 * @var     bool
 	 */
 	public $addPlaceholders = false;
+
+	/**
+	 * The placeholders for custom code keys
+	 * 
+	 * @var     array
+	 */
+	protected $customCodeKeyPlacholders = array(
+		'&#91;' => '[',
+		'&#93;' => ']',
+		'&#44;' => ',',
+		'&#43;' => '+',
+		'&#61;' => '='
+		);
 
 	/**
 	 * The Component data
@@ -353,6 +379,13 @@ class Get
 	public $setTagHistory = false;
 
 	/**
+	 * The Joomla Fields Switch
+	 * 
+	 * @var      boolean
+	 */
+	public $setJoomlaFields = false;
+
+	/**
 	 * The site edit views
 	 * 
 	 * @var     array
@@ -482,11 +515,46 @@ class Get
 	public $catOtherName = array();
 
 	/**
+	 * The field relations values
+	 * 
+	 * @var     array
+	 */
+	public $fieldRelations = array();
+
+	/**
+	 * Default Fields
+	 * 
+	 * @var    array
+	 */
+	public $defaultFields = array('created', 'created_by', 'modified', 'modified_by', 'published', 'ordering', 'access', 'version', 'hits', 'id');
+
+	/**
+	 * The list join fields
+	 * 
+	 * @var     array
+	 */
+	public $listJoinBuilder = array();
+
+	/**
+	 * The list head over ride
+	 * 
+	 * @var     array
+	 */
+	public $listHeadOverRide = array();
+
+	/**
 	 * The linked admin view tabs
 	 * 
 	 * @var     array
 	 */
 	public $linkedAdminViews = array();
+
+	/**
+	 * The custom admin view tabs
+	 * 
+	 * @var     array
+	 */
+	public $customTabs = array();
 
 	/**
 	 * The Add Ajax Switch
@@ -635,7 +703,40 @@ class Get
 	 */
 	public $setTidyWarning = false;
 
-	/*	 * *
+	/**
+	 * Tab/spacer bucket (to speed-up the build)
+	 * 
+	 * @var   array
+	 */
+	public $tabSpacerBucket = array();
+
+	/**
+	 * Set tab/spacer
+	 * 
+	 * @var   string
+	 */
+	public $tabSpacer = "\t";
+
+	/**
+	 * mysql table setting keys
+	 * 
+	 * @var    array
+	 */
+	public $mysqlTableKeys = array(
+		'engine' => array('default' => 'MyISAM'),
+		'charset' => array('default' => 'utf8'),
+		'collate' => array('default' => 'utf8_general_ci'),
+		'row_format' => array('default' => '')
+		);
+
+	/**
+	 * mysql table settings
+	 * 
+	 * @var    array
+	 */
+	public $mysqlTableSetting = array();
+
+	/**
 	 * Constructor
 	 */
 
@@ -663,7 +764,8 @@ class Get
 				// we do not have the tidy extention set fall back to StringManipulation
 				$this->fieldBuilderType = 1;
 				// load the sugestion to use string manipulation
-				$this->app->enqueueMessage(JText::_('Since you do not have <b>Tidy</b> extentsion setup on your system, we could not use the SimpleXMLElement class. We instead used <b>string manipulation</b> to build all your fields, this is a faster method, you must inspect the xml files in your component package to see if you are satisfied with the result.<br />You can make this method your default by opening the global options of JCB and under the <b>Global</b> tab set the <b>Field Builder Type</b> to string manipulation.<hr />'), 'Notice');
+				$this->app->enqueueMessage(JText::_('<hr /><h3>Field Notice</h3>'), 'Notice');
+				$this->app->enqueueMessage(JText::_('Since you do not have <b>Tidy</b> extentsion setup on your system, we could not use the SimpleXMLElement class. We instead used <b>string manipulation</b> to build all your fields, this is a faster method, you must inspect the xml files in your component package to see if you are satisfied with the result.<br />You can make this method your default by opening the global options of JCB and under the <b>Global</b> tab set the <b>Field Builder Type</b> to string manipulation.'), 'Notice');
 			}
 			// load the compiler path
 			$this->compilerPath = $this->params->get('compiler_folder_path', JPATH_COMPONENT_ADMINISTRATOR . '/compiler');
@@ -686,6 +788,8 @@ class Get
 				$this->user = JFactory::getUser();
 				// Get a db connection.
 				$this->db = JFactory::getDbo();
+				// get global placeholders
+				$this->globalPlaceholders = $this->getGlobalPlaceholders();
 				// check if this component is install on the current website
 				if ($paths = $this->getLocalInstallPaths())
 				{
@@ -726,6 +830,26 @@ class Get
 	}
 
 	/**
+	 * Set the tab/space
+	 * 
+	 * @param   int   $nr  The number of tag/space
+	 * 
+	 * @return  string
+	 * 
+	 */
+	public function _t($nr)
+	{
+		// check if we already have the string
+		if (!isset($this->tabSpacerBucket[$nr]))
+		{
+			// get the string
+			$this->tabSpacerBucket[$nr] = str_repeat($this->tabSpacer, (int) $nr);
+		}
+		// return stored string
+		return $this->tabSpacerBucket[$nr];
+	}
+
+	/**
 	 * Set the line number in comments
 	 * 
 	 * @param   int   $nr  The line number
@@ -740,6 +864,36 @@ class Get
 			return ' [Get ' . $nr . ']';
 		}
 		return '';
+	}
+
+	/**
+	 * get all System Placeholders
+	 *
+	 * @return  array The global placeholders
+	 * 
+	 */
+	public function getGlobalPlaceholders()
+	{
+		// reset bucket
+		$bucket = array();
+		// Create a new query object.
+		$query = $this->db->getQuery(true);
+		$query->select($this->db->quoteName(array('a.target','a.value')));
+		// from these tables
+		$query->from('#__componentbuilder_placeholder AS a');
+		// Reset the query using our newly populated query object.
+		$this->db->setQuery($query);
+		// Load the items
+		$this->db->execute();
+		if ($this->db->getNumRows())
+		{
+			$bucket = $this->db->loadAssocList('target', 'value');
+			foreach ($bucket as $key => &$code)
+			{
+				$code = base64_decode($code);
+			}
+		}
+		return $bucket;
 	}
 
 	/**
@@ -773,7 +927,8 @@ class Get
 				'i.php_dashboard_methods',
 				'f.sql_tweak',
 				'e.version_update',
-				'e.id'
+				'e.id',
+				'k.addplaceholders'
 				), array(
 				'addadmin_views',
 				'addadmin_views_id',
@@ -789,7 +944,8 @@ class Get
 				'php_dashboard_methods',
 				'sql_tweak',
 				'version_update',
-				'version_update_id'
+				'version_update_id',
+				'_placeholders'
 				)
 			)
 		);
@@ -804,6 +960,7 @@ class Get
 		$query->join('LEFT', $this->db->quoteName('#__componentbuilder_component_config', 'h') . ' ON (' . $this->db->quoteName('a.id') . ' = ' . $this->db->quoteName('h.joomla_component') . ')');
 		$query->join('LEFT', $this->db->quoteName('#__componentbuilder_component_dashboard', 'i') . ' ON (' . $this->db->quoteName('a.id') . ' = ' . $this->db->quoteName('i.joomla_component') . ')');
 		$query->join('LEFT', $this->db->quoteName('#__componentbuilder_component_files_folders', 'j') . ' ON (' . $this->db->quoteName('a.id') . ' = ' . $this->db->quoteName('j.joomla_component') . ')');
+		$query->join('LEFT', $this->db->quoteName('#__componentbuilder_component_placeholders', 'k') . ' ON (' . $this->db->quoteName('a.id') . ' = ' . $this->db->quoteName('k.joomla_component') . ')');
 		$query->where($this->db->quoteName('a.id') . ' = ' . (int) $this->componentID);
 
 		// Reset the query using our newly populated query object.
@@ -849,12 +1006,32 @@ class Get
 		$component = ComponentbuilderHelper::convertRepeatableFields($component, $searchRepeatables, $updater);
 
 		// set component place holders
-		$this->placeholders['###component###'] = ComponentbuilderHelper::safeString($component->name_code);
-		$this->placeholders['###Component###'] = ComponentbuilderHelper::safeString($component->name_code, 'F');
-		$this->placeholders['###COMPONENT###'] = ComponentbuilderHelper::safeString($component->name_code, 'U');
-		$this->placeholders['[[[component]]]'] = $this->placeholders['###component###'];
-		$this->placeholders['[[[Component]]]'] = $this->placeholders['###Component###'];
-		$this->placeholders['[[[COMPONENT]]]'] = $this->placeholders['###COMPONENT###'];
+		$this->placeholders[$this->hhh . 'component' . $this->hhh] = ComponentbuilderHelper::safeString($component->name_code);
+		$this->placeholders[$this->hhh . 'Component' . $this->hhh] = ComponentbuilderHelper::safeString($component->name_code, 'F');
+		$this->placeholders[$this->hhh . 'COMPONENT' . $this->hhh] = ComponentbuilderHelper::safeString($component->name_code, 'U');
+		$this->placeholders[$this->bbb . 'component' . $this->ddd] = $this->placeholders[$this->hhh . 'component' . $this->hhh];
+		$this->placeholders[$this->bbb . 'Component' . $this->ddd] = $this->placeholders[$this->hhh . 'Component' . $this->hhh];
+		$this->placeholders[$this->bbb . 'COMPONENT' . $this->ddd] = $this->placeholders[$this->hhh . 'COMPONENT' . $this->hhh];
+
+		// set the addcustommenus data
+		$component->_placeholders = (isset($component->_placeholders) && ComponentbuilderHelper::checkJson($component->_placeholders)) ? json_decode($component->_placeholders, true) : null;
+		if (ComponentbuilderHelper::checkArray($component->_placeholders))
+		{
+			foreach($component->_placeholders as $row)
+			{
+				$this->globalPlaceholders[$row['target']] = $row['value'];
+			}
+		}
+		unset($component->_placeholders);
+
+		// load the global placeholders
+		if (ComponentbuilderHelper::checkArray($this->globalPlaceholders))
+		{
+			foreach ($this->globalPlaceholders as $globalPlaceholder => $gloabalValue)
+			{
+				$this->placeholders[$globalPlaceholder] = $gloabalValue;
+			}
+		}
 
 		// set component sales name
 		$component->sales_name = ComponentbuilderHelper::safeString($component->system_name);
@@ -887,6 +1064,35 @@ class Get
 
 		// set the uikit switch
 		$this->uikit = $component->adduikit;
+
+		// set whmcs links if needed
+		if (1 == $component->add_license && (!isset($component->whmcs_buy_link) || !ComponentbuilderHelper::checkString($component->whmcs_buy_link)))
+		{
+			// update with the whmcs url
+			if (isset($component->whmcs_url) && ComponentbuilderHelper::checkString($component->whmcs_url))
+			{
+				$component->whmcs_buy_link = $component->whmcs_url;
+			}
+			// use the company website
+			elseif (isset($component->website) && ComponentbuilderHelper::checkString($component->website))
+			{
+				$component->whmcs_buy_link = $component->website;
+				$component->whmcs_url = rtrim($component->website, '/').'/whmcs';
+			}
+			// none set
+			else
+			{
+				$component->whmcs_buy_link = '#';
+				$component->whmcs_url = '#';
+			}
+		}
+		// since the license details are not set clear
+		elseif (0 == $component->add_license)
+		{
+			$component->whmcs_key = '';
+			$component->whmcs_buy_link = '';
+			$component->whmcs_url = '';
+		}
 
 		// set the footable switch
 		if ($component->addfootable)
@@ -947,7 +1153,8 @@ class Get
 			// build the admin_views settings
 			$component->admin_views = array_map(function($array)
 			{
-				$array = array_map(function($value) {
+				$array = array_map(function($value)
+				{
 					if (!ComponentbuilderHelper::checkArray($value) && !ComponentbuilderHelper::checkObject($value) && strval($value) === strval(intval($value)))
 					{
 						return (int) $value;
@@ -955,7 +1162,7 @@ class Get
 					return $value;
 				}, $array);
 				// check if we must add to site
-				if (isset($array['edit_create_site_view']) && $array['edit_create_site_view'])
+				if (isset($array['edit_create_site_view']) && is_numeric($array['edit_create_site_view']) && $array['edit_create_site_view'] > 0)
 				{
 					$this->siteEditView[$array['adminview']] = true;
 					$this->lang = 'both';
@@ -967,6 +1174,10 @@ class Get
 				if (isset($array['history']) && $array['history'] && !$this->setTagHistory)
 				{
 					$this->setTagHistory = true;
+				}
+				if (isset($array['joomla_fields']) && $array['joomla_fields'] && !$this->setJoomlaFields)
+				{
+					$this->setJoomlaFields = true;
 				}
 				// has become a lacacy issue, can't remove this
 				$array['view'] = $array['adminview'];
@@ -1030,22 +1241,14 @@ class Get
 		$component->addconfig = (isset($component->addconfig) && ComponentbuilderHelper::checkJson($component->addconfig)) ? json_decode($component->addconfig, true) : null;
 		if (ComponentbuilderHelper::checkArray($component->addconfig))
 		{
-			$component->config = array_map(function($field)
-			{
-				// set hash 
-				static $hash = 1;
-				// load hash
-				$field['hash'] = md5($field['field'] . $hash);
-				// increment hash
-				$hash++;
+			$component->config = array_map(function($field) {
+				// make sure the alias and title is 0
 				$field['alias'] = 0;
 				$field['title'] = 0;
-				// load the settings
-				$field['settings'] = $this->getFieldData($field['field']);
-				// set real field name
-				$field['base_name'] = $this->getFieldName($field);
-				// set unigue name keeper
-				$this->setUniqueNameCounter($this->getFieldName($field), 'configs');
+				// set the field details
+				$this->setFieldDetails($field);
+				// set unique name counter
+				$this->setUniqueNameCounter($field['base_name'], 'configs');
 				// return field
 				return $field;
 			}, array_values($component->addconfig));
@@ -1213,6 +1416,12 @@ class Get
 			$this->customScriptBuilder['sql']['component_sql'] = base64_decode($component->sql);
 		}
 		unset($component->sql);
+		// add_sql_uninstall
+		if ($component->add_sql_uninstall == 1)
+		{
+			$this->customScriptBuilder['sql_uninstall'] = base64_decode($component->sql_uninstall);
+		}
+		unset($component->sql_uninstall);
 		// bom
 		if (ComponentbuilderHelper::checkString($component->bom))
 		{
@@ -1327,18 +1536,24 @@ class Get
 					'b.addfields',
 					'b.id',
 					'c.addconditions',
-					'c.id'
+					'c.id',
+					'r.addrelations',
+					't.tabs'
 					), array(
 					'addfields',
 					'addfields_id',
 					'addconditions',
-					'addconditions_id'
+					'addconditions_id',
+					'addrelations',
+					'customtabs'
 					)
 				)
 			);
 			$query->from('#__componentbuilder_admin_view AS a');
 			$query->join('LEFT', $this->db->quoteName('#__componentbuilder_admin_fields', 'b') . ' ON (' . $this->db->quoteName('a.id') . ' = ' . $this->db->quoteName('b.admin_view') . ')');
 			$query->join('LEFT', $this->db->quoteName('#__componentbuilder_admin_fields_conditions', 'c') . ' ON (' . $this->db->quoteName('a.id') . ' = ' . $this->db->quoteName('c.admin_view') . ')');
+			$query->join('LEFT', $this->db->quoteName('#__componentbuilder_admin_fields_relations', 'r') . ' ON (' . $this->db->quoteName('a.id') . ' = ' . $this->db->quoteName('r.admin_view') . ')');
+			$query->join('LEFT', $this->db->quoteName('#__componentbuilder_admin_custom_tabs', 't') . ' ON (' . $this->db->quoteName('a.id') . ' = ' . $this->db->quoteName('t.admin_view') . ')');
 			$query->where($this->db->quoteName('a.id') . ' = ' . (int) $id);
 
 			// Reset the query using our newly populated query object.
@@ -1384,18 +1599,18 @@ class Get
 			$this->customScriptBuilder['token'][$name_single] = false;
 			$this->customScriptBuilder['token'][$name_list] = false;
 			// set some placeholders
-			$this->placeholders['###view###'] = ComponentbuilderHelper::safeString($name_single);
-			$this->placeholders['###views###'] = ComponentbuilderHelper::safeString($name_list);
-			$this->placeholders['###View###'] = ComponentbuilderHelper::safeString($name_single, 'F');
-			$this->placeholders['###Views###'] = ComponentbuilderHelper::safeString($name_list, 'F');
-			$this->placeholders['###VIEW###'] = ComponentbuilderHelper::safeString($name_single, 'U');
-			$this->placeholders['###VIEWS###'] = ComponentbuilderHelper::safeString($name_list, 'U');
-			$this->placeholders['[[[view]]]'] = $this->placeholders['###view###'];
-			$this->placeholders['[[[views]]]'] = $this->placeholders['###views###'];
-			$this->placeholders['[[[View]]]'] = $this->placeholders['###View###'];
-			$this->placeholders['[[[Views]]]'] = $this->placeholders['###Views###'];
-			$this->placeholders['[[[VIEW]]]'] = $this->placeholders['###VIEW###'];
-			$this->placeholders['[[[VIEWS]]]'] = $this->placeholders['###VIEWS###'];
+			$this->placeholders[$this->hhh . 'view' . $this->hhh] = ComponentbuilderHelper::safeString($name_single);
+			$this->placeholders[$this->hhh . 'views' . $this->hhh] = ComponentbuilderHelper::safeString($name_list);
+			$this->placeholders[$this->hhh . 'View' . $this->hhh] = ComponentbuilderHelper::safeString($name_single, 'F');
+			$this->placeholders[$this->hhh . 'Views' . $this->hhh] = ComponentbuilderHelper::safeString($name_list, 'F');
+			$this->placeholders[$this->hhh . 'VIEW' . $this->hhh] = ComponentbuilderHelper::safeString($name_single, 'U');
+			$this->placeholders[$this->hhh . 'VIEWS' . $this->hhh] = ComponentbuilderHelper::safeString($name_list, 'U');
+			$this->placeholders[$this->bbb . 'view' . $this->ddd] = $this->placeholders[$this->hhh . 'view' . $this->hhh];
+			$this->placeholders[$this->bbb . 'views' . $this->ddd] = $this->placeholders[$this->hhh . 'views' . $this->hhh];
+			$this->placeholders[$this->bbb . 'View' . $this->ddd] = $this->placeholders[$this->hhh . 'View' . $this->hhh];
+			$this->placeholders[$this->bbb . 'Views' . $this->ddd] = $this->placeholders[$this->hhh . 'Views' . $this->hhh];
+			$this->placeholders[$this->bbb . 'VIEW' . $this->ddd] = $this->placeholders[$this->hhh . 'VIEW' . $this->hhh];
+			$this->placeholders[$this->bbb . 'VIEWS' . $this->ddd] = $this->placeholders[$this->hhh . 'VIEWS' . $this->hhh];
 			// add the tables
 			$view->addtables = (isset($view->addtables) && ComponentbuilderHelper::checkJson($view->addtables)) ? json_decode($view->addtables, true) : null;
 			if (ComponentbuilderHelper::checkArray($view->addtables))
@@ -1403,7 +1618,73 @@ class Get
 				$view->tables = array_values($view->addtables);
 			}
 			unset($view->addtables);
-			// add the tabs
+
+			// set custom tabs
+			$this->customTabs[$name_single] = null;
+			$view->customtabs = (isset($view->customtabs) && ComponentbuilderHelper::checkJson($view->customtabs)) ? json_decode($view->customtabs, true) : null;
+			if (ComponentbuilderHelper::checkArray($view->customtabs))
+			{
+				// setup custom tabs to global data sets
+				$this->customTabs[$name_single] = array_map( function ($tab) use($name_single) {
+					// set the view name
+					$tab['view'] = $name_single;
+					// load the dynamic data
+					$tab['html'] = $this->setPlaceholders($this->setDynamicValues($tab['html']), $this->placeholders);
+					// set the tab name
+					$tab['name'] = (isset($tab['name']) && ComponentbuilderHelper::checkString($tab['name'])) ? $tab['name'] : 'Tab';
+					// set lang
+					$tab['lang'] = $this->langPrefix . '_' . ComponentbuilderHelper::safeString($tab['view'], 'U') . '_' . ComponentbuilderHelper::safeString($tab['name'], 'U');
+					$this->langContent['both'][$tab['lang']] = trim($tab['name']);
+					// set code name
+					$tab['code'] = ComponentbuilderHelper::safeString($tab['name']);
+					// check if the permissions for the tab should be added
+					$_tab = '';
+					if (isset($tab['permission']) && $tab['permission'] == 1)
+					{
+						$_tab = $this->_t(1);
+					}
+					// check if the php of the tab is set, if not load it now
+					if (strpos($tab['html'], 'bootstrap.addTab') === false && strpos($tab['html'], 'bootstrap.endTab') === false)
+					{
+						// add the tab
+						$tmp = PHP_EOL . $_tab . $this->_t(1) . "<?php echo JHtml::_('bootstrap.addTab', '" . $tab['view'] . "Tab', '" . $tab['code'] . "', JText::_('" . $tab['lang'] . "', true)); ?>";
+						$tmp .= PHP_EOL . $_tab . $this->_t(2) . '<div class="row-fluid form-horizontal-desktop">';
+						$tmp .= PHP_EOL . $_tab . $this->_t(3) . '<div class="span12">';
+						$tmp .= PHP_EOL . $_tab . $this->_t(4) . implode(PHP_EOL . $_tab . $this->_t(4), (array) explode(PHP_EOL, trim($tab['html'])));
+						$tmp .= PHP_EOL . $_tab . $this->_t(3) . '</div>';
+						$tmp .= PHP_EOL . $_tab . $this->_t(2) . '</div>';
+						$tmp .= PHP_EOL . $_tab . $this->_t(1) . "<?php echo JHtml::_('bootstrap.endTab'); ?>";
+						// update html
+						$tab['html'] = $tmp;
+					}
+					else
+					{
+						$tab['html'] = PHP_EOL . $_tab. $this->_t(1) . implode(PHP_EOL . $_tab. $this->_t(1), (array) explode(PHP_EOL, trim($tab['html'])));
+					}
+					// add the permissions if needed
+					if (isset($tab['permission']) && $tab['permission'] == 1)
+					{
+						$tmp = PHP_EOL . $this->_t(1) . "<?php if (\$this->canDo->get('" . $tab['view'] . "." . $tab['code'] . ".viewtab')) : ?>";
+						$tmp .= $tab['html'];
+						$tmp .= PHP_EOL . $this->_t(1) . "<?php endif; ?>";
+						// update html
+						$tab['html'] = $tmp;
+						// set lang for permissions
+						$tab['lang_permission'] = $tab['lang'] . '_TAB_PERMISSION';
+						$tab['lang_permission_desc'] = $tab['lang'] . '_TAB_PERMISSION_DESC';
+						$tab['lang_permission_title'] = $this->placeholders[$this->hhh . 'Views' . $this->hhh] . ' View ' . $tab['name'] . ' Tab';
+						$this->langContent['both'][$tab['lang_permission']] = $tab['lang_permission_title'];
+						$this->langContent['both'][$tab['lang_permission_desc']] = 'Allow the users in this group to view ' . $tab['name'] . ' Tab of ' . $this->placeholders[$this->hhh . 'views' . $this->hhh];
+						// set the sort key
+						$tab['sortKey'] = ComponentbuilderHelper::safeString($tab['lang_permission_title']);
+					}
+					// return tab
+					return $tab;
+				}, array_values($view->customtabs));
+			}
+			unset($view->customtabs);
+
+			// add the local tabs
 			$view->addtabs = (isset($view->addtabs) && ComponentbuilderHelper::checkJson($view->addtabs)) ? json_decode($view->addtabs, true) : null;
 			if (ComponentbuilderHelper::checkArray($view->addtabs))
 			{
@@ -1440,112 +1721,107 @@ class Get
 			$view->addfields = (isset($view->addfields) && ComponentbuilderHelper::checkJson($view->addfields)) ? json_decode($view->addfields, true) : null;
 			if (ComponentbuilderHelper::checkArray($view->addfields))
 			{
+				$ignoreFields = array();
+				// load the field data
+				$view->fields = array_map(function($field) use($name_single, $name_list, &$ignoreFields)
+				{
+					// set the field details
+					$this->setFieldDetails($field, $name_single, $name_list);
+					// check if this field is a default field OR
+					// check if this is none database related field
+					if (in_array($field['base_name'], $this->defaultFields) ||
+						ComponentbuilderHelper::fieldCheck($field['type_name'], 'spacer') ||
+						(isset($field['list']) && $field['list'] == 2)) // 2 = none database
+					{
+						$ignoreFields[$field['field']] = $field['field'];
+					}
+					// return field
+					return $field;
+				}, array_values($view->addfields));
 				// build update SQL
 				if ($old_view = $this->getHistoryWatch('admin_fields', $view->addfields_id))
 				{
 					// add new fields were added
 					if (isset($old_view->addfields) && ComponentbuilderHelper::checkJson($old_view->addfields))
 					{
-						$this->setUpdateSQL(json_decode($old_view->addfields, true), $view->addfields, 'field', $name_single);
+						$this->setUpdateSQL(json_decode($old_view->addfields, true), $view->addfields, 'field', $name_single, $ignoreFields);
 					}
 					// clear this data
 					unset($old_view);
 				}
-				if (ComponentbuilderHelper::checkArray($view->addfields))
+				// sort the fields acording to order
+				usort($view->fields, function($a, $b)
 				{
-					// load the field data
-					$view->fields = array_map(function($field) use($name_single, $name_list)
+					if (isset($a['order_list']) && isset($b['order_list']))
 					{
-						// set hash 
-						static $hash = 123467890; // (TODO) I found this making duplicates
-						// load hash
-						$field['hash'] = md5($field['field'] . $hash);
-						// increment hash
-						$hash++;
-						// set the settings
-						$field['settings'] = $this->getFieldData($field['field'], $name_single, $name_list);
-						// set real field name
-						$field['base_name'] = $this->getFieldName($field);
-						// set unigue name keeper
-						$this->setUniqueNameCounter($field['base_name'], $name_list);
-						// return field
-						return $field;
-					}, array_values($view->addfields));
-
-					// sort the fields acording to order
-					usort($view->fields, function($a, $b)
-					{
-						if (isset($a['order_list']) && isset($b['order_list']))
+						if ($a['order_list'] != 0 && $b['order_list'] != 0)
 						{
-							if ($a['order_list'] != 0 && $b['order_list'] != 0)
-							{
-								return $a['order_list'] - $b['order_list'];
-							}
-							elseif ($b['order_list'] != 0 && $a['order_list'] == 0)
-							{
-								return 1;
-							}
-							elseif ($a['order_list'] != 0 && $b['order_list'] == 0)
-							{
-								return 0;
-							}
+							return $a['order_list'] - $b['order_list'];
+						}
+						elseif ($b['order_list'] != 0 && $a['order_list'] == 0)
+						{
 							return 1;
 						}
-						return 0;
-					});
-
-					// do some house cleaning (for fields)
-					foreach ($view->fields as $field)
-					{
-						// so first we lock the field name in
-						$field_name = $this->getFieldName($field, $name_list);
-						// check if the field changed since the last compilation
-						if (ComponentbuilderHelper::checkObject($field['settings']->history))
+						elseif ($a['order_list'] != 0 && $b['order_list'] == 0)
 						{
-							// check if the datatype changed
-							if (isset($field['settings']->history->datatype))
+							return 0;
+						}
+						return 1;
+					}
+					return 0;
+				});
+				// do some house cleaning (for fields)
+				foreach ($view->fields as $field)
+				{
+					// so first we lock the field name in
+					$field_name = $this->getFieldName($field, $name_list);
+					// check if the field changed since the last compilation (default fields never change and are always added)
+					if (!isset($ignoreFields[$field['field']]) && ComponentbuilderHelper::checkObject($field['settings']->history))
+					{
+						// check if the datatype changed
+						if (isset($field['settings']->history->datatype))
+						{
+							$this->setUpdateSQL($field['settings']->history->datatype, $field['settings']->datatype, 'field.datatype', $name_single . '.' . $field_name);
+						}
+						// check if the datatype lenght changed
+						if (isset($field['settings']->history->datalenght) && isset($field['settings']->history->datalenght_other))
+						{
+							$this->setUpdateSQL($field['settings']->history->datalenght . $field['settings']->history->datalenght_other, $field['settings']->datalenght . $field['settings']->datalenght_other, 'field.lenght', $name_single . '.' . $field_name);
+						}
+						// check if the name changed
+						if (isset($field['settings']->history->xml) && ComponentbuilderHelper::checkJson($field['settings']->history->xml))
+						{
+							// only run if this is not an alias or a tag
+							if ((!isset($field['alias']) || !$field['alias']) && 'tag' !== $field['settings']->type_name)
 							{
-								$this->setUpdateSQL($field['settings']->history->datatype, $field['settings']->datatype, 'field.datatype', $name_single . '.' . $field_name);
-							}
-							// check if the datatype lenght changed
-							if (isset($field['settings']->history->datalenght) && isset($field['settings']->history->datalenght_other))
-							{
-								$this->setUpdateSQL($field['settings']->history->datalenght . $field['settings']->history->datalenght_other, $field['settings']->datalenght . $field['settings']->datalenght_other, 'field.lenght', $name_single . '.' . $field_name);
-							}
-							// check if the name changed
-							if (isset($field['settings']->history->xml) && ComponentbuilderHelper::checkJson($field['settings']->history->xml))
-							{
-								// only run if this is not an alias or a tag
-								if ((!isset($field['alias']) || !$field['alias']) && 'tag' !== $field['settings']->type_name)
-								{
-									// build temp field bucket
-									$tmpfield = array();
-									$tmpfield['settings'] = new stdClass();
-									// convert the xml json string to normal string
-									$tmpfield['settings']->xml = $this->setDynamicValues(json_decode($field['settings']->history->xml));
-									// add properties from current field as it is generic
-									$tmpfield['settings']->properties = $field['settings']->properties;
-									// add the old name
-									$tmpfield['settings']->name = $field['settings']->history->name;
-									// add the field type from current field since it is generic
-									$tmpfield['settings']->type_name = $field['settings']->type_name;
-									// get the old name
-									$old_field_name = $this->getFieldName($tmpfield);
+								// build temp field bucket
+								$tmpfield = array();
+								$tmpfield['settings'] = new stdClass();
+								// convert the xml json string to normal string
+								$tmpfield['settings']->xml = $this->setDynamicValues(json_decode($field['settings']->history->xml));
+								// add properties from current field as it is generic
+								$tmpfield['settings']->properties = $field['settings']->properties;
+								// add the old name
+								$tmpfield['settings']->name = $field['settings']->history->name;
+								// add the field type from current field since it is generic
+								$tmpfield['settings']->type_name = $field['settings']->type_name;
+								// get the old name
+								$old_field_name = $this->getFieldName($tmpfield);
 
-									// only run this if not a multi field
-									if (!isset($this->uniqueNames[$name_list]['names'][$field_name]))
-									{
-										// this only works when the field is not multiple of the same field
-										$this->setUpdateSQL($old_field_name, $field_name, 'field.name', $name_single . '.' . $field_name);
-									}
-									elseif ($old_field_name !== $field_name)
-									{
-										// give a notice atleast that the multi fields could have changed and no DB update was done
-										$this->app->enqueueMessage(JText::sprintf('You have a field called <b>%s</b> that has been added multiple times to the <b>%s</b> view, the name of that field has changed to <b>%s</b>. Normaly we would automaticly add the update SQL to your component, but with multiple fields this does not work automaticly since it could be that noting changed and it just seems like it did. Therefore you will have to do this manualy if it actualy did change!', $field_name, $name_single, $old_field_name), 'Notice');
-									}
-									// remove tmp
-									unset($tmpfield);
+								// only run this if not a multi field
+								if (!isset($this->uniqueNames[$name_list]['names'][$field_name]))
+								{
+									// this only works when the field is not multiple of the same field
+									$this->setUpdateSQL($old_field_name, $field_name, 'field.name', $name_single . '.' . $field_name);
 								}
+								elseif ($old_field_name !== $field_name)
+								{
+									// give a notice atleast that the multi fields could have changed and no DB update was done
+									$this->app->enqueueMessage(JText::_('<hr /><h3>Field Notice</h3>'), 'Notice');
+									$this->app->enqueueMessage(JText::sprintf('You have a field called <b>%s</b> that has been added multiple times to the <b>%s</b> view, the name of that field has changed to <b>%s</b>. Normaly we would automaticly add the update SQL to your component, but with multiple fields this does not work automaticly since it could be that noting changed and it just seems like it did. Therefore you will have to do this manualy if it actualy did change!', $field_name, $name_single, $old_field_name), 'Notice');
+								}
+								// remove tmp
+								unset($tmpfield);
 							}
 						}
 					}
@@ -1559,6 +1835,20 @@ class Get
 				if (ComponentbuilderHelper::checkString($old_view->name_single))
 				{
 					$this->setUpdateSQL(ComponentbuilderHelper::safeString($old_view->name_single), $name_single, 'table_name', $name_single);
+				}
+				// loop the mysql table settings
+				foreach ($this->mysqlTableKeys as $_mysqlTableKey => $_mysqlTableVal)
+				{
+					// check if the table engine changed
+					if (isset($old_view->{'mysql_table_' . $_mysqlTableKey}) && isset($view->{'mysql_table_' . $_mysqlTableKey}))
+					{
+						$this->setUpdateSQL( $old_view->{'mysql_table_' . $_mysqlTableKey}, $view->{'mysql_table_' . $_mysqlTableKey}, 'table_' . $_mysqlTableKey, $name_single);
+					}
+					// check if there is no history on table engine, and it changed from the default/global
+					elseif (isset($view->{'mysql_table_' . $_mysqlTableKey}) && ComponentbuilderHelper::checkString($view->{'mysql_table_' . $_mysqlTableKey}) && !is_numeric($view->{'mysql_table_' . $_mysqlTableKey}))
+					{
+						$this->setUpdateSQL($_mysqlTableVal['default'], $view->{'mysql_table_' . $_mysqlTableKey}, 'table_' . $_mysqlTableKey, $name_single);
+					}
 				}
 				// clear this data
 				unset($old_view);
@@ -1611,7 +1901,7 @@ class Get
 								$conditionValue['match_type'] = $type;
 								$conditionValue['match_xml'] = $fieldValue['settings']->xml;
 								// if custom field load field being extended
-								if (!ComponentbuilderHelper::typeField($type))
+								if (!ComponentbuilderHelper::fieldCheck($type))
 								{
 									$conditionValue['match_extends'] = ComponentbuilderHelper::getBetween($fieldValue['settings']->xml, 'extends="', '"');
 								}
@@ -1629,6 +1919,58 @@ class Get
 				}
 			}
 			unset($view->addconditions);
+
+			// prep the buckets
+			$this->fieldRelations[$name_list] = array();
+			$this->listJoinBuilder[$name_list] = array();
+			$this->listHeadOverRide[$name_list] = array();
+			// set the relations
+			$view->addrelations = (isset($view->addrelations) && ComponentbuilderHelper::checkJson($view->addrelations)) ? json_decode($view->addrelations, true) : null;
+			if (ComponentbuilderHelper::checkArray($view->addrelations))
+			{
+				foreach ($view->addrelations as $nr => $relationsValue)
+				{
+					// only add if list view field is selected and joind fields are set
+					if (isset($relationsValue['listfield']) && is_numeric($relationsValue['listfield']) && $relationsValue['listfield'] > 0 &&
+						isset($relationsValue['area']) && is_numeric($relationsValue['area']) && $relationsValue['area'] > 0)
+					{
+						// do a dynamic update on the set values
+						if (isset($relationsValue['set']) && ComponentbuilderHelper::checkString($relationsValue['set']))
+						{
+							$relationsValue['set'] = $this->setDynamicValues($relationsValue['set']);
+						}
+						// check that the arrays are set
+						if (!isset($this->fieldRelations[$name_list][(int) $relationsValue['listfield']]) || !ComponentbuilderHelper::checkArray($this->fieldRelations[$name_list][(int) $relationsValue['listfield']]))
+						{
+							$this->fieldRelations[$name_list][(int) $relationsValue['listfield']] = array();
+						}
+						// load the field relations
+						$this->fieldRelations[$name_list][ (int) $relationsValue['listfield']][ (int) $relationsValue['area']] = $relationsValue;
+						// load the list joints
+						if (isset($relationsValue['joinfields']) && ComponentbuilderHelper::checkArray($relationsValue['joinfields']))
+						{
+							foreach ($relationsValue['joinfields'] as $join)
+							{
+								$this->listJoinBuilder[$name_list][(int) $join] = (int) $join;
+							}
+						}
+						// set header over-ride
+						if (isset($relationsValue['column_name']) && ComponentbuilderHelper::checkString($relationsValue['column_name']))
+						{
+							$check_column_name = trim(strtolower($relationsValue['column_name']));
+							// confirm it should really make the over ride
+							if ('default' !== $check_column_name)
+							{
+								$column_name_lang = $this->langPrefix . '_' . ComponentbuilderHelper::safeString($name_list, 'U') . '_' . ComponentbuilderHelper::safeString($relationsValue['column_name'], 'U');
+								$this->langContent['admin'][$column_name_lang] = trim($relationsValue['column_name']);
+								$this->listHeadOverRide[$name_list][(int) $relationsValue['listfield']] = $column_name_lang;
+							}
+						}
+					}
+				}
+			}
+			unset($view->addrelations);
+
 			// set linked views
 			$this->linkedAdminViews[$name_single] = null;
 			$view->addlinked_views = (isset($view->addlinked_views) && ComponentbuilderHelper::checkJson($view->addlinked_views)) ? json_decode($view->addlinked_views, true) : null;
@@ -1650,17 +1992,24 @@ class Get
 			{
 				if (isset($view->{'add_' . $scripter}) && $view->{'add_' . $scripter} == 1 && ComponentbuilderHelper::checkString($view->$scripter))
 				{
-					$view->$scripter = $this->setDynamicValues(base64_decode($view->$scripter));
+					$view->{$scripter} = $this->setDynamicValues(base64_decode($view->{$scripter}));
 					$scripter_target = str_replace('javascript_', '', $scripter);
-					if (!isset($this->customScriptBuilder[$scripter_target][$name_single]))
+					if (!isset($this->customScriptBuilder[$scripter_target]) || !isset($this->customScriptBuilder[$scripter_target][$name_single]))
 					{
+						// check if the script is set
 						if (!isset($this->customScriptBuilder[$scripter_target]))
 						{
 							$this->customScriptBuilder[$scripter_target] = array();
 						}
-						$this->customScriptBuilder[$scripter_target][$name_single] = '';
+						// check if the script view is set
+						if (!isset($this->customScriptBuilder[$scripter_target][$name_single]))
+						{
+							$this->customScriptBuilder[$scripter_target][$name_single] = '';
+						}
 					}
-					$this->customScriptBuilder[$scripter_target][$name_single] .= PHP_EOL . $view->$scripter;
+					// load the script to class array
+					$this->customScriptBuilder[$scripter_target][$name_single] .= PHP_EOL . $view->{$scripter};
+					// check if a token must be set
 					if (strpos($view->$scripter, "token") !== false || strpos($view->$scripter, "task=ajax") !== false)
 					{
 						if (!$this->customScriptBuilder['token'][$name_single])
@@ -1668,25 +2017,36 @@ class Get
 							$this->customScriptBuilder['token'][$name_single] = true;
 						}
 					}
-					unset($view->$scripter);
+					unset($view->{$scripter});
 				}
 			}
 			// add_css
 			$addArrayC = array('css_view', 'css_views');
 			foreach ($addArrayC as $scripter)
 			{
-				if (isset($view->{'add_' . $scripter}) && $view->{'add_' . $scripter} == 1)
+				if (isset($view->{'add_' . $scripter}) && $view->{'add_' . $scripter} == 1 && ComponentbuilderHelper::checkString($view->{$scripter}))
 				{
-					if (!isset($this->customScriptBuilder[$scripter][$name_single]))
+					$view->{$scripter} = $this->setDynamicValues(base64_decode($view->{$scripter}));
+					if (!isset($this->customScriptBuilder[$scripter]) || !isset($this->customScriptBuilder[$scripter][$name_single]))
 					{
-						$this->customScriptBuilder[$scripter][$name_single] = '';
+						// check if the script is set
+						if (!isset($this->customScriptBuilder[$scripter]))
+						{
+							$this->customScriptBuilder[$scripter] = array();
+						}
+						// check if the script view is set
+						if (!isset($this->customScriptBuilder[$scripter][$name_single]))
+						{
+							$this->customScriptBuilder[$scripter][$name_single] = '';
+						}
 					}
-					$this->customScriptBuilder[$scripter][$name_single] .= PHP_EOL . base64_decode($view->$scripter);
-					unset($view->$scripter);
+					// load the script to class array
+					$this->customScriptBuilder[$scripter][$name_single] .= PHP_EOL . $view->{$scripter};
+					unset($view->{$scripter});
 				}
 			}
 			// add_php
-			$addArrayP = array('php_getitem', 'php_before_save', 'php_save', 'php_postsavehook', 'php_getitems', 'php_getitems_after_all', 'php_getlistquery', 'php_allowedit', 'php_before_delete', 'php_after_delete', 'php_before_publish', 'php_after_publish', 'php_batchcopy', 'php_batchmove', 'php_document');
+			$addArrayP = array('php_getitem', 'php_before_save', 'php_save', 'php_getform', 'php_postsavehook', 'php_getitems', 'php_getitems_after_all', 'php_getlistquery', 'php_allowadd', 'php_allowedit', 'php_before_delete', 'php_after_delete', 'php_before_publish', 'php_after_publish', 'php_batchcopy', 'php_batchmove', 'php_document');
 			foreach ($addArrayP as $scripter)
 			{
 				if (isset($view->{'add_' . $scripter}) && $view->{'add_' . $scripter} == 1)
@@ -1783,27 +2143,28 @@ class Get
 				}
 			}
 			// activate alias builder
-			if (!isset($this->customAliasBuilder[$name_single]) && isset($view->alias_builder_type) && 2 == $view->alias_builder_type
-				&& isset($view->alias_builder) && ComponentbuilderHelper::checkJson($view->alias_builder))
+			if (!isset($this->customAliasBuilder[$name_single]) && isset($view->alias_builder_type) && 2 == $view->alias_builder_type && isset($view->alias_builder) && ComponentbuilderHelper::checkJson($view->alias_builder))
 			{
 				// get the aliasFields
 				$alias_fields = (array) json_decode($view->alias_builder, true);
 				// get the active fields
-				$alias_fields = (array) array_filter($view->fields, function($field)  use($alias_fields) {
-					// check if field is in view fields
-					if (in_array($field['field'], $alias_fields))
+				$alias_fields = (array) array_filter($view->fields, function($field) use($alias_fields)
 					{
-						return true;
-					}
-					return false;
-				});
+						// check if field is in view fields
+						if (in_array($field['field'], $alias_fields))
+						{
+							return true;
+						}
+						return false;
+					});
 				// check if all is well
 				if (ComponentbuilderHelper::checkArray($alias_fields))
 				{
 					// load the field names
-					$this->customAliasBuilder[$name_single] = (array) array_map(function ($field) use($name_list) {
+					$this->customAliasBuilder[$name_single] = (array) array_map(function ($field) use($name_list)
+						{
 							return $this->getFieldName($field, $name_list);
-						},$alias_fields
+						}, $alias_fields
 					);
 				}
 			}
@@ -1825,19 +2186,38 @@ class Get
 					unset($view->sql);
 				}
 			}
+			// load table settings
+			if (!isset($this->mysqlTableSetting[$name_single]))
+			{
+				$this->mysqlTableSetting[$name_single] = array();
+			}
+			// set mySql Table Settings
+			foreach ($this->mysqlTableKeys as $_mysqlTableKey => $_mysqlTableVal)
+			{
+				if (isset($view->{'mysql_table_' . $_mysqlTableKey}) && ComponentbuilderHelper::checkString($view->{'mysql_table_' . $_mysqlTableKey}) && !is_numeric($view->{'mysql_table_' . $_mysqlTableKey}))
+				{
+					$this->mysqlTableSetting[$name_single][$_mysqlTableKey] = $view->{'mysql_table_' . $_mysqlTableKey};
+				}
+				else
+				{
+					$this->mysqlTableSetting[$name_single][$_mysqlTableKey] = $_mysqlTableVal['default'];
+				}
+				// remove the table values since we moved to another object
+				unset($view->{'mysql_table_' . $_mysqlTableKey});
+			}
 			// clear placeholders
-			unset($this->placeholders['###view###']);
-			unset($this->placeholders['###views###']);
-			unset($this->placeholders['###View###']);
-			unset($this->placeholders['###Views###']);
-			unset($this->placeholders['###VIEW###']);
-			unset($this->placeholders['###VIEWS###']);
-			unset($this->placeholders['[[[view]]]']);
-			unset($this->placeholders['[[[views]]]']);
-			unset($this->placeholders['[[[View]]]']);
-			unset($this->placeholders['[[[Views]]]']);
-			unset($this->placeholders['[[[VIEW]]]']);
-			unset($this->placeholders['[[[VIEWS]]]']);
+			unset($this->placeholders[$this->hhh . 'view' . $this->hhh]);
+			unset($this->placeholders[$this->hhh . 'views' . $this->hhh]);
+			unset($this->placeholders[$this->hhh . 'View' . $this->hhh]);
+			unset($this->placeholders[$this->hhh . 'Views' . $this->hhh]);
+			unset($this->placeholders[$this->hhh . 'VIEW' . $this->hhh]);
+			unset($this->placeholders[$this->hhh . 'VIEWS' . $this->hhh]);
+			unset($this->placeholders[$this->bbb . 'view' . $this->ddd]);
+			unset($this->placeholders[$this->bbb . 'views' . $this->ddd]);
+			unset($this->placeholders[$this->bbb . 'View' . $this->ddd]);
+			unset($this->placeholders[$this->bbb . 'Views' . $this->ddd]);
+			unset($this->placeholders[$this->bbb . 'VIEW' . $this->ddd]);
+			unset($this->placeholders[$this->bbb . 'VIEWS' . $this->ddd]);
 
 			// store this view to class object
 			$this->_adminViewData[$id] = $view;
@@ -1903,6 +2283,16 @@ class Get
 		$view->code = $this->uniqueCode(ComponentbuilderHelper::safeString($view->codename));
 		$view->Code = ComponentbuilderHelper::safeString($view->code, 'F');
 		$view->CODE = ComponentbuilderHelper::safeString($view->code, 'U');
+		// load context if not set
+		if (!isset($view->context) || !ComponentbuilderHelper::checkString($view->context))
+		{
+			$view->context = $view->code;
+		}
+		else
+		{
+			// always make sure context is a safe string
+			$view->context = ComponentbuilderHelper::safeString($view->context);
+		}
 		// load the library
 		if (!isset($this->libManager[$this->target]))
 		{
@@ -1974,10 +2364,10 @@ class Get
 			}
 		}
 		// set the main get data
-		$main_get = $this->setGetData(array($view->main_get), $view->code);
+		$main_get = $this->setGetData(array($view->main_get), $view->code, $view->context);
 		$view->main_get = $main_get[0];
 		// set the custom_get data
-		$view->custom_get = $this->setGetData(json_decode($view->custom_get, true), $view->code);
+		$view->custom_get = $this->setGetData(json_decode($view->custom_get, true), $view->code, $view->context);
 		// set array adding array of scripts
 		$addArray = array('php_view', 'php_jview', 'php_jview_display', 'php_document', 'javascript_file', 'js_document', 'css_document', 'css');
 		foreach ($addArray as $scripter)
@@ -2167,10 +2557,10 @@ class Get
 							if (!in_array($validationRule, (array) $coreValidationRules))
 							{
 								// get the class methods for this rule if it exists
-								if ($this->validationRules[$validationRule] = ComponentbuilderHelper::getVar('validation_rule', $validationRule, 'name','php'))
+								if ($this->validationRules[$validationRule] = ComponentbuilderHelper::getVar('validation_rule', $validationRule, 'name', 'php'))
 								{
 									// open and set the validation rule
-									$this->validationRules[$validationRule] = $this->setDynamicValues(base64_decode($this->validationRules[$validationRule]));
+									$this->validationRules[$validationRule] = $this->setPlaceholders($this->setDynamicValues(base64_decode($this->validationRules[$validationRule])), $this->placeholders);
 								}
 								else
 								{
@@ -2341,6 +2731,55 @@ class Get
 	}
 
 	/**
+	 * set Field details
+	 * 
+	 * @param   object   $field           The field object
+	 * @param   string   $singleViewName  The single view name
+	 * @param   string   $listViewName    The list view name
+	 * @param   string   $amicably        The peaceful resolve
+	 * 
+	 * @return  void
+	 * 
+	 */
+	public function setFieldDetails(&$field, $singleViewName = null, $listViewName = null, $amicably = '')
+	{
+		// set hash
+		static $hash = 123467890;
+		// load hash if not found
+		if (!isset($field['hash']))
+		{
+			$field['hash'] = md5($field['field'] . $hash);
+			// increment hash
+			$hash++;
+		}
+		// set the settings
+		if (!isset($field['settings']))
+		{
+			$field['settings'] = $this->getFieldData($field['field'], $singleViewName, $listViewName);
+		}
+		// set real field name
+		if (!isset($field['base_name']))
+		{
+			$field['base_name'] = $this->getFieldName($field);
+		}
+		// set code name for field type
+		if (!isset($field['type_name']))
+		{
+			$field['type_name'] = $this->getFieldType($field);
+		}
+		// check if value is array
+		if (isset($field['permission']) && !ComponentbuilderHelper::checkArray($field['permission']) && is_numeric($field['permission']) && $field['permission'] > 0)
+		{
+			$field['permission'] = array($field['permission']);
+		}
+		// set unigue name keeper
+		if ($listViewName)
+		{
+			$this->setUniqueNameCounter($field['base_name'], $listViewName . $amicably);
+		}
+	}
+
+	/**
 	 * Get the field's actual type
 	 * 
 	 * @param   object   $field   The field object
@@ -2350,44 +2789,60 @@ class Get
 	 */
 	public function getFieldType(&$field)
 	{
-		// set the type name
-		$type_name = ComponentbuilderHelper::safeString($field['settings']->type_name);
-		// check that we have the poperties
-		if (ComponentbuilderHelper::checkArray($field['settings']->properties))
+		// check if we have done this already
+		if (isset($field['type_name']))
 		{
-			foreach ($field['settings']->properties as $property)
+			return $field['type_name'];
+		}
+		// check that we have the poperties
+		if (isset($field['settings']) && ComponentbuilderHelper::checkObject($field['settings']) && isset($field['settings']->properties) && ComponentbuilderHelper::checkArray($field['settings']->properties))
+		{
+			// search for own custom fields
+			if (strpos($field['settings']->type_name, '@') !== false)
 			{
-				if ($property['name'] === 'type')
+				// set own custom field
+				$field['settings']->own_custom = $field['settings']->type_name;
+				$field['settings']->type_name = 'Custom';
+			}
+			// set the type name
+			$type_name = ComponentbuilderHelper::safeString($field['settings']->type_name);
+			// if custom (we must use the xml value)
+			if ($type_name === 'custom' || $type_name === 'customuser')
+			{
+				$type = ComponentbuilderHelper::safeString(ComponentbuilderHelper::getBetween($field['settings']->xml, 'type="', '"'));
+			}
+			else
+			{
+				// loop over properties looking for the type value
+				foreach ($field['settings']->properties as $property)
 				{
-					if ($type_name === 'custom' || $type_name === 'customuser')
+					if ($property['name'] === 'type') // type field is never ajustable (unless custom)
 					{
-						$type = ComponentbuilderHelper::safeString(ComponentbuilderHelper::getBetween($field['settings']->xml, 'type="', '"'));
+						// force the default value
+						if (isset($property['example']) && ComponentbuilderHelper::checkString($property['example']))
+						{
+							$type = ComponentbuilderHelper::safeString($property['example']);
+						}
+						// fallback on type name set in name field
+						elseif (ComponentbuilderHelper::checkString($type_name))
+						{
+							$type = $type_name;
+						}
+						// fall back on the xml settings (not ideal)
+						else
+						{
+							$type = ComponentbuilderHelper::safeString(ComponentbuilderHelper::getBetween($xml, 'type="', '"'));
+						}
+						// exit foreach loop
+						break;
 					}
-					// use field core type
-					elseif (ComponentbuilderHelper::checkString($type_name))
-					{
-						$type = $type_name;
-					}
-					// make sure none adjustable fields are set (should be same as above)
-					elseif (isset($property['example']) && ComponentbuilderHelper::checkString($property['example']) && $property['adjustable'] == 0)
-					{
-						$type = $property['example'];
-					}
-					// fall back on the xml settings (not ideal)
-					else
-					{
-						$type = ComponentbuilderHelper::safeString(ComponentbuilderHelper::getBetween($xml, 'type="', '"'));
-					}
-
-					// check if the value is set
-					if (ComponentbuilderHelper::checkString($type))
-					{
-						// add the value
-						return $type;
-					}
-					// exit foreach loop
-					break;
 				}
+			}
+			// check if the value is set
+			if (ComponentbuilderHelper::checkString($type))
+			{
+				// add the value
+				return $type;
 			}
 		}
 		// fall back to text
@@ -2399,16 +2854,22 @@ class Get
 	 * 
 	 * @param   object   $field         The field object
 	 * @param   string   $listViewName  The list view name
+	 * @param   string   $amicably      The peaceful resolve
 	 * 
 	 * @return  string   Success returns field name
 	 * 
 	 */
-	public function getFieldName(&$field, $listViewName = null)
+	public function getFieldName(&$field, $listViewName = null, $amicably = '')
 	{
 		// return the unique name if already set
-		if (ComponentbuilderHelper::checkString($listViewName) && isset($field['hash']) && isset($this->uniqueFieldNames[$listViewName . $field['hash']]))
+		if (ComponentbuilderHelper::checkString($listViewName) && isset($field['hash']) && isset($this->uniqueFieldNames[$listViewName . $amicably . $field['hash']]))
 		{
-			return $this->uniqueFieldNames[$listViewName . $field['hash']];
+			return $this->uniqueFieldNames[$listViewName . $amicably . $field['hash']];
+		}
+		// always make sure we have a field name and type
+		if (!isset($field['settings']) || !isset($field['settings']->type_name) || !isset($field['settings']->name))
+		{
+			return 'error';
 		}
 		// set the type name
 		$type_name = ComponentbuilderHelper::safeString($field['settings']->type_name);
@@ -2429,7 +2890,7 @@ class Get
 						if (strpos($requeSt_id, '_request_id') !== false || strpos($requeSt_id, '_request_catid') !== false)
 						{
 							// keep it then, don't change
-							$name = $requeSt_id;
+							$name = $this->setPlaceholders($requeSt_id, $this->placeholders);
 						}
 						else
 						{
@@ -2465,7 +2926,7 @@ class Get
 					else
 					{
 						// get value from xml
-						$xml = ComponentbuilderHelper::safeString(ComponentbuilderHelper::getBetween($field['settings']->xml, 'name="', '"'));
+						$xml = ComponentbuilderHelper::safeString($this->setPlaceholders(ComponentbuilderHelper::getBetween($field['settings']->xml, 'name="', '"'), $this->placeholders));
 						// check if a value was found
 						if (ComponentbuilderHelper::checkString($xml))
 						{
@@ -2480,9 +2941,9 @@ class Get
 		// return the value unique
 		if (ComponentbuilderHelper::checkString($listViewName) && isset($field['hash']))
 		{
-			$this->uniqueFieldNames[$listViewName . $field['hash']] = $this->uniqueName($name, $listViewName);
+			$this->uniqueFieldNames[$listViewName . $amicably . $field['hash']] = $this->uniqueName($name, $listViewName . $amicably);
 			// now return the unique name
-			return $this->uniqueFieldNames[$listViewName . $field['hash']];
+			return $this->uniqueFieldNames[$listViewName . $amicably . $field['hash']];
 		}
 		// fall back to global
 		return $name;
@@ -2550,13 +3011,14 @@ class Get
 	/**
 	 * Set get Data
 	 * 
-	 * @param   array    $ids  The ids of the dynamic get
+	 * @param   array    $ids        The ids of the dynamic get
 	 * @param   string   $view_code  The view code name
+	 * @param   string   $context    The context for events
 	 *
 	 * @return  oject the get dynamicGet data
 	 * 
 	 */
-	public function setGetData($ids, $view_code)
+	public function setGetData($ids, $view_code, $context)
 	{
 		if (ComponentbuilderHelper::checkArray($ids))
 		{
@@ -2620,170 +3082,239 @@ class Get
 						// reset buckets
 						$result->main_get = array();
 						$result->custom_get = array();
+						// should joineds and other weaks be added
+						$addDynamicTweaksJoints = true;
 						// set source data
 						switch ($result->main_source)
 						{
 							case 1:
+								// check if auto sync is set
+								if ($result->select_all == 1)
+								{
+									$result->view_selection = '*';
+								}
 								// set the view data
-								$result->main_get[0]['selection'] = $this->setDataSelection($result->key, $view_code, $result->view_selection, $result->view_table_main, 'a', '', 'view');
+								$result->main_get[0]['selection'] = $this->setDataSelection($result->key, $view_code, $result->view_selection, $result->view_table_main, 'a', null, 'view');
 								$result->main_get[0]['as'] = 'a';
 								$result->main_get[0]['key'] = $result->key;
+								$result->main_get[0]['context'] = $context;
 								unset($result->view_selection);
 								break;
 							case 2:
+								// check if auto sync is set
+								if ($result->select_all == 1)
+								{
+									$result->db_selection = '*';
+								}
 								// set the database data
-								$result->main_get[0]['selection'] = $this->setDataSelection($result->key, $view_code, $result->db_selection, $result->db_table_main, 'a', '', 'db');
+								$result->main_get[0]['selection'] = $this->setDataSelection($result->key, $view_code, $result->db_selection, $result->db_table_main, 'a', null, 'db');
 								$result->main_get[0]['as'] = 'a';
 								$result->main_get[0]['key'] = $result->key;
+								$result->main_get[0]['context'] = $context;
 								unset($result->db_selection);
 								break;
 							case 3:
+								// get the custom query
+								$customQueryString = $this->setDynamicValues(base64_decode($result->php_custom_get));
+								// get the table name
+								$_searchQuery = ComponentbuilderHelper::getBetween($customQueryString, '$query->from(', ')');
+								if (ComponentbuilderHelper::checkString($_searchQuery) && strpos($_searchQuery, '#__') !== false)
+								{
+									$_queryName = ComponentbuilderHelper::getBetween($_searchQuery, '#__', "'");
+									if (!ComponentbuilderHelper::checkString($_queryName))
+									{
+										$_queryName = ComponentbuilderHelper::getBetween($_searchQuery, '#__', '"');
+									}
+								}
+								// set to blank if not found
+								if (!isset($_queryName) || !ComponentbuilderHelper::checkString($_queryName))
+								{
+									$_queryName = '';
+								}
 								// set custom script
 								$result->main_get[0]['selection'] = array(
-									'select' => base64_decode($result->php_custom_get),
-									'from' => '', 'table' => '', 'type' => '');
+									'select' => $customQueryString,
+									'from' => '', 'table' => '', 'type' => '', 'name' => $_queryName);
+								$result->main_get[0]['as'] = 'a';
+								$result->main_get[0]['key'] = $result->key;
+								$result->main_get[0]['context'] = $context;
+								// do not add
+								$addDynamicTweaksJoints = false;
 								break;
 						}
-						// set join_view_table details
-						$result->join_view_table = json_decode($result->join_view_table, true);
-						if (ComponentbuilderHelper::checkArray($result->join_view_table))
+						// only add if main source is not custom
+						if ($addDynamicTweaksJoints)
 						{
-							foreach ($result->join_view_table as $nr => &$option)
+							// set join_view_table details
+							$result->join_view_table = json_decode($result->join_view_table, true);
+							if (ComponentbuilderHelper::checkArray($result->join_view_table))
 							{
-								if (ComponentbuilderHelper::checkString($option['selection']))
+								foreach ($result->join_view_table as $nr => &$option)
 								{
-									// convert the type
-									$option['type'] = $typeArray[$option['type']];
-									// convert the operator
-									$option['operator'] = $operatorArray[$option['operator']];
-									// get the on field values
-									$on_field = array(); // array(on_field_as, on_field)
-									$on_field = array_map('trim', explode('.', $option['on_field']));
-									// get the join field values
-									$join_field = array(); // array(join_field_as, join_field) 
-									$join_field = array_map('trim', explode('.', $option['join_field']));
-									$option['selection'] = $this->setDataSelection($result->key, $view_code, $option['selection'], $option['view_table'], $option['as'], $option['row_type'], 'view');
-									$option['key'] = $result->key;
-									// load to the getters
-									if ($option['row_type'] == 1)
+									if (ComponentbuilderHelper::checkString($option['selection']))
 									{
-										$result->main_get[] = $option;
-										if ($on_field[0] === 'a')
+										// convert the type
+										$option['type'] = $typeArray[$option['type']];
+										// convert the operator
+										$option['operator'] = $operatorArray[$option['operator']];
+										// get the on field values
+										$on_field = array(); // array(on_field_as, on_field)
+										$on_field = array_map('trim', explode('.', $option['on_field']));
+										// get the join field values
+										$join_field = array(); // array(join_field_as, join_field) 
+										$join_field = array_map('trim', explode('.', $option['join_field']));
+										$option['selection'] = $this->setDataSelection($result->key, $view_code, $option['selection'], $option['view_table'], $option['as'], $option['row_type'], 'view');
+										$option['key'] = $result->key;
+										$option['context'] = $context;
+										// load to the getters
+										if ($option['row_type'] == 1)
 										{
-											$this->siteMainGet[$this->target][$view_code][$option['as']] = $option['as'];
+											$result->main_get[] = $option;
+											if ($on_field[0] === 'a')
+											{
+												$this->siteMainGet[$this->target][$view_code][$option['as']] = $option['as'];
+											}
+											else
+											{
+												$this->siteDynamicGet[$this->target][$view_code][$option['as']][$join_field[1]] = $on_field[0];
+											}
 										}
-										else
+										elseif ($option['row_type'] == 2)
 										{
-											$this->siteDynamicGet[$this->target][$view_code][$option['as']][$join_field[1]] = $on_field[0];
+											$result->custom_get[] = $option;
+											if ($on_field[0] != 'a')
+											{
+												$this->siteDynamicGet[$this->target][$view_code][$option['as']][$join_field[1]] = $on_field[0];
+											}
 										}
 									}
-									elseif ($option['row_type'] == 2)
-									{
-										$result->custom_get[] = $option;
-										if ($on_field[0] != 'a')
-										{
-											$this->siteDynamicGet[$this->target][$view_code][$option['as']][$join_field[1]] = $on_field[0];
-										}
-									}
-								}
-								unset($result->join_view_table[$nr]);
-							}
-						}
-						unset($result->join_view_table);
-						// set join_db_table details
-						$result->join_db_table = json_decode($result->join_db_table, true);
-						if (ComponentbuilderHelper::checkArray($result->join_db_table))
-						{
-							foreach ($result->join_db_table as $nr => &$option1)
-							{
-								if (ComponentbuilderHelper::checkString($option1['selection']))
-								{
-									// convert the type
-									$option1['type'] = $typeArray[$option1['type']];
-									// convert the operator
-									$option1['operator'] = $operatorArray[$option1['operator']];
-									// get the on field values
-									$on_field = array(); // array(on_field_as, on_field)
-									$on_field = array_map('trim', explode('.', $option1['on_field']));
-									// get the join field values
-									$join_field = array(); // array(join_field_as, join_field) 
-									$join_field = array_map('trim', explode('.', $option1['join_field']));
-									$option1['selection'] = $this->setDataSelection($result->key, $view_code, $option1['selection'], $option1['db_table'], $option1['as'], $option1['row_type'], 'db');
-									$option1['key'] = $result->key;
-									// load to the getters
-									if ($option1['row_type'] == 1)
-									{
-										$result->main_get[] = $option1;
-										if ($on_field[0] === 'a')
-										{
-											$this->siteMainGet[$this->target][$view_code][$option1['as']] = $option1['as'];
-										}
-										else
-										{
-											$this->siteDynamicGet[$this->target][$view_code][$option1['as']][$join_field[1]] = $on_field[0];
-										}
-									}
-									elseif ($option1['row_type'] == 2)
-									{
-										$result->custom_get[] = $option1;
-										if ($on_field[0] != 'a')
-										{
-											$this->siteDynamicGet[$this->target][$view_code][$option1['as']][$join_field[1]] = $on_field[0];
-										}
-									}
-								}
-								unset($result->join_db_table[$nr]);
-							}
-						}
-						unset($result->join_db_table);
-						// set filter details
-						$result->filter = json_decode($result->filter, true);
-						if (ComponentbuilderHelper::checkArray($result->filter))
-						{
-							foreach ($result->filter as $nr => &$option2)
-							{
-								if (isset($option2['operator']))
-								{
-									$option2['operator'] = $operatorArray[$option2['operator']];
-									$option2['key'] = $result->key;
-								}
-								else
-								{
-									unset($result->filter[$nr]);
+									unset($result->join_view_table[$nr]);
 								}
 							}
-						}
-						// set where details
-						$result->where = json_decode($result->where, true);
-						if (ComponentbuilderHelper::checkArray($result->where))
-						{
-							foreach ($result->where as $nr => &$option3)
+							unset($result->join_view_table);
+							// set join_db_table details
+							$result->join_db_table = json_decode($result->join_db_table, true);
+							if (ComponentbuilderHelper::checkArray($result->join_db_table))
 							{
-								if (isset($option3['operator']))
+								foreach ($result->join_db_table as $nr => &$option1)
 								{
-									$option3['operator'] = $operatorArray[$option3['operator']];
+									if (ComponentbuilderHelper::checkString($option1['selection']))
+									{
+										// convert the type
+										$option1['type'] = $typeArray[$option1['type']];
+										// convert the operator
+										$option1['operator'] = $operatorArray[$option1['operator']];
+										// get the on field values
+										$on_field = array(); // array(on_field_as, on_field)
+										$on_field = array_map('trim', explode('.', $option1['on_field']));
+										// get the join field values
+										$join_field = array(); // array(join_field_as, join_field) 
+										$join_field = array_map('trim', explode('.', $option1['join_field']));
+										$option1['selection'] = $this->setDataSelection($result->key, $view_code, $option1['selection'], $option1['db_table'], $option1['as'], $option1['row_type'], 'db');
+										$option1['key'] = $result->key;
+										$option1['context'] = $context;
+										// load to the getters
+										if ($option1['row_type'] == 1)
+										{
+											$result->main_get[] = $option1;
+											if ($on_field[0] === 'a')
+											{
+												$this->siteMainGet[$this->target][$view_code][$option1['as']] = $option1['as'];
+											}
+											else
+											{
+												$this->siteDynamicGet[$this->target][$view_code][$option1['as']][$join_field[1]] = $on_field[0];
+											}
+										}
+										elseif ($option1['row_type'] == 2)
+										{
+											$result->custom_get[] = $option1;
+											if ($on_field[0] != 'a')
+											{
+												$this->siteDynamicGet[$this->target][$view_code][$option1['as']][$join_field[1]] = $on_field[0];
+											}
+										}
+									}
+									unset($result->join_db_table[$nr]);
 								}
-								else
+							}
+							unset($result->join_db_table);
+							// set filter details
+							$result->filter = json_decode($result->filter, true);
+							if (ComponentbuilderHelper::checkArray($result->filter))
+							{
+								foreach ($result->filter as $nr => &$option2)
 								{
-									unset($result->where[$nr]);
+									if (isset($option2['operator']))
+									{
+										$option2['operator'] = $operatorArray[$option2['operator']];
+										$option2['state_key'] = $this->setPlaceholders($this->setDynamicValues($option2['state_key']), $this->placeholders);
+										$option2['key'] = $result->key;
+									}
+									else
+									{
+										unset($result->filter[$nr]);
+									}
 								}
+							}
+							// set where details
+							$result->where = json_decode($result->where, true);
+							if (ComponentbuilderHelper::checkArray($result->where))
+							{
+								foreach ($result->where as $nr => &$option3)
+								{
+									if (isset($option3['operator']))
+									{
+										$option3['operator'] = $operatorArray[$option3['operator']];
+									}
+									else
+									{
+										unset($result->where[$nr]);
+									}
+								}
+							}
+							else
+							{
+								unset($result->where);
+							}
+							// set order details
+							$result->order = json_decode($result->order, true);
+							if (!ComponentbuilderHelper::checkArray($result->order))
+							{
+								unset($result->order);
+							}
+							// set grouping
+							$result->group = json_decode($result->group, true);
+							if (!ComponentbuilderHelper::checkArray($result->group))
+							{
+								unset($result->group);
+							}
+							// set global details
+							$result->global = json_decode($result->global, true);
+							if (!ComponentbuilderHelper::checkArray($result->global))
+							{
+								unset($result->global);
 							}
 						}
 						else
 						{
+							// when we have a custom query script we do not add the dynamic options
+							unset($result->join_view_table);
+							unset($result->join_db_table);
+							unset($result->filter);
 							unset($result->where);
-						}
-						// set order details
-						$result->order = json_decode($result->order, true);
-						if (!ComponentbuilderHelper::checkArray($result->order))
-						{
 							unset($result->order);
-						}
-						// set global details
-						$result->global = json_decode($result->global, true);
-						if (!ComponentbuilderHelper::checkArray($result->global))
-						{
+							unset($result->group);
 							unset($result->global);
+						}
+						// load the events if any is set
+						if ($result->gettype == 1 && ComponentbuilderHelper::checkJson($result->plugin_events))
+						{
+							$result->plugin_events = json_decode($result->plugin_events, true);
+						}
+						else
+						{
+							$result->plugin_events = '';
 						}
 					}
 					return $results;
@@ -2874,11 +3405,12 @@ class Get
 	 * @param   mix      $new    The new values
 	 * @param   string   $type   The type of values
 	 * @param   int      $key    The id/key where values changed
+	 * @param   array    $ignore The ids to ignore
 	 *
 	 * @return  void
 	 * 
 	 */
-	protected function setUpdateSQL($old, $new, $type, $key = null)
+	protected function setUpdateSQL($old, $new, $type, $key = null, $ignore = null)
 	{
 		// check if there were new items added
 		if (ComponentbuilderHelper::checkArray($new) && ComponentbuilderHelper::checkArray($old))
@@ -2889,8 +3421,14 @@ class Get
 				foreach ($new[$type] as $item)
 				{
 					$newItem = true;
+					// check if this is an id to ignore
+					if (ComponentbuilderHelper::checkArray($ignore) && in_array($item, $ignore))
+					{
+						// don't add ignored ids
+						$newItem = false;
+					}
 					// check if this is old repeatable field
-					if (isset($old[$type]) && ComponentbuilderHelper::checkArray($old[$type]))
+					elseif (isset($old[$type]) && ComponentbuilderHelper::checkArray($old[$type]))
 					{
 						if (!in_array($item, $old[$type]))
 						{
@@ -2936,12 +3474,18 @@ class Get
 			{
 				foreach ($new as $item)
 				{
-					// search to see if this is a new value
-					$newItem = true;
 					if (isset($item[$type]))
 					{
+						// search to see if this is a new value
+						$newItem = true;
+						// check if this is an id to ignore
+						if (ComponentbuilderHelper::checkArray($ignore) && in_array($item[$type], $ignore))
+						{
+							// don't add ignored ids
+							$newItem = false;
+						}
 						// check if this is old repeatable field
-						if (isset($old[$type]) && ComponentbuilderHelper::checkArray($old[$type]))
+						elseif (isset($old[$type]) && ComponentbuilderHelper::checkArray($old[$type]))
 						{
 							if (in_array($item[$type], $old[$type]))
 							{
@@ -2972,21 +3516,17 @@ class Get
 						{
 							$newItem = false;
 						}
-					}
-					else
-					{
-						break;
-					}
-					// add if new
-					if ($newItem)
-					{
-						// we have a new item, lets add to SQL
-						$this->setAddSQL($type, $item[$type], $key);
+						// add if new
+						if ($newItem)
+						{
+							// we have a new item, lets add to SQL
+							$this->setAddSQL($type, $item[$type], $key);
+						}
 					}
 				}
 			}
 		}
-		elseif ($key && ComponentbuilderHelper::checkString($new) && ComponentbuilderHelper::checkString($old) && $new !== $old)
+		elseif ($key && ((ComponentbuilderHelper::checkString($new) && ComponentbuilderHelper::checkString($old)) || (is_numeric($new) && is_numeric($old))) && $new !== $old)
 		{
 			// the string changed, lets add to SQL update
 			if (!isset($this->updateSQL[$type]) || !ComponentbuilderHelper::checkArray($this->updateSQL[$type]))
@@ -3612,7 +4152,7 @@ class Get
 		if (ComponentbuilderHelper::checkArray($langStringTargets))
 		{
 			// insure string is not broken
-			$content = str_replace('COM_###COMPONENT###', $this->langPrefix, $content);
+			$content = str_replace('COM_' . $this->hhh . 'COMPONENT' . $this->hhh, $this->langPrefix, $content);
 			// reset some buckets
 			$langHolders = array();
 			$langCheck = array();
@@ -3654,6 +4194,8 @@ class Get
 			{
 				$langOnly[] = ComponentbuilderHelper::getAllBetween($content, "JustTEXT:" . ":_('", "')");
 				$langOnly[] = ComponentbuilderHelper::getAllBetween($content, 'JustTEXT:' . ':_("', '")');
+				// merge lang only
+				$langOnly = ComponentbuilderHelper::mergeArrays($langOnly);
 			}
 			// set language data
 			foreach ($langStringTargets as $langStringTarget)
@@ -3679,6 +4221,11 @@ class Get
 						// load the language targets
 						foreach ($langStringTargets as $langStringTarget)
 						{
+							// need some special treatment here
+							if ($langStringTarget === 'JustTEXT:' . ':_(')
+							{
+								continue;
+							}
 							$langHolders[$langStringTarget . "'" . $string . "'"] = $langStringTarget . "'" . $keyLang . "'";
 							$langHolders[$langStringTarget . '"' . $string . '"'] = $langStringTarget . '"' . $keyLang . '"';
 						}
@@ -3688,7 +4235,6 @@ class Get
 			// the uppercase loading only (for arrays and other tricks)
 			if (ComponentbuilderHelper::checkArray($langOnly))
 			{
-				$langOnly = ComponentbuilderHelper::mergeArrays($langOnly);
 				foreach ($langOnly as $string)
 				{
 					if ($keyLang = $this->setLang($string))
@@ -3738,7 +4284,7 @@ class Get
 	 * @param   string         $method_key  The method unique key
 	 * @param   string         $view_code  The code name of the view
 	 * @param   string         $string  The data string
-	 * @param   string || INT  $asset  The asset in question
+	 * @param   string         $asset  The asset in question
 	 * @param   string         $as  The as string
 	 * @param   int            $row_type  The row type
 	 * @param   string         $type  The target type (db||view)
@@ -3750,21 +4296,42 @@ class Get
 	{
 		if (ComponentbuilderHelper::checkString($string))
 		{
-			$lines = explode(PHP_EOL, $string);
+			if ('db' === $type)
+			{
+				$table = '#__' . $asset;
+				$queryName = $asset;
+				$view = '';
+			}
+			elseif ('view' === $type)
+			{
+				$view = $this->getViewTableName($asset);
+				$table = '#__' . $this->componentCodeName . '_' . $view;
+				$queryName = $view;
+			}
+			// just get all values from table if * is found
+			if ($string === '*' || strpos($string, '*') !== false)
+			{
+				if ($type == 'view')
+				{
+					$_string = ComponentbuilderHelper::getViewTableColumns($asset, $as, $row_type);
+				}
+				else
+				{
+					$_string = ComponentbuilderHelper::getDbTableColumns($asset, $as, $row_type);
+				}
+				// get only selected values
+				$lines = explode(PHP_EOL, $_string);
+				// make sure to set the string to *
+				$string = '*';
+			}
+			else
+			{
+				// get only selected values
+				$lines = explode(PHP_EOL, $string);
+			}
+			// only continue if lines are available
 			if (ComponentbuilderHelper::checkArray($lines))
 			{
-				if ('db' === $type)
-				{
-					$table = '#__' . $asset;
-					$queryName = $asset;
-					$view = '';
-				}
-				elseif ('view' === $type)
-				{
-					$view = $this->getViewTableName($asset);
-					$table = '#__' . $this->componentCodeName . '_' . $view;
-					$queryName = $view;
-				}
 				$gets = array();
 				$keys = array();
 				// first load all options
@@ -3772,20 +4339,19 @@ class Get
 				{
 					if (strpos($line, 'AS') !== false)
 					{
-						list($get, $key) = explode("AS", $line);
+						$lineArray = explode("AS", $line);
 					}
 					elseif (strpos($line, 'as') !== false)
 					{
-						list($get, $key) = explode("as", $line);
+						$lineArray = explode("as", $line);
 					}
 					else
 					{
-						$get = $line;
-						$key = null;
+						$lineArray = array($line, null);
 					}
 					// set the get and key
-					$get = trim($get);
-					$key = trim($key);
+					$get = trim($lineArray[0]);
+					$key = trim($lineArray[1]);
 					// only add the view (we must adapt this)
 					if (isset($this->getAsLookup[$method_key][$get]) && 'a' != $as && 1 == $row_type && 'view' === $type && strpos('#' . $key, '#' . $view . '_') === false)
 					{
@@ -3807,16 +4373,33 @@ class Get
 							$this->getAsLookup[$method_key][$get] = $key;
 							$keys[] = $this->db->quote($key);
 						}
+						// make sure we have the view name
 						if (ComponentbuilderHelper::checkString($view))
 						{
+							// prep the field name
 							$field = str_replace($as . '.', '', $get);
-							$this->siteFields[$view][$field][$method_key] = array('site' => $view_code, 'get' => $get, 'as' => $as, 'key' => $key);
+							// make sure the array is set
+							if (!isset($this->siteFields[$view][$field]))
+							{
+								$this->siteFields[$view][$field] = array();
+							}
+							// load to the site fields memory bucket
+							$this->siteFields[$view][$field][$method_key . '___' . $as] = array('site' => $view_code, 'get' => $get, 'as' => $as, 'key' => $key);
 						}
 					}
 				}
 				if (ComponentbuilderHelper::checkArray($gets) && ComponentbuilderHelper::checkArray($keys))
 				{
-					$querySelect = '$query->select($db->quoteName(' . PHP_EOL . "\t\t\t" . 'array(' . implode(',', $gets) . '),' . PHP_EOL . "\t\t\t" . 'array(' . implode(',', $keys) . ')));';
+					// single joined selection needs the prefix to the values to avoid conflict in the names
+					// so we most still add then AS
+					if ($string == '*' && 1 != $row_type)
+					{
+						$querySelect = "\$query->select('" . $as . ".*');";
+					}
+					else
+					{
+						$querySelect = '$query->select($db->quoteName(' . PHP_EOL . $this->_t(3) . 'array(' . implode(',', $gets) . '),' . PHP_EOL . $this->_t(3) . 'array(' . implode(',', $keys) . ')));';
+					}
 					$queryFrom = '$db->quoteName(' . $this->db->quote($table) . ', ' . $this->db->quote($as) . ')';
 					// return the select query
 					return array('select' => $querySelect, 'from' => $queryFrom, 'name' => $queryName, 'table' => $table, 'type' => $type, 'select_gets' => $gets, 'select_keys' => $keys);
@@ -3863,139 +4446,155 @@ class Get
 			$counter = 'a';
 			// Create a new query object.
 			$query = $this->db->getQuery(true);
+			// switch to onlu trigger the run of the query if we have tables to query
+			$runQuery = false;
 			foreach ($tables as $table)
 			{
-				if ($counter === 'a')
+				if (isset($table['table']))
 				{
-					// the main table fields
-					if (strpos($table['sourcemap'], PHP_EOL) !== false)
+					if ($counter === 'a')
 					{
-						$fields = explode(PHP_EOL, $table['sourcemap']);
-						if (ComponentbuilderHelper::checkArray($fields))
+						// the main table fields
+						if (strpos($table['sourcemap'], PHP_EOL) !== false)
 						{
-							// reset array buckets
-							$sourceArray = array();
-							$targetArray = array();
-							foreach ($fields as $field)
+							$fields = explode(PHP_EOL, $table['sourcemap']);
+							if (ComponentbuilderHelper::checkArray($fields))
 							{
-								if (strpos($field, "=>") !== false)
+								// reset array buckets
+								$sourceArray = array();
+								$targetArray = array();
+								foreach ($fields as $field)
 								{
-									list($source, $target) = explode("=>", $field);
-									$sourceArray[] = $counter . '.' . trim($source);
-									$targetArray[] = trim($target);
+									if (strpos($field, "=>") !== false)
+									{
+										list($source, $target) = explode("=>", $field);
+										$sourceArray[] = $counter . '.' . trim($source);
+										$targetArray[] = trim($target);
+									}
 								}
-							}
-							if (ComponentbuilderHelper::checkArray($sourceArray) && ComponentbuilderHelper::checkArray($targetArray))
-							{
-								// add to query
-								$query->select($this->db->quoteName($sourceArray, $targetArray));
-								$query->from('#__' . $table['table'] . ' AS a');
-							}
-							// we may need to filter the selection
-							if (isset($this->sqlTweak[$view_id]['where']))
-							{
-								// add to query the where filter
-								$query->where('a.id IN (' . $this->sqlTweak[$view_id]['where'] . ')');
-							}
-						}
-					}
-				}
-				else
-				{
-					// the other tables
-					if (strpos($table['sourcemap'], PHP_EOL) !== false)
-					{
-						$fields = explode(PHP_EOL, $table['sourcemap']);
-						if (ComponentbuilderHelper::checkArray($fields))
-						{
-							// reset array buckets
-							$sourceArray = array();
-							$targetArray = array();
-							foreach ($fields as $field)
-							{
-								if (strpos($field, "=>") !== false)
+								if (ComponentbuilderHelper::checkArray($sourceArray) && ComponentbuilderHelper::checkArray($targetArray))
 								{
-									list($source, $target) = explode("=>", $field);
-									$sourceArray[] = $counter . '.' . trim($source);
-									$targetArray[] = trim($target);
-								}
-								if (strpos($field, "==") !== false)
-								{
-									list($aKey, $bKey) = explode("==", $field);
 									// add to query
-									$query->join('LEFT', $this->db->quoteName('#__' . $table['table'], $counter) . ' ON (' . $this->db->quoteName('a.' . trim($aKey)) . ' = ' . $this->db->quoteName($counter . '.' . trim($bKey)) . ')');
+									$query->select($this->db->quoteName($sourceArray, $targetArray));
+									$query->from('#__' . $table['table'] . ' AS a');
+									$runQuery = true;
+								}
+								// we may need to filter the selection
+								if (isset($this->sqlTweak[$view_id]['where']))
+								{
+									// add to query the where filter
+									$query->where('a.id IN (' . $this->sqlTweak[$view_id]['where'] . ')');
 								}
 							}
-							if (ComponentbuilderHelper::checkArray($sourceArray) && ComponentbuilderHelper::checkArray($targetArray))
-							{
-								// add to query
-								$query->select($this->db->quoteName($sourceArray, $targetArray));
-							}
 						}
-					}
-				}
-				$counter++;
-			}
-			// now get the data
-			$this->db->setQuery($query);
-			$this->db->execute();
-			if ($this->db->getNumRows())
-			{
-				// get the data
-				$data = $this->db->loadObjectList();
-				// start building the MySql dump
-				$dump = "--";
-				$dump .= PHP_EOL . "-- Dumping data for table `#__[[[component]]]_" . $view . "`";
-				$dump .= PHP_EOL . "--";
-				$dump .= PHP_EOL . PHP_EOL . "INSERT INTO `#__[[[component]]]_" . $view . "` (";
-				foreach ($data as $line)
-				{
-					$comaSet = 0;
-					foreach ($line as $fieldName => $fieldValue)
-					{
-						if ($comaSet == 0)
-						{
-							$dump .= $this->db->quoteName($fieldName);
-						}
-						else
-						{
-							$dump .= ", " . $this->db->quoteName($fieldName);
-						}
-						$comaSet++;
-					}
-					break;
-				}
-				$dump .= ") VALUES";
-				$coma = 0;
-				foreach ($data as $line)
-				{
-					if ($coma == 0)
-					{
-						$dump .= PHP_EOL . "(";
 					}
 					else
 					{
-						$dump .= "," . PHP_EOL . "(";
-					}
-					$comaSet = 0;
-					foreach ($line as $fieldName => $fieldValue)
-					{
-						if ($comaSet == 0)
+						// the other tables
+						if (strpos($table['sourcemap'], PHP_EOL) !== false)
 						{
-							$dump .= $this->mysql_escape($fieldValue);
+							$fields = explode(PHP_EOL, $table['sourcemap']);
+							if (ComponentbuilderHelper::checkArray($fields))
+							{
+								// reset array buckets
+								$sourceArray = array();
+								$targetArray = array();
+								foreach ($fields as $field)
+								{
+									if (strpos($field, "=>") !== false)
+									{
+										list($source, $target) = explode("=>", $field);
+										$sourceArray[] = $counter . '.' . trim($source);
+										$targetArray[] = trim($target);
+									}
+									if (strpos($field, "==") !== false)
+									{
+										list($aKey, $bKey) = explode("==", $field);
+										// add to query
+										$query->join('LEFT', $this->db->quoteName('#__' . $table['table'], $counter) . ' ON (' . $this->db->quoteName('a.' . trim($aKey)) . ' = ' . $this->db->quoteName($counter . '.' . trim($bKey)) . ')');
+									}
+								}
+								if (ComponentbuilderHelper::checkArray($sourceArray) && ComponentbuilderHelper::checkArray($targetArray))
+								{
+									// add to query
+									$query->select($this->db->quoteName($sourceArray, $targetArray));
+								}
+							}
+						}
+					}
+					$counter++;
+				}
+				else
+				{
+					// see where
+					// var_dump($view);
+					// jexit();
+				}
+			}
+			// check if we should run query
+			if ($runQuery)
+			{
+				// now get the data
+				$this->db->setQuery($query);
+				$this->db->execute();
+				if ($this->db->getNumRows())
+				{
+					// get the data
+					$data = $this->db->loadObjectList();
+					// start building the MySql dump
+					$dump = "--";
+					$dump .= PHP_EOL . "-- Dumping data for table `#__" . $this->bbb . "component" . $this->ddd . "_" . $view . "`";
+					$dump .= PHP_EOL . "--";
+					$dump .= PHP_EOL . PHP_EOL . "INSERT INTO `#__" . $this->bbb . "component" . $this->ddd . "_" . $view . "` (";
+					foreach ($data as $line)
+					{
+						$comaSet = 0;
+						foreach ($line as $fieldName => $fieldValue)
+						{
+							if ($comaSet == 0)
+							{
+								$dump .= $this->db->quoteName($fieldName);
+							}
+							else
+							{
+								$dump .= ", " . $this->db->quoteName($fieldName);
+							}
+							$comaSet++;
+						}
+						break;
+					}
+					$dump .= ") VALUES";
+					$coma = 0;
+					foreach ($data as $line)
+					{
+						if ($coma == 0)
+						{
+							$dump .= PHP_EOL . "(";
 						}
 						else
 						{
-							$dump .= ", " . $this->mysql_escape($fieldValue);
+							$dump .= "," . PHP_EOL . "(";
 						}
-						$comaSet++;
+						$comaSet = 0;
+						foreach ($line as $fieldName => $fieldValue)
+						{
+							if ($comaSet == 0)
+							{
+								$dump .= $this->mysql_escape($fieldValue);
+							}
+							else
+							{
+								$dump .= ", " . $this->mysql_escape($fieldValue);
+							}
+							$comaSet++;
+						}
+						$dump .= ")";
+						$coma++;
 					}
-					$dump .= ")";
-					$coma++;
+					$dump .= ";";
+					// return build dump query
+					return $dump;
 				}
-				$dump .= ";";
-				// return build dump query
-				return $dump;
 			}
 		}
 		return false;
@@ -4138,15 +4737,23 @@ class Get
 	 * Set the dynamic values in strings here
 	 * 
 	 * @param   string   $string The content to check
+	 * @param   int      $debug  The switch to debug the update
+	 *				We can now at any time debug the 
+	 *				dynamic build values if it gets broken
 	 *
 	 * @return  string
 	 * 
 	 */
-	public function setDynamicValues($string)
+	public function setDynamicValues($string, $debug = 0)
 	{
 		if (ComponentbuilderHelper::checkString($string))
 		{
-			return $this->setLangStrings($this->setCustomCodeData($this->setExternalCodeString($string)));
+			$string = $this->setLangStrings($this->setCustomCodeData($this->setExternalCodeString($string, $debug), $debug));
+		}
+		// if debug
+		if ($debug)
+		{
+			jexit();
 		}
 		return $string;
 	}
@@ -4155,15 +4762,22 @@ class Get
 	 * Set the external code string & load it in to string
 	 * 
 	 * @param   string   $string The content to check
+	 * @param   int      $debug  The switch to debug the update
 	 *
 	 * @return  string
 	 * 
 	 */
-	public function setExternalCodeString($string)
+	public function setExternalCodeString($string, $debug = 0)
 	{
 		// check if content has custom code place holder
 		if (strpos($string, '[EXTERNA' . 'LCODE=') !== false)
 		{
+			// if debug
+			if ($debug)
+			{
+				echo 'External Code String:';
+				var_dump($string);
+			}
 			// target content
 			$bucket = array();
 			$found = ComponentbuilderHelper::getAllBetween($string, '[EXTERNA' . 'LCODE=', ']');
@@ -4188,7 +4802,6 @@ class Get
 							// set the notice
 							$this->app->enqueueMessage(JText::_('<hr /><h3>External Code Warning</h3>'), 'Warning');
 							$this->app->enqueueMessage(JText::sprintf('The <b>%s</b> is not a valid url/path!', $key), 'Warning');
-							$this->app->enqueueMessage('<hr />', 'Warning');
 							// remove the placeholder
 							$bucket[$key] = '';
 						}
@@ -4198,7 +4811,8 @@ class Get
 						// set key
 						$key = '[EXTERNA' . 'LCODE=' . $target . ']';
 						// set the notice
-						$this->app->enqueueMessage(JText::sprintf('%s, you do not have permission to use <b>EXTERNALCODE</b> feature (so it was removed from the compilation), please contact you system administrator for more info!<br /><small>(admin access required)</small>', $this->user->get('name')), 'Error');
+						$this->app->enqueueMessage(JText::_('<hr /><h3>External Code Error</h3>'), 'Error');
+						$this->app->enqueueMessage(JText::sprintf('%s, you do not have permission to use <b>EXTERNALCODE</b> feature (so <b>%s</b> was removed from the compilation), please contact you system administrator for more info!<br /><small>(admin access required)</small>', $this->user->get('name'), $key), 'Error');
 						// remove the placeholder
 						$bucket[$key] = '';
 					}
@@ -4208,6 +4822,12 @@ class Get
 				{
 					$string = $this->setPlaceholders($string, $bucket);
 				}
+			}
+			// if debug
+			if ($debug)
+			{
+				echo 'External Code String After Update:';
+				var_dump($string);
 			}
 		}
 		return $string;
@@ -4252,7 +4872,6 @@ class Get
 						// give notice of the change
 						$this->app->enqueueMessage(JText::_('<hr /><h3>External Code Warning</h3>'), 'Warning');
 						$this->app->enqueueMessage(JText::sprintf('The code/string from <b>%s</b> has been <b>changed</b> since the last compilation, please investigate to insure the changes are safe!', $key), 'Warning');
-						$this->app->enqueueMessage('<hr />', 'Warning');
 					}
 				}
 				else
@@ -4266,7 +4885,6 @@ class Get
 					// give notice the first time this is added
 					$this->app->enqueueMessage(JText::_('<hr /><h3>External Code Notice</h3>'), 'Notice');
 					$this->app->enqueueMessage(JText::sprintf('The code/string from <b>%s</b> has been added for the <b>first time</b>, please investigate to insure the correct code/string was used!', $key), 'Notice');
-					$this->app->enqueueMessage('<hr />', 'Notice');
 				}
 			}
 			else
@@ -4274,7 +4892,6 @@ class Get
 				// set notice that we could not get a valid string from the target
 				$this->app->enqueueMessage(JText::_('<hr /><h3>External Code Warning</h3>'), 'Warning');
 				$this->app->enqueueMessage(JText::sprintf('The <b>%s</b> returned an invalid string!', $key), 'Warning');
-				$this->app->enqueueMessage('<hr />', 'Warning');
 			}
 		}
 		// add to local bucket
@@ -4288,17 +4905,24 @@ class Get
 	 * We start set the custom code data & can load it in to string
 	 * 
 	 * @param   string   $string The content to check
+	 * @param   int      $debug  The switch to debug the update
 	 *
 	 * @return  string
 	 * 
 	 */
-	public function setCustomCodeData($string)
+	public function setCustomCodeData($string, $debug = 0, $not = null)
 	{
 		// insure the code is loaded
 		$loaded = false;
 		// check if content has custom code place holder
 		if (strpos($string, '[CUSTO' . 'MCODE=') !== false)
 		{
+			// if debug
+			if ($debug)
+			{
+				echo 'Custom Code String:';
+				var_dump($string);
+			}
 			// the ids found in this content
 			$bucket = array();
 			$found = ComponentbuilderHelper::getAllBetween($string, '[CUSTO' . 'MCODE=', ']');
@@ -4306,6 +4930,12 @@ class Get
 			{
 				foreach ($found as $key)
 				{
+					// if debug
+					if ($debug)
+					{
+						echo '$key before update:';
+						var_dump($key);
+					}
 					// check if we have args
 					if (is_numeric($key))
 					{
@@ -4361,12 +4991,16 @@ class Get
 							{
 								if (strpos($array[1], ',') !== false)
 								{
-									$this->customCodeData[$id]['args'][$key] = explode(',', $array[1]);
+									// update the function values with the custom code key placholdres (this allow the use of [] + and , in the values)
+									$this->customCodeData[$id]['args'][$key] = array_map(function($_key) {
+											return $this->setPlaceholders($_key, $this->customCodeKeyPlacholders);
+										}, (array) explode(',', $array[1]));
 								}
 								elseif (ComponentbuilderHelper::checkString($array[1]))
 								{
 									$this->customCodeData[$id]['args'][$key] = array();
-									$this->customCodeData[$id]['args'][$key][] = $array[1];
+									// update the function values with the custom code key placholdres (this allow the use of [] + and , in the values)
+									$this->customCodeData[$id]['args'][$key][] = $this->setPlaceholders($array[1], $this->customCodeKeyPlacholders);
 								}
 							}
 						}
@@ -4375,8 +5009,19 @@ class Get
 					{
 						continue;
 					}
+					// make sure to remove the not if set
+					if ($not && is_numeric($not) && $not > 0 && $not == $id)
+					{
+						continue;
+					}
 					$bucket[$id] = $id;
 				}
+			}
+			// if debug
+			if ($debug)
+			{
+				echo 'Bucket:';
+				var_dump($bucket);
 			}
 			// check if any custom code placeholders where found
 			if (ComponentbuilderHelper::checkArray($bucket))
@@ -4385,14 +5030,26 @@ class Get
 				// insure we add the langs to both site and admin
 				$this->lang = 'both';
 				// now load the code to memory
-				$loaded = $this->getCustomCode($bucket, false);
+				$loaded = $this->getCustomCode($bucket, false, $debug);
 				// revert lang to current setting
 				$this->lang = $_tmpLang;
+			}
+			// if debug
+			if ($debug)
+			{
+				echo 'Loaded:';
+				var_dump($loaded);
 			}
 			// when the custom code is loaded
 			if ($loaded === true)
 			{
-				$string = $this->insertCustomCode($string);
+				$string = $this->insertCustomCode($bucket, $string, $debug);
+			}
+			// if debug
+			if ($debug)
+			{
+				echo 'Custom Code String After Update:';
+				var_dump($string);
 			}
 		}
 		return $string;
@@ -4402,16 +5059,26 @@ class Get
 	 * Insert the custom code into the string
 	 * 
 	 * @param   string   $string The content to check
+	 * @param   int      $debug  The switch to debug the update
 	 *
 	 * @return  string on success
 	 * 
 	 */
-	protected function insertCustomCode($string)
+	protected function insertCustomCode($ids, $string, $debug = 0)
 	{
 		$code = array();
-		foreach ($this->customCode as $item)
+		// load the code
+		foreach ($ids as $id)
 		{
-			$this->buildCustomCodePlaceholders($item, $code);
+			$this->buildCustomCodePlaceholders($this->customCodeMemory[$id], $code, $debug);
+		}
+		// if debug
+		if ($debug)
+		{
+			echo 'Place holders to Update String:';
+			var_dump($code);
+			echo 'Custom Code String Before Update:';
+			var_dump($string);
 		}
 		// now update the string
 		return $this->setPlaceholders($string, $code);
@@ -4421,21 +5088,34 @@ class Get
 	 * Insert the custom code into the string
 	 * 
 	 * @param   string   $string The content to check
+	 * @param   int      $debug  The switch to debug the update
 	 *
 	 * @return  string on success
 	 * 
 	 */
-	protected function buildCustomCodePlaceholders($item, &$code)
+	protected function buildCustomCodePlaceholders($item, &$code, $debug = 0)
 	{
 		// check if there is args for this code
 		if (isset($this->customCodeData[$item['id']]['args']) && ComponentbuilderHelper::checkArray($this->customCodeData[$item['id']]['args']))
 		{
 			// since we have args we cant update this code via IDE (TODO)
 			$placeholder = $this->getPlaceHolder(3, null);
+			// if debug
+			if ($debug)
+			{
+				echo 'Custom Code Placeholders:';
+				var_dump($placeholder);
+			}
 			// we have args and so need to load each
 			foreach ($this->customCodeData[$item['id']]['args'] as $key => $args)
 			{
 				$this->setThesePlaceHolders('arg', $args);
+				// if debug
+				if ($debug)
+				{
+					echo 'Custom Code Global Placholders:';
+					var_dump($this->placeholders);
+				}
 				$code['[CUSTOM' . 'CODE=' . $key . ']'] = $placeholder['start'] . PHP_EOL . $this->setPlaceholders($item['code'], $this->placeholders) . $placeholder['end'];
 			}
 			// always clear the args
@@ -4449,7 +5129,7 @@ class Get
 			}
 			// check what type of place holders we should load here
 			$placeholderType = (int) $item['comment_type'] . '2';
-			if (stripos($item['code'], '[[[view') !== false || stripos($item['code'], '[[[sview') !== false || stripos($item['code'], '[[[arg') !== false)
+			if (stripos($item['code'], $this->bbb . 'view') !== false || stripos($item['code'], $this->bbb . 'sview') !== false || stripos($item['code'], $this->bbb . 'arg') !== false)
 			{
 				// if view is being set dynamicly then we can't update this code via IDE (TODO)
 				$placeholderType = 3;
@@ -4479,7 +5159,7 @@ class Get
 			$number = 0;
 			foreach ($values as $value)
 			{
-				$this->placeholders['[[[' . $key . $number . ']]]'] = $value;
+				$this->placeholders[$this->bbb . $key . $number . $this->ddd] = $value;
 				$number++;
 			}
 		}
@@ -4867,7 +5547,7 @@ class Get
 	 * @return  void
 	 * 
 	 */
-	public function getCustomCode($ids = null, $setLang = true)
+	public function getCustomCode($ids = null, $setLang = true, $debug = 0)
 	{
 		// should the result be stored in memory
 		$loadInMemory = false;
@@ -4876,7 +5556,7 @@ class Get
 		$query->from($this->db->quoteName('#__componentbuilder_custom_code', 'a'));
 		if (ComponentbuilderHelper::checkArray($ids))
 		{
-			if ($idArray = $this->customCodeMemory($ids))
+			if ($idArray = $this->checkCustomCodeMemory($ids))
 			{
 				$query->select($this->db->quoteName(array('a.id', 'a.code', 'a.comment_type')));
 				$query->where($this->db->quoteName('a.id') . ' IN (' . implode(',', $idArray) . ')');
@@ -4915,12 +5595,28 @@ class Get
 				{
 					$customCode['code'] = $this->setLangStrings($customCode['code']);
 				}
+				// check for more custom code (since this is a custom code placeholder)
+				else
+				{
+					$customCode['code'] = $this->setCustomCodeData($customCode['code'], $debug, $nr);
+				}
+				// build the hash array
 				if (isset($customCode['hashtarget']))
 				{
 					$customCode['hashtarget'] = explode("__", $customCode['hashtarget']);
+					// is this a replace code, set end has array
 					if ($customCode['type'] == 1 && strpos($customCode['hashendtarget'], '__') !== false)
 					{
 						$customCode['hashendtarget'] = explode("__", $customCode['hashendtarget']);
+						// NOW see if this is an end of page target (TODO not sure if the string is always d41d8cd98f00b204e9800998ecf8427e)
+						// I know this fix is not air-tight, but it should work as the value of an empty line when md5'ed is ^^^^
+						// Then if the line number is only >>>one<<< it is almost always end of the page.
+						// So I am using those two values to detect end of page replace ending, to avoid mismatching the ending target hash.
+						if ($customCode['hashendtarget'][0] == 1 && 'd41d8cd98f00b204e9800998ecf8427e' === $customCode['hashendtarget'][1])
+						{
+							// unset since this will force the replacement unto end of page.
+							unset($customCode['hashendtarget']);
+						}
 					}
 				}
 			}
@@ -4941,7 +5637,7 @@ class Get
 	 * @return  void
 	 * 
 	 */
-	protected function customCodeMemory($ids)
+	protected function checkCustomCodeMemory($ids)
 	{
 		// reset custom code
 		$this->customCode = array();
@@ -5050,9 +5746,10 @@ class Get
 		$fileTypes = array('\.php', '\.js');
 		// set some local placeholders
 		$placeholders = array();
-		$placeholders[ComponentbuilderHelper::safeString($this->componentCodeName, 'F') . 'Helper::'] = '[[[Component]]]Helper::';
-		$placeholders['COM_' . ComponentbuilderHelper::safeString($this->componentCodeName, 'U')] = 'COM_[[[COMPONENT]]]';
-		$placeholders['com_' . $this->componentCodeName] = 'com_[[[component]]]';
+		$placeholders[ComponentbuilderHelper::safeString($this->componentCodeName, 'F') . 'Helper::'] = $this->bbb . 'Component' . $this->ddd . 'Helper::';
+		$placeholders['COM_' . ComponentbuilderHelper::safeString($this->componentCodeName, 'U')] = 'COM_' . $this->bbb . 'COMPONENT' . $this->ddd;
+		$placeholders['com_' . $this->componentCodeName] = 'com_' . $this->bbb . 'component' . $this->ddd;
+
 		foreach ($paths as $target => $path)
 		{
 			// we are changing the working directory to the componet path
@@ -5117,7 +5814,7 @@ class Get
 		$commentType = 0;
 		// make sure we have the path correct (the script file is not in admin path for example)
 		// there may be more... will nead to keep our eye on this... since files could be moved during install
-		$file = str_replace('./', '', $file);
+		$file = str_replace(  './', '', $file); # TODO (windows path issues)
 		if ($file !== 'script.php')
 		{
 			$path = $target . '/' . $file;
@@ -5248,6 +5945,7 @@ class Get
 						{
 							// reset found comment type
 							$commentType = 0;
+							$this->app->enqueueMessage(JText::_('<hr /><h3>Custom Codes Warning</h3>'), 'Warning');
 							$this->app->enqueueMessage(JText::sprintf('We found dynamic code <b>all in one line</b>, and ignored it! Please review (%s) for more details!', $path), 'Warning');
 							continue;
 						}
@@ -5290,6 +5988,8 @@ class Get
 						$hasharray = array_slice($fingerPrint, -$inFinger, $getFinger, true);
 						$hasleng = count($hasharray);
 						$hashtarget = $hasleng . '__' . md5(implode('', $hasharray));
+						// for good practice
+						ComponentbuilderHelper::fixPath($path);
 						// all new records we can do a buldk insert
 						if ($i === 1 || !$id)
 						{
@@ -5497,13 +6197,13 @@ class Get
 		// get targets to search for
 		$langStringTargets = array_filter(
 			$this->langStringTargets, function($get) use($string)
+		{
+			if (strpos($string, $get) !== false)
 			{
-				if (strpos($string, $get) !== false)
-				{
-					return true;
-				}
-				return false;
-			});
+				return true;
+			}
+			return false;
+		});
 		// check if we should continue
 		if (ComponentbuilderHelper::checkArray($langStringTargets))
 		{
@@ -5728,48 +6428,6 @@ class Get
 		if (ComponentbuilderHelper::checkArray($localPaths))
 		{
 			return $localPaths;
-		}
-		return false;
-	}
-
-	/**
-	 * bc math wrapper (very basic not for accounting)
-	 * 
-	 * @param   string   $type    The type bc math
-	 * @param   int      $val1    The first value
-	 * @param   int      $val2    The second value
-	 *
-	 * @return int
-	 * 
-	 */
-	public function bcmath($type, $val1, $val2)
-	{
-		// build function name
-		$function = 'bc'.$type;
-		// use the bcmath function of available
-		if (function_exists($function))
-		{
-			return $function($val1, $val2);
-		}
-		// if function does not exist we use +-*/ operators (since it realy not that serious)
-		switch($type)
-		{
-			// Multiply two numbers
-			case 'mul':
-				return round($val1 * $val2);
-			break;
-			// Divide of two numbers
-			case 'div':
-				return round($val1 / $val2);
-			break;
-			// Adding two numbers
-			case 'add':
-				return round($val1 + $val2);
-			break;
-			// Subtract one number from the other
-			case 'add':
-				return round($val1 - $val2);
-			break;
 		}
 		return false;
 	}

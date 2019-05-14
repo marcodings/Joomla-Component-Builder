@@ -47,6 +47,85 @@
 		/>
 		<field type="spacer" name="spacerHistory" hr="true" />
 
+		<!-- Editor Field. Type: Plugins. (joomla) -->
+		<field
+			type="plugins"
+			name="editor"
+			label="COM_COMPONENTBUILDER_CONFIG_EDITOR_LABEL"
+			default="none"
+			description="COM_COMPONENTBUILDER_CONFIG_EDITOR_DESCRIPTION"
+			folder="editors"
+			filter="cmd"
+		/>
+		<!-- Spacer_hr_one Field. Type: Spacer. A None Database Field. (joomla) -->
+		<field type="spacer" name="spacer_hr_one" hr="true" class="spacer_hr_one" />
+		<!-- Manage_jcb_package_directories Field. Type: Radio. (joomla) -->
+		<field
+			type="radio"
+			name="manage_jcb_package_directories"
+			label="COM_COMPONENTBUILDER_CONFIG_MANAGE_JCB_PACKAGE_DIRECTORIES_LABEL"
+			description="COM_COMPONENTBUILDER_CONFIG_MANAGE_JCB_PACKAGE_DIRECTORIES_DESCRIPTION"
+			class="btn-group btn-group-yesno"
+			default="2"
+			required="true">
+			<!-- Option Set. -->
+			<option value="0">
+				COM_COMPONENTBUILDER_CONFIG_NONE</option>
+			<option value="2">
+				COM_COMPONENTBUILDER_CONFIG_SHOW_ALL</option>
+			<option value="1">
+				COM_COMPONENTBUILDER_CONFIG_MANUAL_SELECTION</option>
+		</field>
+		<!-- Jcb_package_directories Field. Type: List. (joomla) -->
+		<field
+			type="list"
+			name="jcb_package_directories"
+			label="COM_COMPONENTBUILDER_CONFIG_JCB_PACKAGE_DIRECTORIES_LABEL"
+			description="COM_COMPONENTBUILDER_CONFIG_JCB_PACKAGE_DIRECTORIES_DESCRIPTION"
+			class="list_class"
+			multiple="true"
+			default=""
+			showon="manage_jcb_package_directories:1">
+			<!-- Option Set. -->
+			<option value="vdm">
+				COM_COMPONENTBUILDER_CONFIG_VDM_PACKAGES</option>
+			<option value="jcb">
+				COM_COMPONENTBUILDER_CONFIG_JCB_COMMUNITY_PACKAGES</option>
+		</field>
+		<!-- Spacer_hr_two Field. Type: Spacer. A None Database Field. (joomla) -->
+		<field type="spacer" name="spacer_hr_two" hr="true" class="spacer_hr_two" />
+		<!-- Add_menu_prefix Field. Type: Radio. (joomla) -->
+		<field
+			type="radio"
+			name="add_menu_prefix"
+			label="COM_COMPONENTBUILDER_CONFIG_ADD_MENU_PREFIX_LABEL"
+			description="COM_COMPONENTBUILDER_CONFIG_ADD_MENU_PREFIX_DESCRIPTION"
+			class="btn-group btn-group-yesno"
+			default="1">
+			<!-- Option Set. -->
+			<option value="1">
+				COM_COMPONENTBUILDER_CONFIG_YES</option>
+			<option value="0">
+				COM_COMPONENTBUILDER_CONFIG_NO</option>
+		</field>
+		<!-- Menu_prefix Field. Type: Text. (joomla) -->
+		<field
+			type="text"
+			name="menu_prefix"
+			label="COM_COMPONENTBUILDER_CONFIG_MENU_PREFIX_LABEL"
+			size="30"
+			maxlength="30"
+			default="&amp;#187;"
+			description="COM_COMPONENTBUILDER_CONFIG_MENU_PREFIX_DESCRIPTION"
+			class="text_area"
+			filter="SAFEHTML"
+			message="COM_COMPONENTBUILDER_CONFIG_MENU_PREFIX_MESSAGE"
+			hint="COM_COMPONENTBUILDER_CONFIG_MENU_PREFIX_HINT"
+			autocomplete="on"
+			showon="add_menu_prefix:1"
+		/>
+		<!-- Spacer_hr_three Field. Type: Spacer. A None Database Field. (joomla) -->
+		<field type="spacer" name="spacer_hr_three" hr="true" class="spacer_hr_three" />
 		<!-- Minify Field. Type: Radio. (joomla) -->
 		<field
 			type="radio"
@@ -61,61 +140,8 @@
 			<option value="0">
 				COM_COMPONENTBUILDER_CONFIG_NO</option>
 		</field>
-		<!-- Spacer_hr_one Field. Type: Spacer. A None Database Field. (joomla) -->
-		<field type="spacer" name="spacer_hr_one" hr="true" class="spacer_hr_one" />
-		<!-- Note_language_global Field. Type: Note. A None Database Field. (joomla) -->
-		<field type="note" name="note_language_global" label="COM_COMPONENTBUILDER_CONFIG_NOTE_LANGUAGE_GLOBAL_LABEL" description="COM_COMPONENTBUILDER_CONFIG_NOTE_LANGUAGE_GLOBAL_DESCRIPTION" heading="h4" class="alert alert-info note_language_global" />
-		<!-- Language Field. Type: Lang. (custom) -->
-		<field
-			type="lang"
-			name="language"
-			label="COM_COMPONENTBUILDER_CONFIG_LANGUAGE_LABEL"
-			class="list_class"
-			multiple="false"
-			default="0"
-			required="true"
-			button="true"
-		/>
-		<!-- Percentagelanguageadd Field. Type: Number. (joomla) -->
-		<field
-			type="number"
-			name="percentagelanguageadd"
-			label="COM_COMPONENTBUILDER_CONFIG_PERCENTAGELANGUAGEADD_LABEL"
-			default="50"
-			description="COM_COMPONENTBUILDER_CONFIG_PERCENTAGELANGUAGEADD_DESCRIPTION"
-			class="text_area"
-			required="true"
-			min="10"
-			max="100"
-			step="10"
-		/>
-		<!-- Spacer_hr_two Field. Type: Spacer. A None Database Field. (joomla) -->
-		<field type="spacer" name="spacer_hr_two" hr="true" class="spacer_hr_two" />
-		<!-- Compiler_field_builder_type Field. Type: List. (joomla) -->
-		<field
-			type="list"
-			name="compiler_field_builder_type"
-			label="COM_COMPONENTBUILDER_CONFIG_COMPILER_FIELD_BUILDER_TYPE_LABEL"
-			description="COM_COMPONENTBUILDER_CONFIG_COMPILER_FIELD_BUILDER_TYPE_DESCRIPTION"
-			class="list_class"
-			filter="INT"
-			required="true"
-			default="2">
-			<!-- Option Set. -->
-			<option value="1">
-				COM_COMPONENTBUILDER_CONFIG_STRING_MANIPULATION</option>
-			<option value="2">
-				COM_COMPONENTBUILDER_CONFIG_SIMPLEXMLELEMENT_CLASS</option>
-		</field>
-		<!-- Spacer_hr_three Field. Type: Spacer. A None Database Field. (joomla) -->
-		<field type="spacer" name="spacer_hr_three" hr="true" class="spacer_hr_three" />
-		<!-- Api Field. Type: User. (joomla) -->
-		<field
-			type="user"
-			name="api"
-			label="COM_COMPONENTBUILDER_CONFIG_API_LABEL"
-			description="COM_COMPONENTBUILDER_CONFIG_API_DESCRIPTION"
-		/>
+		<!-- Spacer_hr_four Field. Type: Spacer. A None Database Field. (joomla) -->
+		<field type="spacer" name="spacer_hr_four" hr="true" class="spacer_hr_four" />
 		<!-- Set_browser_storage Field. Type: Radio. (joomla) -->
 		<field
 			type="radio"
@@ -167,8 +193,63 @@
 			<option value="0">
 				COM_COMPONENTBUILDER_CONFIG_NEVER_UPDATE</option>
 		</field>
-		<!-- Spacer_hr_four Field. Type: Spacer. A None Database Field. (joomla) -->
-		<field type="spacer" name="spacer_hr_four" hr="true" class="spacer_hr_four" />
+		<!-- Spacer_hr_five Field. Type: Spacer. A None Database Field. (joomla) -->
+		<field type="spacer" name="spacer_hr_five" hr="true" class="spacer_hr_five" />
+		<!-- Note_language_global Field. Type: Note. A None Database Field. (joomla) -->
+		<field type="note" name="note_language_global" label="COM_COMPONENTBUILDER_CONFIG_NOTE_LANGUAGE_GLOBAL_LABEL" description="COM_COMPONENTBUILDER_CONFIG_NOTE_LANGUAGE_GLOBAL_DESCRIPTION" heading="h4" class="alert alert-info note_language_global" />
+		<!-- Language Field. Type: Lang. (custom) -->
+		<field
+			type="lang"
+			name="language"
+			label="COM_COMPONENTBUILDER_CONFIG_LANGUAGE_LABEL"
+			class="list_class"
+			multiple="false"
+			default="0"
+			required="true"
+			button="true"
+		/>
+		<!-- Percentagelanguageadd Field. Type: Number. (joomla) -->
+		<field
+			type="number"
+			name="percentagelanguageadd"
+			label="COM_COMPONENTBUILDER_CONFIG_PERCENTAGELANGUAGEADD_LABEL"
+			default="50"
+			description="COM_COMPONENTBUILDER_CONFIG_PERCENTAGELANGUAGEADD_DESCRIPTION"
+			class="text_area"
+			required="true"
+			min="10"
+			max="100"
+			step="10"
+		/>
+		<!-- Spacer_hr_six Field. Type: Spacer. A None Database Field. (joomla) -->
+		<field type="spacer" name="spacer_hr_six" hr="true" class="spacer_hr_six" />
+		<!-- Compiler_field_builder_type Field. Type: List. (joomla) -->
+		<field
+			type="list"
+			name="compiler_field_builder_type"
+			label="COM_COMPONENTBUILDER_CONFIG_COMPILER_FIELD_BUILDER_TYPE_LABEL"
+			description="COM_COMPONENTBUILDER_CONFIG_COMPILER_FIELD_BUILDER_TYPE_DESCRIPTION"
+			class="list_class"
+			filter="INT"
+			required="true"
+			default="2">
+			<!-- Option Set. -->
+			<option value="1">
+				COM_COMPONENTBUILDER_CONFIG_STRING_MANIPULATION</option>
+			<option value="2">
+				COM_COMPONENTBUILDER_CONFIG_SIMPLEXMLELEMENT_CLASS</option>
+		</field>
+		<!-- Spacer_hr_seven Field. Type: Spacer. A None Database Field. (joomla) -->
+		<field type="spacer" name="spacer_hr_seven" hr="true" class="spacer_hr_seven" />
+		<!-- Api Field. Type: User. (joomla) -->
+		<field
+			type="user"
+			name="api"
+			label="COM_COMPONENTBUILDER_CONFIG_API_LABEL"
+			description="COM_COMPONENTBUILDER_CONFIG_API_DESCRIPTION"
+		/>
+		<!-- Spacer_hr_eight Field. Type: Spacer. A None Database Field. (joomla) -->
+		<field type="spacer" name="spacer_hr_eight" hr="true" class="spacer_hr_eight" />
 		<field name="autorTitle"
 			type="spacer"
 			label="COM_COMPONENTBUILDER_CONFIG_AUTHOR"
@@ -257,7 +338,7 @@
 				COM_COMPONENTBUILDER_CONFIG_ON</option>
 			<option value="0">
 				COM_COMPONENTBUILDER_CONFIG_OFF</option>
-		</field>		
+		</field>
 		<!-- Mailer Field. Type: List. (joomla) -->
 		<field
 			type="list"
@@ -278,7 +359,7 @@
 				COM_COMPONENTBUILDER_CONFIG_SENDMAIL</option>
 			<option value="smtp">
 				COM_COMPONENTBUILDER_CONFIG_SMTP</option>
-		</field>		
+		</field>
 		<!-- Emailfrom Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -293,7 +374,7 @@
 			message="Error! Please add email address here."
 			hint="COM_COMPONENTBUILDER_CONFIG_EMAILFROM_HINT"
 			showon="mailer:smtp,sendmail,default"
-		/>		
+		/>
 		<!-- Fromname Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -307,7 +388,7 @@
 			message="Error! Please add some name here."
 			hint="COM_COMPONENTBUILDER_CONFIG_FROMNAME_HINT"
 			showon="mailer:smtp,sendmail,default"
-		/>		
+		/>
 		<!-- Email reply to Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -322,7 +403,7 @@
 			message="Error! Please add email address here."
 			hint="COM_COMPONENTBUILDER_CONFIG_EMAILREPLY_HINT"
 			showon="mailer:smtp,sendmail,default"
-		/>		
+		/>
 		<!-- Reply to name Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -336,7 +417,7 @@
 			message="Error! Please add some name here."
 			hint="COM_COMPONENTBUILDER_CONFIG_REPLYNAME_HINT"
 			showon="mailer:smtp,sendmail,default"
-		/>		
+		/>
 		<!-- Sendmail Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -351,7 +432,7 @@
 			message="Error! Please add path to you local sendmail here."
 			hint="COM_COMPONENTBUILDER_CONFIG_SENDMAIL_HINT"
 			showon="mailer:sendmail"
-		/>		
+		/>
 		<!-- Smtpauth Field. Type: Radio. (joomla) -->
 		<field
 			type="radio"
@@ -366,7 +447,7 @@
 				COM_COMPONENTBUILDER_CONFIG_YES</option>
 			<option value="0">
 				COM_COMPONENTBUILDER_CONFIG_NO</option>
-		</field>		
+		</field>
 		<!-- Smtpsecure Field. Type: List. (joomla) -->
 		<field
 			type="list"
@@ -385,7 +466,7 @@
 				COM_COMPONENTBUILDER_CONFIG_SSL</option>
 			<option value="tls">
 				COM_COMPONENTBUILDER_CONFIG_TLS</option>
-		</field>		
+		</field>
 		<!-- Smtpport Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -400,7 +481,7 @@
 			message="Error! Please add the port number of your SMTP server here."
 			hint="COM_COMPONENTBUILDER_CONFIG_SMTPPORT_HINT"
 			showon="mailer:smtp"
-		/>		
+		/>
 		<!-- Smtpuser Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -414,7 +495,7 @@
 			message="Error! Please add the username for SMTP server here."
 			hint="COM_COMPONENTBUILDER_CONFIG_SMTPUSER_HINT"
 			showon="mailer:smtp"
-		/>		
+		/>
 		<!-- Smtppass Field. Type: Password. (joomla) -->
 		<field
 			type="password"
@@ -426,7 +507,7 @@
 			filter="raw"
 			message="Error! Please add the password for SMTP server here."
 			showon="mailer:smtp"
-		/>		
+		/>
 		<!-- Smtphost Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -461,7 +542,7 @@
 				COM_COMPONENTBUILDER_CONFIG_YES</option>
 			<option value="0">
 				COM_COMPONENTBUILDER_CONFIG_NO</option>
-		</field>		
+		</field>
 		<!-- Dkim_domain Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -476,7 +557,7 @@
 			hint="COM_COMPONENTBUILDER_CONFIG_DKIM_DOMAIN_HINT"
 			showon="dkim:1"
 			onchange="vdm_dkim();"
-		/>		
+		/>
 		<!-- Dkim_selector Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -492,7 +573,7 @@
 			hint="COM_COMPONENTBUILDER_CONFIG_DKIM_SELECTOR_HINT"
 			showon="dkim:1"
 			onchange="vdm_dkim();"
-		/>		
+		/>
 		<!-- Dkim_passphrase Field. Type: Password. (joomla) -->
 		<field
 			type="password"
@@ -504,7 +585,7 @@
 			filter="raw"
 			message="Error! Please add  passphrase here."
 			showon="dkim:1"
-		/>		
+		/>
 		<!-- Dkim_identity Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -518,7 +599,7 @@
 			message="Error! Please add  DKIM Identity here."
 			hint="COM_COMPONENTBUILDER_CONFIG_DKIM_IDENTITY_HINT"
 			showon="dkim:1"
-		/>		
+		/>
 		<!-- Dkim_private_key Field. Type: Textarea. (joomla) -->
 		<field
 			type="textarea"
@@ -529,7 +610,7 @@
 			description="COM_COMPONENTBUILDER_CONFIG_DKIM_PRIVATE_KEY_DESCRIPTION"
 			class="input-xxlarge span12"
 			showon="dkim:1"
-		/>		
+		/>
 		<!-- Dkim_public_key Field. Type: Textarea. (joomla) -->
 		<field
 			type="textarea"
@@ -541,9 +622,9 @@
 			class="input-xxlarge span12"
 			showon="dkim:1"
 			onchange="vdm_dkim();"
-		/>		
+		/>
 		<!-- Note_dkim_use Field. Type: Note. A None Database Field. (joomla) -->
-		<field type="note" name="note_dkim_use" label="COM_COMPONENTBUILDER_CONFIG_NOTE_DKIM_USE_LABEL" description="COM_COMPONENTBUILDER_CONFIG_NOTE_DKIM_USE_DESCRIPTION" heading="h4" class="note_dkim_use" showon="dkim:1" />		
+		<field type="note" name="note_dkim_use" label="COM_COMPONENTBUILDER_CONFIG_NOTE_DKIM_USE_LABEL" description="COM_COMPONENTBUILDER_CONFIG_NOTE_DKIM_USE_DESCRIPTION" heading="h4" class="note_dkim_use" showon="dkim:1" />
 		<!-- Dkim_key Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -557,7 +638,7 @@
 			message="Error! Please add KEY here."
 			hint="COM_COMPONENTBUILDER_CONFIG_DKIM_KEY_HINT"
 			showon="dkim:1"
-		/>		
+		/>
 		<!-- Dkim_value Field. Type: Text. (joomla) -->
 		<field
 			type="text"
@@ -606,9 +687,9 @@
 				COM_COMPONENTBUILDER_CONFIG_EXPANSION</option>
 		</field>
 		<!-- Note_development_method_default Field. Type: Note. A None Database Field. (joomla) -->
-		<field type="note" name="note_development_method_default" label="COM_COMPONENTBUILDER_CONFIG_NOTE_DEVELOPMENT_METHOD_DEFAULT_LABEL" description="COM_COMPONENTBUILDER_CONFIG_NOTE_DEVELOPMENT_METHOD_DEFAULT_DESCRIPTION" heading="h4" class="alert alert-info note_development_method_default" showon="development_method:1" />
+		<field type="note" name="note_development_method_default" label="COM_COMPONENTBUILDER_CONFIG_NOTE_DEVELOPMENT_METHOD_DEFAULT_LABEL" description="COM_COMPONENTBUILDER_CONFIG_NOTE_DEVELOPMENT_METHOD_DEFAULT_DESCRIPTION" heading="h2" class="alert alert-info note_development_method_default" showon="development_method:1" />
 		<!-- Note_development_method_expansion Field. Type: Note. A None Database Field. (joomla) -->
-		<field type="note" name="note_development_method_expansion" label="COM_COMPONENTBUILDER_CONFIG_NOTE_DEVELOPMENT_METHOD_EXPANSION_LABEL" description="COM_COMPONENTBUILDER_CONFIG_NOTE_DEVELOPMENT_METHOD_EXPANSION_DESCRIPTION" heading="h4" class="alert alert-info note_development_method_expansion" showon="development_method:2" />
+		<field type="note" name="note_development_method_expansion" label="COM_COMPONENTBUILDER_CONFIG_NOTE_DEVELOPMENT_METHOD_EXPANSION_LABEL" description="COM_COMPONENTBUILDER_CONFIG_NOTE_DEVELOPMENT_METHOD_EXPANSION_DESCRIPTION" heading="h2" class="alert alert-info note_development_method_expansion" showon="development_method:2" />
 		<!-- Expansion Field. Type: Subform. (joomla) -->
 		<field
 			type="subform"
@@ -659,6 +740,7 @@
 					name="placeholders"
 					label="COM_COMPONENTBUILDER_CONFIG_PLACEHOLDERS_LABEL"
 					value="1"
+					default=""
 					required="false"
 					description="COM_COMPONENTBUILDER_CONFIG_PLACEHOLDERS_DESCRIPTION"
 					class="inputbox"
@@ -722,6 +804,7 @@
 			label="COM_COMPONENTBUILDER_CONFIG_CRONJOB_BACKUP_FOLDER_PATH_LABEL"
 			size="70"
 			maxlength="150"
+			default=""
 			description="COM_COMPONENTBUILDER_CONFIG_CRONJOB_BACKUP_FOLDER_PATH_DESCRIPTION"
 			class="text_area"
 			readonly="false"
@@ -779,6 +862,7 @@
 			label="COM_COMPONENTBUILDER_CONFIG_COMPILER_FOLDER_PATH_LABEL"
 			size="70"
 			maxlength="150"
+			default=""
 			description="COM_COMPONENTBUILDER_CONFIG_COMPILER_FOLDER_PATH_DESCRIPTION"
 			class="text_area"
 			readonly="false"
@@ -797,6 +881,7 @@
 			label="COM_COMPONENTBUILDER_CONFIG_CUSTOM_FOLDER_PATH_LABEL"
 			size="70"
 			maxlength="150"
+			default=""
 			description="COM_COMPONENTBUILDER_CONFIG_CUSTOM_FOLDER_PATH_DESCRIPTION"
 			class="text_area"
 			readonly="false"
@@ -815,6 +900,7 @@
 			label="COM_COMPONENTBUILDER_CONFIG_BACKUP_FOLDER_PATH_LABEL"
 			size="70"
 			maxlength="150"
+			default=""
 			description="COM_COMPONENTBUILDER_CONFIG_BACKUP_FOLDER_PATH_DESCRIPTION"
 			class="text_area"
 			readonly="false"
@@ -833,6 +919,7 @@
 			label="COM_COMPONENTBUILDER_CONFIG_GIT_FOLDER_PATH_LABEL"
 			size="70"
 			maxlength="150"
+			default=""
 			description="COM_COMPONENTBUILDER_CONFIG_GIT_FOLDER_PATH_DESCRIPTION"
 			class="text_area"
 			readonly="false"
@@ -901,6 +988,7 @@
 			label="COM_COMPONENTBUILDER_CONFIG_EXPORT_WEBSITE_LABEL"
 			size="60"
 			maxlength="150"
+			default=""
 			description="COM_COMPONENTBUILDER_CONFIG_EXPORT_WEBSITE_DESCRIPTION"
 			class="text_area"
 			required="true"
@@ -949,6 +1037,7 @@
 			required="false"
 			filter="url"
 			validated="url"
+			scheme="http,https"
 			message="COM_COMPONENTBUILDER_CONFIG_EXPORT_BUY_LINK_MESSAGE"
 			hint="COM_COMPONENTBUILDER_CONFIG_EXPORT_BUY_LINK_HINT"
 		/>

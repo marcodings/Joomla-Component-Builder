@@ -1,35 +1,18 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		dynamic_get.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
 
 use Joomla\Registry\Registry;
-
-// import Joomla modelform library
-jimport('joomla.application.component.modeladmin');
 
 /**
  * Componentbuilder Dynamic_get Model
@@ -63,6 +46,9 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 	 */
 	public function getTable($type = 'dynamic_get', $prefix = 'ComponentbuilderTable', $config = array())
 	{
+		// add table path for when model gets used from other component
+		$this->addTablePath(JPATH_ADMINISTRATOR . '/components/com_componentbuilder/tables');
+		// get instance of the table
 		return JTable::getInstance($type, $prefix, $config);
 	}
 
@@ -148,6 +134,22 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 				$item->php_calculation = base64_decode($item->php_calculation);
 			}
 
+			if (!empty($item->join_view_table))
+			{
+				// Convert the join_view_table field to an array.
+				$join_view_table = new Registry;
+				$join_view_table->loadString($item->join_view_table);
+				$item->join_view_table = $join_view_table->toArray();
+			}
+
+			if (!empty($item->join_db_table))
+			{
+				// Convert the join_db_table field to an array.
+				$join_db_table = new Registry;
+				$join_db_table->loadString($item->join_db_table);
+				$item->join_db_table = $join_db_table->toArray();
+			}
+
 			if (!empty($item->filter))
 			{
 				// Convert the filter field to an array.
@@ -172,6 +174,14 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 				$item->order = $order->toArray();
 			}
 
+			if (!empty($item->group))
+			{
+				// Convert the group field to an array.
+				$group = new Registry;
+				$group->loadString($item->group);
+				$item->group = $group->toArray();
+			}
+
 			if (!empty($item->global))
 			{
 				// Convert the global field to an array.
@@ -180,20 +190,10 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 				$item->global = $global->toArray();
 			}
 
-			if (!empty($item->join_view_table))
+			if (!empty($item->plugin_events))
 			{
-				// Convert the join_view_table field to an array.
-				$join_view_table = new Registry;
-				$join_view_table->loadString($item->join_view_table);
-				$item->join_view_table = $join_view_table->toArray();
-			}
-
-			if (!empty($item->join_db_table))
-			{
-				// Convert the join_db_table field to an array.
-				$join_db_table = new Registry;
-				$join_db_table->loadString($item->join_db_table);
-				$item->join_db_table = $join_db_table->toArray();
+				// JSON Decode plugin_events.
+				$item->plugin_events = json_decode($item->plugin_events);
 			}
 
 
@@ -204,7 +204,7 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 			else
 			{
 				$id = $item->id;
-			}			
+			}
 			// set the id and view name to session
 			if ($vdm = ComponentbuilderHelper::get('dynamic_get__'.$id))
 			{
@@ -212,9 +212,14 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 			}
 			else
 			{
+				// set the vast development method key
 				$this->vastDevMod = ComponentbuilderHelper::randomkey(50);
 				ComponentbuilderHelper::set($this->vastDevMod, 'dynamic_get__'.$id);
 				ComponentbuilderHelper::set('dynamic_get__'.$id, $this->vastDevMod);
+				// set a return value if found
+				$jinput = JFactory::getApplication()->input;
+				$return = $jinput->get('return', null, 'base64');
+				ComponentbuilderHelper::set($this->vastDevMod . '__return', $return);
 			}
 
 			// update the fields
@@ -261,22 +266,25 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 		}
 
 		return $item;
-	} 
+	}
 
 	/**
 	 * Method to get the record form.
 	 *
 	 * @param   array    $data      Data for the form.
 	 * @param   boolean  $loadData  True if the form is to load its own data (default case), false if not.
+	 * @param   array    $options   Optional array of options for the form creation.
 	 *
 	 * @return  mixed  A JForm object on success, false on failure
 	 *
 	 * @since   1.6
 	 */
-	public function getForm($data = array(), $loadData = true)
+	public function getForm($data = array(), $loadData = true, $options = array('control' => 'jform'))
 	{
+		// set load data option
+		$options['load_data'] = $loadData;
 		// Get the form.
-		$form = $this->loadForm('com_componentbuilder.dynamic_get', 'dynamic_get', array('control' => 'jform', 'load_data' => $loadData));
+		$form = $this->loadForm('com_componentbuilder.dynamic_get', 'dynamic_get', $options);
 
 		if (empty($form))
 		{
@@ -337,14 +345,34 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 		// Only load these values if no id is found
 		if (0 == $id)
 		{
-			// Set redirected field name
-			$redirectedField = $jinput->get('ref', null, 'STRING');
-			// Set redirected field value
-			$redirectedValue = $jinput->get('refid', 0, 'INT');
+			// Set redirected view name
+			$redirectedView = $jinput->get('ref', null, 'STRING');
+			// Set field name (or fall back to view name)
+			$redirectedField = $jinput->get('field', $redirectedView, 'STRING');
+			// Set redirected view id
+			$redirectedId = $jinput->get('refid', 0, 'INT');
+			// Set field id (or fall back to redirected view id)
+			$redirectedValue = $jinput->get('field_id', $redirectedId, 'INT');
 			if (0 != $redirectedValue && $redirectedField)
 			{
 				// Now set the local-redirected field default value
 				$form->setValue($redirectedField, null, $redirectedValue);
+			}
+		}
+
+		// update all editors to use this components global editor
+		$global_editor = JComponentHelper::getParams('com_componentbuilder')->get('editor', 'none');
+		// now get all the editor fields
+		$editors = $form->getXml()->xpath("//field[@type='editor']");
+		// check if we found any
+		if (ComponentbuilderHelper::checkArray($editors))
+		{
+			foreach ($editors as $editor)
+			{
+				// get the field names
+				$name = (string) $editor['name'];
+				// set the field editor value (with none as fallback)
+				$form->setFieldAttribute($name, 'editor', $global_editor . '|none');
 			}
 		}
 
@@ -398,7 +426,7 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 	protected function canEditState($record)
 	{
 		$user = JFactory::getUser();
-		$recordId	= (!empty($record->id)) ? $record->id : 0;
+		$recordId = (!empty($record->id)) ? $record->id : 0;
 
 		if ($recordId)
 		{
@@ -509,18 +537,18 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 	}
 
 	/**
-	* Method to validate the form data.
-	*
-	* @param   JForm   $form   The form to validate against.
-	* @param   array   $data   The data to validate.
-	* @param   string  $group  The name of the field group to validate.
-	*
-	* @return  mixed  Array of filtered data if valid, false otherwise.
-	*
-	* @see     JFormRule
-	* @see     JFilterInput
-	* @since   12.2
-	*/
+	 * Method to validate the form data.
+	 *
+	 * @param   JForm   $form   The form to validate against.
+	 * @param   array   $data   The data to validate.
+	 * @param   string  $group  The name of the field group to validate.
+	 *
+	 * @return  mixed  Array of filtered data if valid, false otherwise.
+	 *
+	 * @see     JFormRule
+	 * @see     JFilterInput
+	 * @since   12.2
+	 */
 	public function validate($form, $data, $group = null)
 	{
 		// check if the not_required field is set
@@ -542,7 +570,7 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 			}
 		}
 		return parent::validate($form, $data, $group);
-	} 
+	}
 
 	/**
 	 * Method to get the unique fields of this table.
@@ -700,7 +728,7 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 	 *
 	 * @return  mixed  An array of new IDs on success, boolean false on failure.
 	 *
-	 * @since	12.2
+	 * @since 12.2
 	 */
 	protected function batchCopy($values, $pks, $contexts)
 	{
@@ -798,7 +826,7 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 			$this->table->id = 0;
 
 			// TODO: Deal with ordering?
-			// $this->table->ordering	= 1;
+			// $this->table->ordering = 1;
 
 			// Check the row.
 			if (!$this->table->check())
@@ -832,7 +860,7 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 		$this->cleanCache();
 
 		return $newIds;
-	} 
+	}
 
 	/**
 	 * Batch move items to a new category
@@ -843,7 +871,7 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 	 *
 	 * @return  boolean  True if successful, false otherwise and internal error is set.
 	 *
-	 * @since	12.2
+	 * @since 12.2
 	 */
 	protected function batchMove($values, $pks, $contexts)
 	{
@@ -964,7 +992,33 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 			$metadata = new JRegistry;
 			$metadata->loadArray($data['metadata']);
 			$data['metadata'] = (string) $metadata;
-		} 
+		}
+
+		// Set the join_view_table items to data.
+		if (isset($data['join_view_table']) && is_array($data['join_view_table']))
+		{
+			$join_view_table = new JRegistry;
+			$join_view_table->loadArray($data['join_view_table']);
+			$data['join_view_table'] = (string) $join_view_table;
+		}
+		elseif (!isset($data['join_view_table']))
+		{
+			// Set the empty join_view_table to data
+			$data['join_view_table'] = '';
+		}
+
+		// Set the join_db_table items to data.
+		if (isset($data['join_db_table']) && is_array($data['join_db_table']))
+		{
+			$join_db_table = new JRegistry;
+			$join_db_table->loadArray($data['join_db_table']);
+			$data['join_db_table'] = (string) $join_db_table;
+		}
+		elseif (!isset($data['join_db_table']))
+		{
+			// Set the empty join_db_table to data
+			$data['join_db_table'] = '';
+		}
 
 		// Set the filter items to data.
 		if (isset($data['filter']) && is_array($data['filter']))
@@ -1005,6 +1059,19 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 			$data['order'] = '';
 		}
 
+		// Set the group items to data.
+		if (isset($data['group']) && is_array($data['group']))
+		{
+			$group = new JRegistry;
+			$group->loadArray($data['group']);
+			$data['group'] = (string) $group;
+		}
+		elseif (!isset($data['group']))
+		{
+			// Set the empty group to data
+			$data['group'] = '';
+		}
+
 		// Set the global items to data.
 		if (isset($data['global']) && is_array($data['global']))
 		{
@@ -1018,30 +1085,10 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 			$data['global'] = '';
 		}
 
-		// Set the join_view_table items to data.
-		if (isset($data['join_view_table']) && is_array($data['join_view_table']))
+		// Set the plugin_events string to JSON string.
+		if (isset($data['plugin_events']))
 		{
-			$join_view_table = new JRegistry;
-			$join_view_table->loadArray($data['join_view_table']);
-			$data['join_view_table'] = (string) $join_view_table;
-		}
-		elseif (!isset($data['join_view_table']))
-		{
-			// Set the empty join_view_table to data
-			$data['join_view_table'] = '';
-		}
-
-		// Set the join_db_table items to data.
-		if (isset($data['join_db_table']) && is_array($data['join_db_table']))
-		{
-			$join_db_table = new JRegistry;
-			$join_db_table->loadArray($data['join_db_table']);
-			$data['join_db_table'] = (string) $join_db_table;
-		}
-		elseif (!isset($data['join_db_table']))
-		{
-			// Set the empty join_db_table to data
-			$data['join_db_table'] = '';
+			$data['plugin_events'] = (string) json_encode($data['plugin_events']);
 		}
 
 		// Set the php_custom_get string to base64 string.
@@ -1146,13 +1193,13 @@ class ComponentbuilderModelDynamic_get extends JModelAdmin
 	}
 
 	/**
-	* Method to change the title
-	*
-	* @param   string   $title   The title.
-	*
-	* @return	array  Contains the modified title and alias.
-	*
-	*/
+	 * Method to change the title
+	 *
+	 * @param   string   $title   The title.
+	 *
+	 * @return	array  Contains the modified title and alias.
+	 *
+	 */
 	protected function _generateNewTitle($title)
 	{
 

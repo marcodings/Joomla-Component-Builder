@@ -1,33 +1,16 @@
 <?php
-/*--------------------------------------------------------------------------------------------------------|  www.vdm.io  |------/
-    __      __       _     _____                 _                                  _     __  __      _   _               _
-    \ \    / /      | |   |  __ \               | |                                | |   |  \/  |    | | | |             | |
-     \ \  / /_ _ ___| |_  | |  | | _____   _____| | ___  _ __  _ __ ___   ___ _ __ | |_  | \  / | ___| |_| |__   ___   __| |
-      \ \/ / _` / __| __| | |  | |/ _ \ \ / / _ \ |/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __| | |\/| |/ _ \ __| '_ \ / _ \ / _` |
-       \  / (_| \__ \ |_  | |__| |  __/\ V /  __/ | (_) | |_) | | | | | |  __/ | | | |_  | |  | |  __/ |_| | | | (_) | (_| |
-        \/ \__,_|___/\__| |_____/ \___| \_/ \___|_|\___/| .__/|_| |_| |_|\___|_| |_|\__| |_|  |_|\___|\__|_| |_|\___/ \__,_|
-                                                        | |                                                                 
-                                                        |_| 				
-/-------------------------------------------------------------------------------------------------------------------------------/
-
-	@version		2.7.x
-	@created		30th April, 2015
-	@package		Component Builder
-	@subpackage		view.html.php
-	@author			Llewellyn van der Merwe <http://joomlacomponentbuilder.com>	
-	@github			Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
-	@copyright		Copyright (C) 2015. All Rights Reserved
-	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html 
-	
-	Builds Complex Joomla Components 
-                                                             
-/-----------------------------------------------------------------------------------------------------------------------------*/
+/**
+ * @package    Joomla.Component.Builder
+ *
+ * @created    30th April, 2015
+ * @author     Llewellyn van der Merwe <http://www.joomlacomponentbuilder.com>
+ * @github     Joomla Component Builder <https://github.com/vdm-io/Joomla-Component-Builder>
+ * @copyright  Copyright (C) 2015 - 2019 Vast Development Method. All rights reserved.
+ * @license    GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-
-// import Joomla view library
-jimport('joomla.application.component.view');
 
 /**
  * Componentbuilder View class for the Templates
@@ -54,6 +37,8 @@ class ComponentbuilderViewTemplates extends JViewLegacy
 		$this->listOrder = $this->escape($this->state->get('list.ordering'));
 		$this->listDirn = $this->escape($this->state->get('list.direction'));
 		$this->saveOrder = $this->listOrder == 'ordering';
+		// set the return here value
+		$this->return_here = urlencode(base64_encode((string) JUri::getInstance()));
 		// get global action permissions
 		$this->canDo = ComponentbuilderHelper::getActions('template');
 		$this->canEdit = $this->canDo->get('core.edit');
@@ -133,7 +118,7 @@ class ComponentbuilderViewTemplates extends JViewLegacy
 				// add the button to the page
 				$dhtml = $layout->render(array('title' => $title));
 				$bar->appendButton('Custom', $dhtml, 'batch');
-			} 
+			}
 
 			if ($this->state->get('filter.published') == -2 && ($this->canState && $this->canDelete))
 			{
@@ -153,7 +138,7 @@ class ComponentbuilderViewTemplates extends JViewLegacy
 		{
 			// add Get Snippets button.
 			JToolBarHelper::custom('templates.getSnippets', 'search', '', 'COM_COMPONENTBUILDER_GET_SNIPPETS', false);
-		} 
+		}
 
 		if ($this->canDo->get('core.import') && $this->canDo->get('template.import'))
 		{
@@ -204,7 +189,51 @@ class ComponentbuilderViewTemplates extends JViewLegacy
 				'batch[access]',
 				JHtml::_('select.options', JHtml::_('access.assetgroups'), 'value', 'text')
 			);
-		} 
+		}
+
+		// Set Dynamic Get Name Selection
+		$this->dynamic_getNameOptions = JFormHelper::loadFieldType('Dynamicget')->options;
+		if ($this->dynamic_getNameOptions)
+		{
+			// Dynamic Get Name Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_TEMPLATE_DYNAMIC_GET_LABEL').' -',
+				'filter_dynamic_get',
+				JHtml::_('select.options', $this->dynamic_getNameOptions, 'value', 'text', $this->state->get('filter.dynamic_get'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Dynamic Get Name Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_TEMPLATE_DYNAMIC_GET_LABEL').' -',
+					'batch[dynamic_get]',
+					JHtml::_('select.options', $this->dynamic_getNameOptions, 'value', 'text')
+				);
+			}
+		}
+
+		// Set Add Php View Selection
+		$this->add_php_viewOptions = $this->getTheAdd_php_viewSelections();
+		if ($this->add_php_viewOptions)
+		{
+			// Add Php View Filter
+			JHtmlSidebar::addFilter(
+				'- Select '.JText::_('COM_COMPONENTBUILDER_TEMPLATE_ADD_PHP_VIEW_LABEL').' -',
+				'filter_add_php_view',
+				JHtml::_('select.options', $this->add_php_viewOptions, 'value', 'text', $this->state->get('filter.add_php_view'))
+			);
+
+			if ($this->canBatch && $this->canCreate && $this->canEdit)
+			{
+				// Add Php View Batch Selection
+				JHtmlBatch_::addListSelection(
+					'- Keep Original '.JText::_('COM_COMPONENTBUILDER_TEMPLATE_ADD_PHP_VIEW_LABEL').' -',
+					'batch[add_php_view]',
+					JHtml::_('select.options', $this->add_php_viewOptions, 'value', 'text')
+				);
+			}
+		}
 	}
 
 	/**
@@ -251,9 +280,45 @@ class ComponentbuilderViewTemplates extends JViewLegacy
 			'a.sorting' => JText::_('JGRID_HEADING_ORDERING'),
 			'a.published' => JText::_('JSTATUS'),
 			'a.name' => JText::_('COM_COMPONENTBUILDER_TEMPLATE_NAME_LABEL'),
-			'a.alias' => JText::_('COM_COMPONENTBUILDER_TEMPLATE_ALIAS_LABEL'),
 			'a.description' => JText::_('COM_COMPONENTBUILDER_TEMPLATE_DESCRIPTION_LABEL'),
+			'g.name' => JText::_('COM_COMPONENTBUILDER_TEMPLATE_DYNAMIC_GET_LABEL'),
 			'a.id' => JText::_('JGRID_HEADING_ID')
 		);
+	}
+
+	protected function getTheAdd_php_viewSelections()
+	{
+		// Get a db connection.
+		$db = JFactory::getDbo();
+
+		// Create a new query object.
+		$query = $db->getQuery(true);
+
+		// Select the text.
+		$query->select($db->quoteName('add_php_view'));
+		$query->from($db->quoteName('#__componentbuilder_template'));
+		$query->order($db->quoteName('add_php_view') . ' ASC');
+
+		// Reset the query using our newly populated query object.
+		$db->setQuery($query);
+
+		$results = $db->loadColumn();
+
+		if ($results)
+		{
+			// get model
+			$model = $this->getModel();
+			$results = array_unique($results);
+			$_filter = array();
+			foreach ($results as $add_php_view)
+			{
+				// Translate the add_php_view selection
+				$text = $model->selectionTranslation($add_php_view,'add_php_view');
+				// Now add the add_php_view and its text to the options array
+				$_filter[] = JHtml::_('select.option', $add_php_view, JText::_($text));
+			}
+			return $_filter;
+		}
+		return false;
 	}
 }
